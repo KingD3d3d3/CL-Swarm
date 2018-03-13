@@ -1,0 +1,299 @@
+    def update(self):
+
+        # Update sensors value
+        self.readSensors()
+
+        # Get orientation to the goal
+        toGoal = normalize(self.goal - self.body.position)
+        forward = normalize(self.body.GetWorldVector((0, 1)))
+        dot = forward.dot(toGoal)  # give cos(alpha) value between -1 and 1, should be good as NN input
+        #angle = math.acos(dot) * 180.0 / math.pi
+        #orientation = round(dot, 2) # only 3 decimals
+
+        orientation = angle(forward, toGoal) / 180.0
+        orientation = round(orientation, 2)  # only 3 decimals
+        # Select Action using AI
+        last_signal = np.asarray([0., 0., 0., orientation, -orientation])
+        #np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation, -orientation])
+        #action_num = self.brain.update(self.last_reward, last_signal)
+        #self.updateDrive(Action(action_num))
+        self.updateFriction()
+
+        # Reward mechanism
+        distance = np.sqrt((self.body.position.x - self.goal.x) ** 2 + (self.body.position.y - self.goal.y) ** 2)
+        self.last_reward = -0.5
+        if distance < self.last_distance:  # getting closer
+            self.last_reward = 0.1
+
+        if distance < 2.5:
+            self.goal.x = SCREEN_WIDTH / PPM - self.goal.x
+            self.goal.y = SCREEN_HEIGHT / PPM - self.goal.y
+            print('change goal')
+
+        self.last_distance = distance
+
+        return
+
+
+
+
+
+    # def replay(self):
+    #     # If not enough sample in memory
+    #     if len(self.memory.samples) < self.batch_size:
+    #         return
+    #
+    #     batch = self.memory.sample(self.batch_size)
+    #     batchLen = len(batch)
+    #
+    #     x_batch = np.zeros((batchLen, self.inputCnt))
+    #     y_batch = np.zeros((batchLen, self.actionCnt))
+    #
+    #     #x_batch, y_batch = [], []
+    #
+    #     i = 0
+    #     for state, action, reward, next_state in batch:
+    #         q_values = self.model.predict(next_state)[0]
+    #         target = reward + self.gamma * np.amax(q_values)
+    #
+    #         labels = self.model.predict(state)
+    #         labels[0][action] = target  # only the one action passed in the sample will have the actual target
+    #
+    #         x_batch[i] = state[0]
+    #         y_batch[i] = labels[0]
+    #
+    #         i = i + 1
+    #
+    #         #x_batch.append(state[0])  # remove fake dimension
+    #         #y_batch.append(labels[0])
+    #
+    #     #x_batch = np.array(x_batch)  # convert list to array -> automatically add dimension
+    #     #y_batch = np.array(y_batch)
+    #     self.model.train(x_batch, y_batch, batch_len=self.batch_size)
+    #
+    #     if self.epsilon > self.epsilon_min:
+    #         self.epsilon *= self.epsilon_decay
+
+
+            if rayCastLeft.hit:
+            dist1 = (self.raycastLeft_point1 - rayCastLeft.point).length  # distance to the hit point
+            myfont = pygame.font.SysFont("monospace", 15)
+            #self.screen.blit(myfont.render(str('{:3.2f}').format(dist1), True, Color.White), worldToPixels(rayCastLeft.point))
+            self.sensor1 = round(dist1, 2)
+        else:
+            self.sensor1 = self.raycastMaxLength
+
+
+
+
+
+
+
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import random
+
+import pygame
+# Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
+from Box2D.b2 import (world)
+from pygame.locals import *
+
+import res.colors as Color
+from AgentHoming import AgentHoming
+from Border import Border
+from Circle import StaticCircle
+from MyContactListener import MyContactListener
+from Setup import *
+from Util import *
+from experimental.EntityManager import EntityManager
+from experimental.Entity import Entity
+
+if __name__ == '__main__':
+
+    render = True
+    deltaTime = TARGET_FPS / 1000.0
+    fps = 1.0 / deltaTime
+
+    print('fps', fps)
+    accumulator = 0
+    interpolated = False
+
+    # -------------------- Pygame Setup ----------------------
+
+    pygame.init()
+    screen = None
+    if render:
+        screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
+        pygame.display.set_caption('Homing Task Testbed')
+    clock = pygame.time.Clock()
+
+    myfont = pygame.font.SysFont("monospace", 15)
+    def PrintScreen(text, color=(255, 0, 0, 255)):
+        """
+        Draw some text at the top status lines
+        and advance to the next line.
+        """
+        screen.blit(myfont.render(
+            text, True, color), (10, 3))
+
+
+    # -------------------- PyBox2d World Setup ----------------------
+
+    # Create the world
+    world = world(gravity=(0, 0), doSleep=True, contactListener=MyContactListener())  # gravity = (0, -10)
+
+    # Border of the map
+    border = Border(screen=screen, world=world)
+
+    # Entity Manager
+    if interpolated:
+        entityManager = EntityManager()
+
+    # Agent
+    numAgents = 5
+    goal_threshold = 100
+    agents = []
+    for i in xrange(numAgents):
+        randX = random.randint(2, SCREEN_WIDTH / PPM - 2)
+        randY = random.randint(2, SCREEN_HEIGHT / PPM - 2)
+        randAngle = degToRad(random.randint(0, 360))
+        a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
+                        radius=1.5, goal_threshold=goal_threshold)
+        agents.append(a)
+
+        if interpolated:
+            entity = Entity(entityManager, a)
+
+    # Obstacles
+    circle1 = StaticCircle(screen=screen, world=world, x=20, y=17, radius=2)
+    circle2 = StaticCircle(screen=screen, world=world, x=40, y=20, radius=2)
+    circle3 = StaticCircle(screen=screen, world=world, x=50, y=10, radius=2)
+    circle4 = StaticCircle(screen=screen, world=world, x=10, y=25, radius=2)
+
+    # -------------------- Main Game Loop ----------------------
+
+    timeCount = 0
+    stepCount = 0
+    running = True
+    pause = False
+    while running:
+        # Check the event queue
+        for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                # The user closed the window or pressed escape
+                running = False
+            if event.type == KEYDOWN and event.key == K_p:
+                pause = not pause # Pause the game
+
+        # Pause the game
+        if pause:
+            if render:
+                deltaTime = clock.tick(TARGET_FPS) / 1000.0
+            elif not render:
+                deltaTime = clock.tick() / 1000.0
+            continue # go back to loop entry
+
+        if render:
+            screen.fill((0, 0, 0, 0))
+
+        # Update the agents
+        for i in xrange(numAgents):
+            agents[i].update()
+
+        # ---------------------- FPS Physics Step Part -----------
+        if render:
+            deltaTime = clock.tick(TARGET_FPS) / 1000.0
+            fps = clock.get_fps()
+
+            # "Fixed your timestep" technique
+            # Physics is stepped by a fixed amount i.e. 1/60s.
+            # Faster machine i.e. render at 120fps -> step the physics one every 2 frames
+            # Slower machine i.e. render at 30fps -> run the physics twice
+            accumulator += deltaTime
+            while accumulator >= PHYSICS_TIME_STEP:
+
+                if interpolated:
+                    entityManager.updateCurrentState()
+
+                # Physic step
+                world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+                world.ClearForces()
+
+                accumulator -= PHYSICS_TIME_STEP
+
+            # Interpolate entitie's transform between previous and current physics state
+            # Based on how much time is left in the accumulator
+            if interpolated:
+                entityManager.interpolate(accumulator / PHYSICS_TIME_STEP)
+
+        elif not render:
+            deltaTime = clock.tick() / 1000.0
+            fps = clock.get_fps()
+            #print('FPS : ' + str('{:3.2f}').format(fps))
+
+            if deltaTime >= TARGET_FPS: # Frame is faster than target (60fps) -> simulation run faster
+                accumulator = 0
+
+                # Physic step
+                world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+                world.ClearForces()
+            else:
+                accumulator += deltaTime
+
+                while accumulator >= PHYSICS_TIME_STEP:
+
+                    # Physic step
+                    world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+                    world.ClearForces()
+
+                    accumulator -= PHYSICS_TIME_STEP
+
+        # ---------------------------------------------------------
+
+        # ---------------------- Rendering Part -------------------
+        if render:
+            # Draw goals
+            pygame.draw.circle(screen, Color.Red, (goal_threshold, goal_threshold), 20)
+            goalFont = pygame.font.SysFont("monospace", 25)
+            screen.blit(goalFont.render('1', True, Color.White), (goal_threshold - 8, goal_threshold - 12))
+            pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal_threshold, SCREEN_HEIGHT - goal_threshold),
+                               20)
+            screen.blit(goalFont.render('2', True, Color.White),
+                        (SCREEN_WIDTH - goal_threshold - 8, SCREEN_HEIGHT - goal_threshold - 12))
+
+            # Moving Objects
+            for i in xrange(numAgents):
+                agents[i].draw()
+
+
+            # # Moving Objects
+            # for i in xrange(numAgents):
+            #     prevPos = entityManager.entities[i].position
+            #     agents[i].drawEntity(prevPos)
+
+            # Obstacles
+            circle1.draw()
+            circle2.draw()
+            circle3.draw()
+            circle4.draw()
+
+            # Boundary
+            border.draw()
+
+            # Show FPS
+            PrintScreen('FPS : ' + str('{:3.2f}').format(fps))
+        # ---------------------------------------------------------
+
+        # Flip the screen
+        if render:
+            pygame.display.flip()
+
+        # Time counter
+        timeCount += deltaTime
+
+        # Step counter
+        stepCount += 1
+
+    pygame.quit()
+    print('Done!')
