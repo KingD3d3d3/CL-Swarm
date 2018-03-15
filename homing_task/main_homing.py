@@ -59,7 +59,7 @@ if __name__ == '__main__':
         entityManager = EntityManager()
 
     # Agent
-    numAgents = 15
+    numAgents = 1
     goal_threshold = 100
     agents = []
     for i in xrange(numAgents):
@@ -68,6 +68,7 @@ if __name__ == '__main__':
         randAngle = degToRad(random.randint(0, 360))
         a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
                         radius=1.5, goal_threshold=goal_threshold)
+        a.id = i  # set agent ID
         agents.append(a)
 
         if interpolated:
@@ -75,9 +76,13 @@ if __name__ == '__main__':
 
     # Obstacles
     circle1 = StaticCircle(screen=screen, world=world, x=20, y=17, radius=2)
+    circle1.id = 1
     circle2 = StaticCircle(screen=screen, world=world, x=40, y=20, radius=2)
+    circle2.id = 2
     circle3 = StaticCircle(screen=screen, world=world, x=50, y=10, radius=2)
+    circle3.id = 3
     circle4 = StaticCircle(screen=screen, world=world, x=10, y=25, radius=2)
+    circle4.id = 4
 
     # -------------------- Main Game Loop ----------------------
 

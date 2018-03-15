@@ -4,9 +4,11 @@ from Box2D.b2 import (polygonShape)
 
 import res.colors as Color
 from Setup import SCREEN_WIDTH, SCREEN_HEIGHT, PPM
+import random
+import sys
 
 
-class Wall:
+class Wall(object):
     def __init__(self, screen=None, world=None, x=0, y=0, width=50, height=1):
         self.screen = screen
         self.body = world.CreateStaticBody(
@@ -14,6 +16,7 @@ class Wall:
             shapes=polygonShape(box=(width, height)),
             userData=self
         )
+        self.id = random.randint(0, sys.maxint)
 
     def draw(self):
         vertices = [(self.body.transform * v) * PPM for v in self.body.fixtures[0].shape.vertices]
@@ -21,14 +24,18 @@ class Wall:
         pygame.draw.polygon(self.screen, Color.Gray, vertices)
 
 
-class Border:
+class Border(object):
     def __init__(self, screen=None, world=None):
         self.screen = screen
         bottom = Wall(screen=screen, world=world, x=0, y=0, width=int(SCREEN_WIDTH / PPM), height=1)
+        bottom.id = 0
+        right = Wall(screen=screen, world=world, x=int(SCREEN_WIDTH / PPM), y=0, width=1, height=int(SCREEN_HEIGHT / PPM))
+        right.id = 1
         top = Wall(screen=screen, world=world, x=0, y=int(SCREEN_HEIGHT / PPM), width=int(SCREEN_WIDTH / PPM), height=1)
-        right = Wall(screen=screen, world=world, x=0, y=0, width=1, height=int(SCREEN_HEIGHT / PPM))
-        left = Wall(screen=screen, world=world, x=int(SCREEN_WIDTH / PPM), y=0, width=1, height=int(SCREEN_HEIGHT / PPM))
-        self.boxList = [bottom, top, right, left]
+        top.id = 2
+        left = Wall(screen=screen, world=world, x=0, y=0, width=1, height=int(SCREEN_HEIGHT / PPM))
+        left.id = 3
+        self.boxList = [bottom, right, top, left]
 
     def draw(self):
         for box in self.boxList:

@@ -1,7 +1,9 @@
 from Box2D.b2 import (world, polygonShape, vec2, contactListener)
 import res.colors as Color
-from Circle import Circle
-
+from Circle import Circle, StaticCircle
+from Agent import Agent
+import pygame, sys
+from Border import Wall
 
 # Event when there is a collision
 class MyContactListener(contactListener):
@@ -12,26 +14,63 @@ class MyContactListener(contactListener):
         bodyA = contact.fixtureA.body
         bodyB = contact.fixtureB.body
 
-        o1 = bodyA.userData
-        o2 = bodyB.userData
+        objectA = bodyA.userData
+        objectB = bodyB.userData
 
-        if isinstance(o1, Circle) or isinstance(o2, Circle):
-            o2.color = Color.Blue # change color
+        nameA = objectA.__class__.__name__
+        nameB = objectB.__class__.__name__
 
-        # Circle and Ground collision
-        # if(isinstance(o1, Ground) and isinstance(o2,Circle)):
-        #     o2.color = (255, 255, 0, 255)
+        # Agent to Obstacles collision
+        if isinstance(objectA, Agent) and isinstance(objectB, StaticCircle):
+            print(nameA + " " + str(objectA.id)
+                  + " collision " + nameB + " " + str(objectB.id)
+                  + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+        if isinstance(objectA, StaticCircle) and isinstance(objectB, Agent):
+            print(nameB + " " + str(objectB.id)
+                  + " collision " + nameA + " " + str(objectA.id)
+                  + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+
+        # Agent to Wall collision
+        if isinstance(objectA, Agent) and isinstance(objectB, Wall):
+            print(nameA + " " + str(objectA.id)
+                  + " collision " + nameB + " " + str(objectB.id)
+                  + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+        if isinstance(objectA, Wall) and isinstance(objectB, Agent):
+            print(nameB + " " + str(objectB.id)
+                  + " collision " + nameA + " " + str(objectA.id)
+                  + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+
         pass
 
     def EndContact(self, contact):
         bodyA = contact.fixtureA.body
         bodyB = contact.fixtureB.body
 
-        o1 = bodyA.userData
-        o2 = bodyB.userData
+        objectA = bodyA.userData
+        objectB = bodyB.userData
 
-        if (isinstance(o1, Circle) or isinstance(o2, Circle)):
-            o2.color = Color.Lime
+        nameA = objectA.__class__.__name__
+        nameB = objectB.__class__.__name__
+
+        # # Agent to Obstacles collision
+        # if isinstance(objectA, Agent) and isinstance(objectB, StaticCircle):
+        #     print(nameA + " " + str(objectA.id)
+        #           + " end collision " + nameB + " " + str(objectB.id)
+        #           + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+        # if isinstance(objectA, StaticCircle) and isinstance(objectB, Agent):
+        #     print(nameB + " " + str(objectB.id)
+        #           + " end collision " + nameA + " " + str(objectA.id)
+        #           + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+        #
+        # # Agent to Wall collision
+        # if isinstance(objectA, Agent) and isinstance(objectB, Wall):
+        #     print(nameA + " " + str(objectA.id)
+        #           + " end collision " + nameB + " " + str(objectB.id)
+        #           + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+        # if isinstance(objectA, Wall) and isinstance(objectB, Agent):
+        #     print(nameB + " " + str(objectB.id)
+        #           + " end collision " + nameA + " " + str(objectA.id)
+        #           + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
 
         pass
 

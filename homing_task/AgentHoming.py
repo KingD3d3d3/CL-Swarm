@@ -52,6 +52,8 @@ class AgentHoming(Agent):
         self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
 
         self.goal = pixelsToWorld((goal_threshold, goal_threshold))
+        self.goal1 = self.goal
+        self.goal2 = vec2(SCREEN_WIDTH / PPM - self.goal.x, SCREEN_HEIGHT / PPM - self.goal.y)
 
         self.last_reward = 0
         self.last_distance = 0
@@ -202,9 +204,9 @@ class AgentHoming(Agent):
         # Select Action using AI
         #last_signal = np.asarray([0., 0., 0., orientation, -orientation])
         last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation, -orientation])
-        action_num = self.brain.update(self.last_reward, last_signal)
-        self.updateDrive(Action(action_num))
-        #self.updateManualDrive()
+        #action_num = self.brain.update(self.last_reward, last_signal)
+        #self.updateDrive(Action(action_num))
+        self.updateManualDrive()
         self.updateFriction()
 
         # Reward mechanism
@@ -221,8 +223,17 @@ class AgentHoming(Agent):
             self.last_reward = -1
 
         if distance < 2.5:
-            self.goal.x = SCREEN_WIDTH / PPM - self.goal.x
-            self.goal.y = SCREEN_HEIGHT / PPM - self.goal.y
+            if self.goal == self.goal1:
+                self.goal = self.goal2
+                print("Agent " + str(self.id) + " reached goal" + " 1" + " at "
+                      + str(pygame.time.get_ticks() / 1000.0) + " s")
+            elif self.goal == self.goal2:
+                self.goal = self.goal1
+                print("Agent " + str(self.id) + " reached goal" + " 2" + " at "
+                      + str(pygame.time.get_ticks() / 1000.0) + " s")
+
+            #self.goal.x = SCREEN_WIDTH / PPM - self.goal.x
+            #self.goal.y = SCREEN_HEIGHT / PPM - self.goal.y
             self.last_reward = 1
 
         self.last_distance = distance

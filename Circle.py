@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+import random, sys
 
 import res.colors as Color
 from Setup import SCREEN_HEIGHT, PPM
@@ -25,9 +26,12 @@ class Circle(object):
         pygame.draw.line(self.screen, Color.White, worldToPixels(self.body.worldCenter),
                          worldToPixels(self.body.worldCenter + current_forward_normal * self.radius))
 
-class StaticCircle:
+
+class StaticCircle(object):
     def __init__(self, screen=None, world=None, x=0, y=0, radius=1):
         self.screen = screen
+        self.id = random.randint(0, sys.maxint)
+
         self.radius = radius
         self.body = world.CreateStaticBody(
             position=(x, y), userData=self)
