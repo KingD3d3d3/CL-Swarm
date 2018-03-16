@@ -12,6 +12,7 @@ import res.colors as Color
 from AgentHoming import AgentHoming
 from Border import Border
 from Circle import StaticCircle
+from Box import StaticBox
 from MyContactListener import MyContactListener
 from Setup import *
 from Util import *
@@ -54,10 +55,6 @@ if __name__ == '__main__':
     # Border of the map
     border = Border(screen=screen, world=world)
 
-    # Entity Manager
-    if interpolated:
-        entityManager = EntityManager()
-
     # Agent
     numAgents = 1
     goal_threshold = 100
@@ -71,10 +68,16 @@ if __name__ == '__main__':
         a.id = i  # set agent ID
         agents.append(a)
 
-        if interpolated:
-            entity = Entity(entityManager, a)
-
     # Obstacles
+    # box1 = StaticBox(screen=screen, world=world, x=20, y=17, width=2, height=2)
+    # box1.id = 1
+    # box2 = StaticBox(screen=screen, world=world, x=40, y=20, width=2, height=2)
+    # box2.id = 2
+    # box3 = StaticBox(screen=screen, world=world, x=50, y=10, width=2, height=2)
+    # box3.id = 3
+    # box4 = StaticBox(screen=screen, world=world, x=10, y=25, width=2, height=2)
+    # box4.id = 4
+
     circle1 = StaticCircle(screen=screen, world=world, x=20, y=17, radius=2)
     circle1.id = 1
     circle2 = StaticCircle(screen=screen, world=world, x=40, y=20, radius=2)
@@ -83,7 +86,6 @@ if __name__ == '__main__':
     circle3.id = 3
     circle4 = StaticCircle(screen=screen, world=world, x=10, y=25, radius=2)
     circle4.id = 4
-
     # -------------------- Main Game Loop ----------------------
 
     timeCount = 0
@@ -126,24 +128,15 @@ if __name__ == '__main__':
             accumulator += deltaTime
             while accumulator >= PHYSICS_TIME_STEP:
 
-                if interpolated:
-                    entityManager.updateCurrentState()
-
                 # Physic step
                 world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
                 world.ClearForces()
 
                 accumulator -= PHYSICS_TIME_STEP
 
-            # Interpolate entitie's transform between previous and current physics state
-            # Based on how much time is left in the accumulator
-            if interpolated:
-                entityManager.interpolate(accumulator / PHYSICS_TIME_STEP)
-
         elif not render:
             deltaTime = clock.tick() / 1000.0
             fps = clock.get_fps()
-            #print('FPS : ' + str('{:3.2f}').format(fps))
 
             if deltaTime >= TARGET_FPS: # Frame is faster than target (60fps) -> simulation run faster
                 accumulator = 0
@@ -178,12 +171,6 @@ if __name__ == '__main__':
             # Moving Objects
             for i in xrange(numAgents):
                 agents[i].draw()
-
-
-            # # Moving Objects
-            # for i in xrange(numAgents):
-            #     prevPos = entityManager.entities[i].position
-            #     agents[i].drawEntity(prevPos)
 
             # Obstacles
             circle1.draw()

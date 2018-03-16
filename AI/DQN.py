@@ -101,6 +101,10 @@ class Dqn(object):
         self.zeros_x = np.zeros((1, self.inputCnt))
         self.zeros_y = np.zeros((1, self.actionCnt))
 
+        # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
+        dummy = self.model.predict(self.zeros_state)
+        self.model.train(self.zeros_x, self.zeros_y)
+        
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
 
@@ -116,16 +120,16 @@ class Dqn(object):
         sample = (self.last_state, self.last_action, self.last_reward, new_state)
         self.record(sample)
         action = self.select_action(self.last_state)
-        if len(self.memory.samples) > 100:
-            if not isPrinted:
-                print('time to learn')
-                isPrinted = True
-            self.replay()
-        else:
-            #a = self.model.model.get_weights()
-            # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
-            dummy = self.model.predict(self.zeros_state)
-            self.model.train(self.zeros_x, self.zeros_y)
+        # if len(self.memory.samples) > 100:
+        #     if not isPrinted:
+        #         print('time to learn')
+        #         isPrinted = True
+        #     self.replay()
+        # else:
+        #     #a = self.model.model.get_weights()
+        #     # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
+        #     dummy = self.model.predict(self.zeros_state)
+        #     self.model.train(self.zeros_x, self.zeros_y)
 
         self.last_action = action
         self.last_state = new_state

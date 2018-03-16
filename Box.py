@@ -6,7 +6,9 @@ from pygame.locals import *
 import res.colors as Color
 from Setup import SCREEN_HEIGHT, PPM
 from Util import worldToPixels
-
+import random
+import sys
+from Box2D.b2 import (polygonShape)
 
 class Box(object):
     def __init__(self, screen=None, world=None, x=0, y=0, width=1, height=1, angle=0):
@@ -26,3 +28,21 @@ class Box(object):
         forward = self.body.GetWorldVector((0, 1))  # transform.forward of this box
         pygame.draw.line(self.screen, Color.White, worldToPixels(vec2(p)),
                          worldToPixels(vec2(p) + forward))
+
+
+class StaticBox(object):
+    def __init__(self, screen=None, world=None, x=0, y=0, width=1, height=1, angle=0):
+        self.screen = screen
+        self.body = world.CreateStaticBody(
+            position=(x, y),
+            angle=angle,
+            shapes=polygonShape(box=(width, height)),
+            userData=self
+        )
+        self.id = random.randint(0, sys.maxint)
+        self.color = Color.Lime
+
+    def draw(self):
+        vertices = [(self.body.transform * v) * PPM for v in self.body.fixtures[0].shape.vertices]
+        a = self.body.fixtures[0].shape.vertices
+        pygame.draw.polygon(self.screen, self.color, vertices)

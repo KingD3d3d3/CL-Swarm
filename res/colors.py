@@ -16,3 +16,7 @@ NavyBlue = (0, 0, 128)
 Purple = (128, 0, 128)
 Teal = (0, 128, 128)
 Navy = (0, 0, 128)
+
+Orange = (255, 165, 0)
+DarkOrange = (255, 140, 0)
+DeepSkyBlue = (0,191,255)

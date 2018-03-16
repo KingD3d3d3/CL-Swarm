@@ -32,8 +32,11 @@ class Agent(object):
             position=(x, y), userData=self, angle=angle)
         self.fixture = self.body.CreateCircleFixture(
             radius=radius, density=1, friction=0) # friction=0.3
+        self.initial_color = Color.Magenta
         self.color = Color.Magenta
         self.action = Action.TURN_LEFT  # default action is turn LEFT
+
+        self.updateCalls = 0
 
     def getLateralVelocity(self):
         currentRightNormal = self.body.GetWorldVector(vec2(1, 0))
@@ -56,7 +59,8 @@ class Agent(object):
         self.body.ApplyForce(dragForceMagnitude * currentForwardNormal, self.body.worldCenter, True)
 
     def update(self):
-        raise NotImplementedError("Update method not implemented")
+        # raise NotImplementedError("Update method not implemented")
+        self.updateCalls += 1
 
     def updateManualDriveTestAngle(self, angle):
         speed = 12
