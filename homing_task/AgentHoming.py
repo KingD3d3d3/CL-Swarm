@@ -54,6 +54,9 @@ class AgentHoming(Agent):
         self.goal = pixelsToWorld((goal_threshold, goal_threshold))
         self.goal1 = self.goal
         self.goal2 = vec2(SCREEN_WIDTH / PPM - self.goal.x, SCREEN_HEIGHT / PPM - self.goal.y)
+        self.goalReachedCount = 0
+        self.startTime = 0.0
+        self.elapsedTime = 0.00
 
         self.last_reward = 0
         self.last_distance = 0
@@ -224,19 +227,27 @@ class AgentHoming(Agent):
 
         if distance < 2.5:
             if self.goal == self.goal1:
-                self.goal = self.goal2
-                print("Agent " + str(self.id) + " reached goal" + " 1" + " at "
-                      + str(pygame.time.get_ticks() / 1000.0) + " s")
+                self.goal = self.goal2  # Change goal
+                self.goalReachedCount += 1
+                self.elapsedTime = (pygame.time.get_ticks() - self.startTime)
+                self.startTime = pygame.time.get_ticks()
+                print("Agent: {}, reached goal: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
+                      .format(self.id, 1, self.elapsedTime / 1000.0, self.goalReachedCount, pygame.time.get_ticks() / 1000.0))
             elif self.goal == self.goal2:
-                self.goal = self.goal1
-                print("Agent " + str(self.id) + " reached goal" + " 2" + " at "
-                      + str(pygame.time.get_ticks() / 1000.0) + " s")
+                self.goal = self.goal1  # Change goal
+                self.goalReachedCount += 1
+                self.elapsedTime = (pygame.time.get_ticks() - self.startTime)
+                self.startTime = pygame.time.get_ticks()
+                print("Agent: {}, reached goal: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
+                      .format(self.id, 2, self.elapsedTime / 1000.0, self.goalReachedCount, pygame.time.get_ticks() / 1000.0))
 
             #self.goal.x = SCREEN_WIDTH / PPM - self.goal.x
             #self.goal.y = SCREEN_HEIGHT / PPM - self.goal.y
             self.last_reward = 1
 
         self.last_distance = distance
+
+        self.elapsedTime = (pygame.time.get_ticks() - self.startTime) / 1000.0
 
         return
 
