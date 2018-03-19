@@ -2,27 +2,37 @@
 from Box2D.b2 import (vec2)
 import math
 
-# TODO Describe this file
+try:
+    from Setup import *
+except:
+    # Running in command line
+    print('Not in Pycharm -> Import as package')
+    from .Setup import *
 
-from Setup import SCREEN_HEIGHT, PPM
+# TODO Describe this file
 
 
 def worldToPixels(vector):
     return vector.x * PPM, SCREEN_HEIGHT - vector.y * PPM
 
+
 def pixelsToWorld((a, b)):
     return vec2(a / PPM, (SCREEN_HEIGHT - b) / PPM)
+
 
 def normalize(vector):
     length = vector.length
     invLength = 1.0 / length
     return vec2(vector.x * invLength, vector.y * invLength)
 
+
 def degToRad(degree):
     return degree * (math.pi / 180.0)
 
+
 def radToDeg(radian):
     return radian * (180.0 / math.pi)
+
 
 def angle(vec1, vec2):
     '''Computes the angle between a and b, and returns the angle in
@@ -39,6 +49,7 @@ def angle(vec1, vec2):
         vec1.x * vec2.y - vec1.y * vec2.x,
         vec1.x * vec2.x + vec1.y * vec2.y)
     return angle
+
 
 def megaSlowFunction():
     for i in xrange(500000):

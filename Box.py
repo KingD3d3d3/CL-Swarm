@@ -2,13 +2,20 @@ import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import vec2
 from pygame.locals import *
-
-import res.colors as Color
-from Setup import SCREEN_HEIGHT, PPM
-from Util import worldToPixels
 import random
 import sys
 from Box2D.b2 import (polygonShape)
+
+try:
+    from Util import worldToPixels
+    from Setup import *
+    import res.colors as Color
+except:
+    # Running in command line
+    print('Not in Pycharm -> Import as package')
+    from .Util import worldToPixels
+    from .Setup import *
+    from .res import colors as Color
 
 class Box(object):
     def __init__(self, screen=None, world=None, x=0, y=0, width=1, height=1, angle=0):

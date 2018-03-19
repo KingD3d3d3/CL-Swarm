@@ -7,16 +7,31 @@ from keras.layers import Dense
 from keras.models import Sequential
 from keras.optimizers import Adam
 from pygame.locals import *
-
-import res.colors as Color
-from AI.DQN import Dqn
-from Agent import Agent
-from Setup import *
-from Util import worldToPixels, pixelsToWorld
-import Util
-from homing_task.RayCastCallback import RayCastCallback
-import res.print_colors as PrintColor
 import sys
+
+try:
+    # Running in PyCharm
+    import res.colors as Color
+    # from ..res import colors as Color
+    from AI.DQN import Dqn
+    from Agent import Agent
+    from Setup import *
+    from Util import worldToPixels, pixelsToWorld
+    import Util
+    from homing_task.RayCastCallback import RayCastCallback
+    import res.print_colors as PrintColor
+except:
+    # Running in command line
+    print('Not in Pycharm -> Import as package')
+    from ..res import colors as Color
+    from ..AI.DQN import Dqn
+    from ..Agent import Agent
+    from ..Setup import *
+    from ..Util import worldToPixels, pixelsToWorld
+    from .. import Util
+    from .RayCastCallback import RayCastCallback
+    from ..res import print_colors as PrintColor
+
 
 # ----------- Neural Network Config ----------------
 
@@ -51,11 +66,13 @@ class AgentHoming(Agent):
         self.sensor1 = 0  # left raycast
         self.sensor2 = 0  # middle raycast
         self.sensor3 = 0  # right raycast
-        self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
+        #self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
+        self.brain = HomingDqn(inputCnt=4, actionCnt=len(list(Action)))
 
         self.goal = pixelsToWorld((goal_threshold, goal_threshold))
         self.goal1 = self.goal
         self.goal2 = vec2(SCREEN_WIDTH / PPM - self.goal.x, SCREEN_HEIGHT / PPM - self.goal.y)
+        self.goalNum = 1
         self.goalReachedCount = 0
         self.startTime = 0.0
         self.elapsedTime = 0.00
@@ -190,18 +207,25 @@ class AgentHoming(Agent):
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingFront:
                 self.facingFront = True
-                print('facing front')
+                print("Agent: {}, facing goal: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
+                      .format(self.id, self.goalNum, self.elapsedTime / 1000.0, self.goalReachedCount,
+                              pygame.time.get_ticks() / 1000.0))
+
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             if self.facingFront:
                 self.facingFront = False
-                print('facing reverse')
+                print("Agent: {}, reverse facing goal: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
+                      .format(self.id, self.goalNum, self.elapsedTime / 1000.0, self.goalReachedCount,
+                              pygame.time.get_ticks() / 1000.0))
 
         # Select Action using AI
         #last_signal = np.asarray([0., 0., 0., orientation, -orientation])
-        last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation, -orientation])
+        last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
+        #last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation, -orientation])
+
         action_num = self.brain.update(self.last_reward, last_signal)
-        #self.updateDrive(Action(action_num))
-        self.updateManualDrive()
+        self.updateDrive(Action(action_num))
+        #self.updateManualDrive()
         self.updateFriction()
 
         # Reward mechanism
@@ -221,6 +245,7 @@ class AgentHoming(Agent):
         if distance < 2.5:
             if self.goal == self.goal1:
                 self.goal = self.goal2  # Change goal
+                self.goalNum = 2
                 self.goalReachedCount += 1
                 self.elapsedTime = (pygame.time.get_ticks() - self.startTime)
                 self.startTime = pygame.time.get_ticks()
@@ -232,6 +257,7 @@ class AgentHoming(Agent):
 
             elif self.goal == self.goal2:
                 self.goal = self.goal1  # Change goal
+                self.goalNum = 1
                 self.goalReachedCount += 1
                 self.elapsedTime = (pygame.time.get_ticks() - self.startTime)
                 self.startTime = pygame.time.get_ticks()
@@ -242,7 +268,7 @@ class AgentHoming(Agent):
                 sys.stdout.write(PrintColor.RESET)
 
             self.last_reward = 1
-            self.brain.replay()  # experience replay
+            #self.brain.replay()  # experience replay
 
         self.last_distance = distance
         self.elapsedTime = (pygame.time.get_ticks() - self.startTime) / 1000.0

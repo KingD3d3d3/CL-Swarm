@@ -6,9 +6,16 @@ from Box2D.b2 import (vec2)
 from enum import Enum
 from pygame.locals import *
 
-import res.colors as Color
-from Setup import *
-from Util import worldToPixels
+try:
+    # Running in PyCharm
+    import res.colors as Color
+    from Setup import *
+    from Util import worldToPixels
+except:
+    print('Not in Pycharm -> Import as package')
+    from .res import colors as Color
+    from .Setup import *
+    from .Util import worldToPixels
 
 
 # Agent's possible actions

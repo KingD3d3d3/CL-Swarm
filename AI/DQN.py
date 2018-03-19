@@ -1,7 +1,6 @@
 import numpy as np
 import random
 from collections import deque
-from keras.models import load_model
 
 
 # -------------------- NETWORK -------------------------
@@ -120,11 +119,12 @@ class Dqn(object):
         sample = (self.last_state, self.last_action, self.last_reward, new_state)
         self.record(sample)
         action = self.select_action(self.last_state)
-        # if len(self.memory.samples) > 100:
-        #     if not isPrinted:
-        #         print('time to learn')
-        #         isPrinted = True
-        #     self.replay()
+        # Training each update
+        if len(self.memory.samples) > 100:
+            if not isPrinted:
+                print('time to learn')
+                isPrinted = True
+            self.replay()
         # else:
         #     #a = self.model.model.get_weights()
         #     # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
@@ -185,44 +185,6 @@ class Dqn(object):
 
         if self.epsilon > FINAL_EPSILON:
             self.epsilon -= self.epsilon_step
-
-
-    # def replay(self):
-    #     # If not enough sample in memory
-    #     if len(self.memory.samples) < self.batch_size:
-    #         return
-    #
-    #     # batch = self.memory.sample(self.batch_size)
-    #
-    #     batchLen = self.batch_size
-    #
-    #     states = np.array([o[0] for o in batch]).squeeze(axis=1)
-    #     labels = self.model.predict(states, batch_len=batchLen)
-    #
-    #     # next_states = np.array([o[3] for o in batch]).squeeze(axis=1)
-    #     # q_values = self.model.predict(next_states, batch_len=batchLen)
-    #     #
-    #     # x = np.zeros((batchLen, self.inputCnt))
-    #     # y = np.zeros((batchLen, self.actionCnt))
-    #     # for i in xrange(batchLen):
-    #     #     o = batch[i]
-    #     #     s = o[0]
-    #     #     a = o[1]
-    #     #     r = o[2]
-    #     #
-    #     #     target = r + self.gamma * np.amax(q_values[i])
-    #     #     labels[i][a] = target
-    #     #
-    #     #     x[i] = s
-    #     #     y[i] = labels[i]
-    #     #
-    #     # self.model.train(x, y, batch_len=batchLen)
-    #
-    #     if self.epsilon > FINAL_EPSILON:
-    #         self.epsilon -= self.epsilon_step
-    #
-    #         # if self.epsilon > self.epsilon_min:
-    #         #     self.epsilon *= self.epsilon_decay
 
     def preprocess(self, state):
         # Input shape in Keras : (batch_size, input_dim)

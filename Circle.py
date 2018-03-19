@@ -2,9 +2,16 @@ import pygame
 from pygame.locals import *
 import random, sys
 
-import res.colors as Color
-from Setup import SCREEN_HEIGHT, PPM
-from Util import worldToPixels
+try:
+    from Util import worldToPixels
+    from Setup import *
+    import res.colors as Color
+except:
+    # Running in command line
+    print('Not in Pycharm -> Import as package')
+    from .Util import worldToPixels
+    from .Setup import *
+    from .res import colors as Color
 
 
 class Circle(object):

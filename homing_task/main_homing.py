@@ -8,16 +8,28 @@ import pygame
 from Box2D.b2 import (world)
 from pygame.locals import *
 
-import res.colors as Color
-from AgentHoming import AgentHoming
-from Border import Border
-from Circle import StaticCircle
-from Box import StaticBox
-from MyContactListener import MyContactListener
-from Setup import *
-from Util import *
-from experimental.EntityManager import EntityManager
-from experimental.Entity import Entity
+try:
+    # Running in PyCharm
+    from AgentHoming import AgentHoming
+    import res.colors as Color
+    from Border import Border
+    from Circle import StaticCircle
+    from Box import StaticBox
+    from MyContactListener import MyContactListener
+    from Setup import *
+    from Util import *
+    from experimental.EntityManager import EntityManager
+    from experimental.Entity import Entity
+except:
+    # Running in command line
+    print('Not in Pycharm -> Import as package')
+    from ..res import colors as Color
+    from .AgentHoming import AgentHoming
+    from ..Border import Border
+    from ..Circle import StaticCircle
+    from .MyContactListener import MyContactListener
+    from ..Setup import *
+    from ..Util import *
 
 if __name__ == '__main__':
 

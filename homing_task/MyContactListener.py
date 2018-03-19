@@ -1,11 +1,20 @@
 from Box2D.b2 import (world, polygonShape, vec2, contactListener)
-import res.colors as Color
-from Circle import Circle, StaticCircle
-from Agent import Agent
-from AgentHoming import AgentHoming
 import pygame, sys
-from Border import Wall
-from Box import StaticBox
+
+try:
+    # Running in PyCharm
+    import res.colors as Color
+    from Circle import StaticCircle
+    from AgentHoming import AgentHoming
+    from Border import Wall
+except:
+    # Running in command line
+    print('Not in Pycharm -> Import as package')
+    from ..res import colors as Color
+    from ..Circle import StaticCircle
+    from .AgentHoming import AgentHoming
+    from ..Border import Wall
+
 
 # Event when there is a collision
 class MyContactListener(contactListener):
