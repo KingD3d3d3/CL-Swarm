@@ -1,6 +1,10 @@
 import pygame
 from pygame.locals import *
+import math
 
+def slowFunction():
+    for i in xrange(50000):
+        a = math.sqrt(9123456)
 
 if __name__ == '__main__':
 
@@ -27,6 +31,8 @@ if __name__ == '__main__':
         # Pause the game
         if pause:
             continue  # go back to loop entry
+
+        slowFunction()
 
         deltaTime = clock.tick() / 1000.0
         fps = clock.get_fps()
