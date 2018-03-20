@@ -24,14 +24,22 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
 
     myfont = pygame.font.SysFont("monospace", 30)
-    def PrintScreen(text, color=(255, 0, 0, 255)):
+    def PrintScreen(text, color=(255, 0, 0, 255), pos=(0,0)):
         """
         Draw some text at the top status lines
         and advance to the next line.
         """
         screen.blit(myfont.render(
-            text, True, color), (SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+            text, True, color), pos)
 
+    fpsFont = pygame.font.SysFont("monospace", 15)
+    def PrintFPS(text, color=(255, 0, 0, 255)):
+        """
+        Draw some text at the top status lines
+        and advance to the next line.
+        """
+        screen.blit(fpsFont.render(
+            text, True, color), (10, 3))
     # -------------------- Main Game Loop ----------------------
 
     timeCount = 0
@@ -47,10 +55,15 @@ if __name__ == '__main__':
             if event.type == KEYDOWN and event.key == K_p:
                 pause = not pause # Pause the game
 
-        PrintScreen('HELLO WORLD')
+        screen.fill((0, 0, 0, 0))
 
-        deltaTime = clock.tick(FPS) / 1000.0
+        PrintScreen('HELLO WORLD', pos=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+
+        deltaTime = clock.tick() / 1000.0
         fps = clock.get_fps()
+
+        # Show FPS
+        PrintFPS('FPS : ' + str('{:3.2f}').format(fps))
 
         pygame.display.flip()
 
