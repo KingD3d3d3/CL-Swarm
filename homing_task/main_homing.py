@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import random
-
+import argparse
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (world)
@@ -36,7 +36,13 @@ except:
 
 if __name__ == '__main__':
 
-    render = True
+    parser = argparse.ArgumentParser(description='Homing Task')
+    parser.add_argument('--render', help='render the simulation', default='True')
+    parser.add_argument('--show_fps', help='show fps', default='False')
+    args = parser.parse_args()
+    render = args.render == 'True'
+    show_fps = args.show_fps == 'True'
+
     deltaTime = 1.0 / TARGET_FPS
     fps = 1.0 / deltaTime
 
@@ -71,7 +77,7 @@ if __name__ == '__main__':
     border = Border(screen=screen, world=world)
 
     # Agent
-    numAgents = 1
+    numAgents = 10
     goal_threshold = 100
     agents = []
     for i in xrange(numAgents):
@@ -79,8 +85,7 @@ if __name__ == '__main__':
         randY = random.randint(2, SCREEN_HEIGHT / PPM - 2)
         randAngle = degToRad(random.randint(0, 360))
         a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
-                        radius=1.5, goal_threshold=goal_threshold)
-        a.id = i  # set agent ID
+                        radius=1.5, goal_threshold=goal_threshold, id=i)
         agents.append(a)
 
     # Obstacles
@@ -203,6 +208,9 @@ if __name__ == '__main__':
         # Flip the screen
         if render:
             pygame.display.flip()
+
+        if show_fps:
+            print('FPS : ' + str('{:3.2f}').format(fps))
 
         # Time counter
         timeCount += deltaTime

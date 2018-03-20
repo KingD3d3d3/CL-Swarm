@@ -69,8 +69,12 @@ class Action(Enum):
 
 
 class AgentHoming(Agent):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, goal_threshold=100):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, goal_threshold=100, id=-1):
         super(AgentHoming, self).__init__(screen, world, x, y, angle, radius)
+
+        if id != -1:
+            self.id = id  # id is set
+
         self.sensor1 = 0  # left raycast
         self.sensor2 = 0  # middle raycast
         self.sensor3 = 0  # right raycast
