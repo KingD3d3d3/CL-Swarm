@@ -20,7 +20,7 @@ if __name__ == '__main__':
     screen = None
     if render:
         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-        pygame.display.set_caption('Homing Task Testbed')
+        pygame.display.set_caption('Empty test')
     clock = pygame.time.Clock()
 
     myfont = pygame.font.SysFont("monospace", 30)

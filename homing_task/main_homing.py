@@ -114,7 +114,7 @@ if __name__ == '__main__':
                 # The user closed the window or pressed escape
                 running = False
             if event.type == KEYDOWN and event.key == K_p:
-                pause = not pause # Pause the game
+                pause = not pause  # Pause the game
 
         # Pause the game
         if pause:
