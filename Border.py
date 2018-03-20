@@ -10,7 +10,10 @@ try:
     from Setup import *
 except:
     # Running in command line
-    print('Not in Pycharm -> Import as package')
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info('Running from command line -> Import libraries as package')
     from .res import colors as Color
     from .Setup import *
 

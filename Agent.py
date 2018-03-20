@@ -12,7 +12,10 @@ try:
     from Setup import *
     from Util import worldToPixels
 except:
-    print('Not in Pycharm -> Import as package')
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info('Running from command line -> Import libraries as package')
     from .res import colors as Color
     from .Setup import *
     from .Util import worldToPixels
@@ -120,21 +123,3 @@ class Agent(object):
         current_forward_normal = self.body.GetWorldVector((0, 1))
         pygame.draw.line(self.screen, Color.White, worldToPixels(self.body.worldCenter),
                          worldToPixels(self.body.worldCenter + current_forward_normal * self.radius))
-
-    def updateAutoDrive(self, change=False):
-        speed = 12
-
-        if change:
-            self.action = random.choice(list(Action)) # select random action
-
-        if self.action == Action.TURN_LEFT:  # Turn Left
-            self.body.angularVelocity = 5
-            pass
-        if self.action == Action.TURN_RIGHT:  # Turn Right
-            self.body.angularVelocity = -5
-            pass
-        if self.action == Action.NOTHING:  # Don't turn
-            pass
-
-        forward_vec = self.body.GetWorldVector((0, 1))
-        self.body.linearVelocity = forward_vec * speed

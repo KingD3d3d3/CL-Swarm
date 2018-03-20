@@ -12,7 +12,10 @@ try:
     import res.colors as Color
 except:
     # Running in command line
-    print('Not in Pycharm -> Import as package')
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info('Running from command line -> Import libraries as package')
     from .Util import worldToPixels
     from .Setup import *
     from .res import colors as Color
