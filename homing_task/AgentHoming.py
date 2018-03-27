@@ -86,10 +86,12 @@ class AgentHoming(Agent):
         self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
         #self.brain = HomingDqn(inputCnt=4, actionCnt=len(list(Action)))
 
-        self.goal = pixelsToWorld((goal_threshold, goal_threshold))
-        self.goal1 = self.goal
-        self.goal2 = vec2(SCREEN_WIDTH / PPM - self.goal.x, SCREEN_HEIGHT / PPM - self.goal.y)
-        self.goalNum = 1
+        # Goal
+        goal1 = pixelsToWorld((goal_threshold, goal_threshold))
+        goal2 = vec2(SCREEN_WIDTH / PPM - goal1.x, SCREEN_HEIGHT / PPM - goal1.y)
+        self.currentGoalIndex = 0
+        self.goals = [goal1, goal2]
+
         self.goalReachedCount = 0
         self.startTime = 0.0
         self.startTimestep = 0
@@ -118,17 +120,17 @@ class AgentHoming(Agent):
         self.raycastRight_point2 = self.raycastRight_point1 + top_right * self.raycastLength
 
         # Get initial orientation
-        toGoal = Util.normalize(self.goal - self.body.position)
+        toGoal = Util.normalize(self.goals[self.currentGoalIndex] - self.body.position)
         forward = Util.normalize(self.body.GetWorldVector(vec2(0, 1)))
         orientation = Util.angle(forward, toGoal) / 180.0
         orientation = round(orientation, 2)  # only 3 decimals
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
-            homing_debug.xprint(self, "facing goal: {}".format(self.goalNum))
+            homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
 
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-            homing_debug.xprint(self, "reverse facing goal: {}".format(self.goalNum))
+            homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         self.timeToGoal_window = deque(maxlen=100)
 
@@ -230,7 +232,7 @@ class AgentHoming(Agent):
         self.readSensors()
 
         # Get orientation to the goal
-        toGoal = Util.normalize(self.goal - self.body.position)
+        toGoal = Util.normalize(self.goals[self.currentGoalIndex] - self.body.position)
         forward = Util.normalize(self.body.GetWorldVector((0, 1)))
         orientation = Util.angle(forward, toGoal) / 180.0
         orientation = round(orientation, 2)  # only 3 decimals
@@ -238,12 +240,12 @@ class AgentHoming(Agent):
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingGoal:
                 self.facingGoal = True
-                homing_debug.xprint(self, "facing goal: {}".format(self.goalNum))
+                homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
 
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             if self.facingGoal:
                 self.facingGoal = False
-                homing_debug.xprint(self, "reverse facing goal: {}".format(self.goalNum))
+                homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         # Select action using AI
         #last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
@@ -254,7 +256,8 @@ class AgentHoming(Agent):
         self.updateFriction()
 
         # Reward mechanism
-        distance = np.sqrt((self.body.position.x - self.goal.x) ** 2 + (self.body.position.y - self.goal.y) ** 2)
+        distance = np.sqrt((self.body.position.x - self.goals[self.currentGoalIndex].x) ** 2 +
+                           (self.body.position.y - self.goals[self.currentGoalIndex].y) ** 2)
         self.last_reward = -0.5
         if distance < self.last_distance:  # getting closer
             self.last_reward = 0.1
@@ -268,39 +271,19 @@ class AgentHoming(Agent):
 
         # Reached Goal
         if distance < 2.5:
-            if self.goal == self.goal1:
-                self.goalReachedCount += 1
-                self.elapsedTime = homing_global.timer - self.startTime
-                self.elapsedTimestep = homing_global.timestep - self.startTimestep
+            self.goalReachedCount += 1
+            self.elapsedTime = homing_global.timer - self.startTime
+            self.elapsedTimestep = homing_global.timestep - self.startTimestep
 
-                self.timeToGoal_window.append(self.elapsedTimestep)
+            self.timeToGoal_window.append(self.elapsedTimestep)
 
-                sys.stdout.write(PrintColor.RED)
-                homing_debug.xprint(self, "reached goal: {}".format(self.goalNum))
-                sys.stdout.write(PrintColor.RESET)
+            sys.stdout.write(PrintColor.RED)
+            homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
+            sys.stdout.write(PrintColor.RESET)
 
-                self.startTime = homing_global.timer  # reset
-                self.startTimestep = homing_global.timestep
-
-                self.goal = self.goal2  # Change goal
-                self.goalNum = 2
-
-            elif self.goal == self.goal2:
-                self.goalReachedCount += 1
-                self.elapsedTime = homing_global.timer - self.startTime
-                self.elapsedTimestep = homing_global.timestep - self.startTimestep
-
-                self.timeToGoal_window.append(self.elapsedTimestep)
-
-                sys.stdout.write(PrintColor.RED)
-                homing_debug.xprint(self, "reached goal: {}".format(self.goalNum))
-                sys.stdout.write(PrintColor.RESET)
-
-                self.startTime = homing_global.timer  # reset
-                self.startTimestep = homing_global.timestep
-
-                self.goal = self.goal1  # Change goal
-                self.goalNum = 1
+            self.startTime = homing_global.timer  # reset
+            self.startTimestep = homing_global.timestep
+            self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
 
             self.last_reward = 1
             #self.brain.replay()  # experience replay
