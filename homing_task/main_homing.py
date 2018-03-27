@@ -7,6 +7,9 @@ import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (world)
 from pygame.locals import *
+import os
+import errno
+import time
 
 try:
     # Running in PyCharm
@@ -20,28 +23,34 @@ try:
     from Util import *
     from experimental.EntityManager import EntityManager
     from experimental.Entity import Entity
+    import homing_global
 except:
     # Running in command line
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from ..res import colors as Color
     from .AgentHoming import AgentHoming
     from ..Border import Border
     from ..Circle import StaticCircle
+    from ..res import colors as Color
     from .MyContactListener import MyContactListener
     from ..Setup import *
     from ..Util import *
+    import homing_global
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Homing Task')
     parser.add_argument('--render', help='render the simulation', default='True')
-    parser.add_argument('--show_fps', help='show fps', default='False')
+    parser.add_argument('--print_fps', help='print fps', default='False')
+    parser.add_argument('--debug', help='print simulation log', default='True')
+    parser.add_argument('--record', help='record simulation log in file', default='False')
     args = parser.parse_args()
     render = args.render == 'True'
-    show_fps = args.show_fps == 'True'
+    print_fps = args.print_fps == 'True'
+    homing_global.debug = args.debug == 'True'
+    homing_global.record = args.record == 'True'
 
     deltaTime = 1.0 / TARGET_FPS
     fps = 1.0 / deltaTime
@@ -59,7 +68,7 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
 
     myfont = pygame.font.SysFont("monospace", 15)
-    def PrintScreen(text, color=(255, 0, 0, 255)):
+    def PrintFPS(text, color=(255, 0, 0, 255)):
         """
         Draw some text at the top status lines
         and advance to the next line.
@@ -77,7 +86,7 @@ if __name__ == '__main__':
     border = Border(screen=screen, world=world)
 
     # Agent
-    numAgents = 10
+    numAgents = 1
     goal_threshold = 100
     agents = []
     for i in xrange(numAgents):
@@ -108,10 +117,10 @@ if __name__ == '__main__':
     circle4.id = 4
     # -------------------- Main Game Loop ----------------------
 
-    timeCount = 0
-    stepCount = 0
     running = True
     pause = False
+    recording = False
+    f = None
     while running:
         if render:
             # Check the event queue
@@ -121,14 +130,30 @@ if __name__ == '__main__':
                     running = False
                 if event.type == KEYDOWN and event.key == K_p:
                     pause = not pause  # Pause the game
+                if event.type == KEYDOWN and event.key == K_r:
+                    if not homing_global.record:  # Record simulation
+                        print("start recording")
+                        homing_global.record = True
+                        filename = homing_global.fileCreate()
+                        homing_global.fo = open(filename, 'a')
+                    else:                         # Stop recording
+                        print("stop recording")
+                        homing_global.record = False
+                        homing_global.fo.close()
 
         # Pause the game
         if pause:
+            # clock.tick compute how many milliseconds have passed since the previous call.
+            # If we don't call that during pause, clock.tick will compute time spend during pause
+            # thus timer is counting during simulation pause -> we want to avoid that !
             if render:
                 deltaTime = clock.tick(TARGET_FPS) / 1000.0
             elif not render:
                 deltaTime = clock.tick() / 1000.0
-            continue # go back to loop entry
+            continue  # go back to loop entry
+
+        # if recording:
+        #     f.write("hello world {}\n".format(homing_global.timestep))
 
         if render:
             screen.fill((0, 0, 0, 0))
@@ -203,21 +228,33 @@ if __name__ == '__main__':
             border.draw()
 
             # Show FPS
-            PrintScreen('FPS : ' + str('{:3.2f}').format(fps))
+            PrintFPS('FPS : ' + str('{:3.2f}').format(fps))
         # ---------------------------------------------------------
 
         # Flip the screen
         if render:
             pygame.display.flip()
 
-        if show_fps:
+        if print_fps:
             print('FPS : ' + str('{:3.2f}').format(fps))
 
         # Time counter
-        timeCount += deltaTime
+        homing_global.timer += deltaTime
 
         # Step counter
-        stepCount += 1
+        homing_global.timestep += 1
 
     pygame.quit()
     print('Done!')
+
+    if homing_global.record:
+        homing_global.record = False
+        homing_global.fo.close()
+        print("stop recording")
+
+    # Close file
+    #if recording:
+    #    homing_global.fo.close()
+            #= open("hello.txt", "r")
+        #f.close()
+

@@ -51,12 +51,12 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 # -------------------- DQN AGENT -----------------------
 
 # DEFAULT HYPERPARAMETERS
-# BATCH_SIZE = 32
-# MEMORY_CAPACITY = 2000
-# GAMMA = 0.9 # Discount Factor
-# LEARNING_RATE = 0.001
+BATCH_SIZE = 32
+MEMORY_CAPACITY = 2000
+GAMMA = 0.9 # Discount Factor
+LEARNING_RATE = 0.001
 # EPSILON_MAX = 1 # Exploration Rate
-# EPSILON_MIN = 0.01
+# EPSILON_MIN = 0.001
 # EPSILON_DECAY = 0.995
 
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
@@ -66,8 +66,8 @@ EXPLORATION_STEPS = 1000  # Number of steps over which the initial value of epsi
 isPrinted = False
 
 class Dqn(object):
-    def __init__(self, inputCnt, actionCnt, batch_size=32, mem_capacity=2000, gamma=0.9,
-                 lr=0.001, epsilon_max=1, epsilon_min=0.001, epsilon_decay=0.995,
+    def __init__(self, inputCnt, actionCnt, batch_size=BATCH_SIZE, mem_capacity=MEMORY_CAPACITY, gamma=GAMMA,
+                 lr=LEARNING_RATE, epsilon_max=1, epsilon_min=0.001, epsilon_decay=0.995,
                  brain_file=""):
 
         # Hyperparameters
@@ -94,6 +94,7 @@ class Dqn(object):
         self.last_state = self.preprocess(np.zeros(self.inputCnt))
         self.last_action = 0
         self.last_reward = 0
+        self.reward_window = deque(maxlen=1000)
 
         # Dummy variables
         self.zeros_state = np.zeros([1, self.inputCnt])
@@ -103,7 +104,7 @@ class Dqn(object):
         # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
         dummy = self.model.predict(self.zeros_state)
         self.model.train(self.zeros_x, self.zeros_y)
-        
+
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
 
@@ -134,6 +135,7 @@ class Dqn(object):
         self.last_action = action
         self.last_state = new_state
         self.last_reward = reward
+        self.reward_window.append(reward)
         return action
 
     # Epsilon greedy action-selection policy from now
@@ -192,3 +194,10 @@ class Dqn(object):
 
     def save_model(self, brainfile):
         self.model.model.save(brainfile)
+
+    def score(self):
+        """
+            Score is the mean of the reward in the sliding window
+        """
+        score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
+        return score

@@ -7,6 +7,8 @@ try:
     from Circle import StaticCircle
     from AgentHoming import AgentHoming
     from Border import Wall
+    import homing_global
+    import homing_debug
 except:
     # Running in command line
     import logging
@@ -17,6 +19,8 @@ except:
     from ..Circle import StaticCircle
     from .AgentHoming import AgentHoming
     from ..Border import Wall
+    import homing_global
+    import homing_debug
 
 
 # Event when there is a collision
@@ -41,9 +45,8 @@ class MyContactListener(contactListener):
             agent.raycastSideColor = Color.Magenta
             agent.raycastFrontColor = Color.Magenta
 
-            print("Agent: {}, collision {}: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
-                  .format(agent.id, "StaticCircle", obstacle.id, agent.elapsedTime / 1000.0, agent.goalReachedCount,
-                          pygame.time.get_ticks() / 1000.0))
+            homing_debug.xprint(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+
         if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHoming):
             agent = objectB
             obstacle = objectA
@@ -53,24 +56,30 @@ class MyContactListener(contactListener):
             agent.raycastSideColor = Color.Magenta
             agent.raycastFrontColor = Color.Magenta
 
-            print("Agent: {}, collision {}: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
-                  .format(agent.id, "StaticCircle", obstacle.id, agent.elapsedTime / 1000.0, agent.goalReachedCount,
-                          pygame.time.get_ticks() / 1000.0))
+            homing_debug.xprint(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
 
         # Agent to Wall collision
         if isinstance(objectA, AgentHoming) and isinstance(objectB, Wall):
             agent = objectA
             obstacle = objectB
-            print("Agent: {}, collision {}: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
-                  .format(agent.id, "Wall", obstacle.id, agent.elapsedTime / 1000.0, agent.goalReachedCount,
-                          pygame.time.get_ticks() / 1000.0))
+
+            # Change colors
+            agent.color = Color.DeepSkyBlue
+            agent.raycastSideColor = Color.Magenta
+            agent.raycastFrontColor = Color.Magenta
+
+            homing_debug.xprint(agent, "collision {}: {}".format("Wall", obstacle.id))
+
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
             agent = objectB
             obstacle = objectA
-            print("Agent: {}, collision {}: {}, time to goal: {:5.3f}, goal reached count: {:3.0f}, time: {:5.3f}"
-                  .format(agent.id, "Wall", obstacle.id, agent.elapsedTime / 1000.0, agent.goalReachedCount,
-                          pygame.time.get_ticks() / 1000.0))
-        pass
+
+            # Change colors
+            agent.color = Color.DeepSkyBlue
+            agent.raycastSideColor = Color.Magenta
+            agent.raycastFrontColor = Color.Magenta
+
+            homing_debug.xprint(agent, "collision {}: {}".format("Wall", obstacle.id))
 
     def EndContact(self, contact):
         bodyA = contact.fixtureA.body
@@ -94,17 +103,18 @@ class MyContactListener(contactListener):
             agent.raycastFrontColor = agent.initial_raycastFrontColor
             agent.raycastSideColor = agent.initial_raycastSideColor
 
-        # # Agent to Wall collision
-        # if isinstance(objectA, Agent) and isinstance(objectB, Wall):
-        #     print(nameA + " " + str(objectA.id)
-        #           + " end collision " + nameB + " " + str(objectB.id)
-        #           + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
-        # if isinstance(objectA, Wall) and isinstance(objectB, Agent):
-        #     print(nameB + " " + str(objectB.id)
-        #           + " end collision " + nameA + " " + str(objectA.id)
-        #           + " at " + str(pygame.time.get_ticks() / 1000.0) + " s")
+        # Agent to Wall collision
+        if isinstance(objectA, AgentHoming) and isinstance(objectB, Wall):
+            agent = objectA
+            agent.color = agent.initial_color
+            agent.raycastFrontColor = agent.initial_raycastFrontColor
+            agent.raycastSideColor = agent.initial_raycastSideColor
+        if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
+            agent = objectB
+            agent.color = agent.initial_color
+            agent.raycastFrontColor = agent.initial_raycastFrontColor
+            agent.raycastSideColor = agent.initial_raycastSideColor
 
-        pass
 
     def PreSolve(self, contact, oldManifold):
         pass
