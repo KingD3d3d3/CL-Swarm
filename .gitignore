@@ -50,3 +50,6 @@ fabric.properties
 
 # Logs
 homing_task/simulation_logs/
+
+# Bytecode files
+*.pyc
