@@ -8,7 +8,6 @@ debug = True
 record = False
 fo = None
 
-
 def fileCreate():
     # Creating file (and directory if it doesn't exist)
     timestr = time.strftime("%Y_%m_%d_%H%M%S")

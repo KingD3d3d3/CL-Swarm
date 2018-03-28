@@ -12,13 +12,23 @@ except:
 
 
 def xprint(agent=None, message="", record=False):
-
+    """
+        t2G     : time to goal
+        tmstp2G : timestep to goal
+        GR      : goal reached count
+        t       : time passed (since beginning of simulation)
+        tmstp   : timestep passed ( // )
+        Col2G   : collision count between 1 goal to another
+        Col     : total collision count
+    """
     total_msg = ("Agent: {:3.0f}, ".format(agent.id) +
                  "{:>30s}".format(message) +
-                 ", time to goal: {:10.3f}, timestep to goal : {:10.0f}, "
-                 "goal reached count: {:5.0f}, simulation time: {:10.3f}, timestep : {:10.0f}"
+                 ", t2G: {:10.3f}, tmstp2G : {:10.0f}, "
+                 "GR: {:5.0f}, t: {:10.3f}, tmstp: {:10.0f}, "
+                 "Col2G: {:5.0f}, Col: {:5.0f}"
                  .format(agent.elapsedTime, agent.elapsedTimestep,
-                         agent.goalReachedCount, homing_global.timer, homing_global.timestep))
+                         agent.goalReachedCount, homing_global.timer, homing_global.timestep,
+                         agent.elapsedCollisionCount, agent.collisionCount))
 
     if homing_global.record:
         homing_global.fo.write(total_msg + '\n')

@@ -48,7 +48,7 @@ class HomingDqn(Dqn):
         # Sequential() creates the foundation of the layers.
         model = Sequential()
 
-        # # 'Dense' define fully connected layers
+        # # # 'Dense' define fully connected layers
         # model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
         # #model.add(Dense(24, activation='relu'))  # hidden -> hidden
         # model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
@@ -77,7 +77,7 @@ class AgentHoming(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, goal_threshold=100, id=-1):
         super(AgentHoming, self).__init__(screen, world, x, y, angle, radius)
 
-        if id != -1:
+        if id != -1:  # id == -1 if not set
             self.id = id  # id is set
 
         self.sensor1 = 0  # left raycast
@@ -85,6 +85,10 @@ class AgentHoming(Agent):
         self.sensor3 = 0  # right raycast
         self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
         #self.brain = HomingDqn(inputCnt=4, actionCnt=len(list(Action)))
+
+        # Collision
+        self.elapsedCollisionCount = 0
+        self.collisionCount = 0
 
         # Goal
         goal1 = pixelsToWorld((goal_threshold, goal_threshold))
@@ -100,6 +104,8 @@ class AgentHoming(Agent):
 
         self.last_reward = 0
         self.last_distance = 0
+        self.distance = 0  # current distance to the goal
+        self.goalReachedThreshold = 2.5
 
         self.raycastLength = 2.0
 
@@ -119,27 +125,24 @@ class AgentHoming(Agent):
         self.raycastRight_point1 = self.body.worldCenter + top_right * self.radius
         self.raycastRight_point2 = self.raycastRight_point1 + top_right * self.raycastLength
 
-        # Get initial orientation
-        toGoal = Util.normalize(self.goals[self.currentGoalIndex] - self.body.position)
-        forward = Util.normalize(self.body.GetWorldVector(vec2(0, 1)))
-        orientation = Util.angle(forward, toGoal) / 180.0
-        orientation = round(orientation, 2)  # only 3 decimals
+        self.timeToGoal_window = deque(maxlen=100)
+
+        # Get initial orientation to the goal
+        orientation = self.orientationToGoal()
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
             homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
-
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
             homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
-        self.timeToGoal_window = deque(maxlen=100)
 
     def draw(self):
 
         # Circle of collision
-        # position = self.body.transform * self.fixture.shape.pos * PPM
-        # position = (position[0], SCREEN_HEIGHT - position[1])
-        # pygame.draw.circle(self.screen, Color.Blue, [int(x) for x in position], int(self.radius * PPM))
+        position = self.body.transform * self.fixture.shape.pos * PPM
+        position = (position[0], SCREEN_HEIGHT - position[1])
+        pygame.draw.circle(self.screen, Color.Blue, [int(x) for x in position], int(self.radius * PPM))
 
         # Triangle Shape
         vertex = [(-1, -1), (1, -1), (0, 1.5)]
@@ -225,6 +228,43 @@ class AgentHoming(Agent):
         forward_vec = self.body.GetWorldVector((0, 1))
         self.body.linearVelocity = forward_vec * speed
 
+    def orientationToGoal(self):
+        """
+            Get agent orientation to the goal
+            Angle in degrees, normalized between [-1,1] and counter-clockwise
+            0 degree -> 0, perfectly aligned in direction to the goal
+            90 deg -> 0.5, goal is on the right
+            180 deg -> 1 , reverse facing
+            -90 deg -> -0.5, goal is on the left
+        """
+        toGoal = Util.normalize(self.goals[self.currentGoalIndex] - self.body.position)
+        forward = Util.normalize(self.body.GetWorldVector((0, 1)))
+        orientation = Util.angle(forward, toGoal) / 180.0
+        orientation = round(orientation, 2)  # only 3 decimals
+        return orientation
+
+    def distanceToGoal(self):
+        distance = np.sqrt((self.body.position.x - self.goals[self.currentGoalIndex].x) ** 2 +
+                           (self.body.position.y - self.goals[self.currentGoalIndex].y) ** 2)
+        return distance
+
+    def computeGoalReached(self):
+        self.goalReachedCount += 1
+        self.elapsedTime = homing_global.timer - self.startTime
+        self.elapsedTimestep = homing_global.timestep - self.startTimestep
+
+        self.timeToGoal_window.append(self.elapsedTimestep)
+
+        sys.stdout.write(PrintColor.RED)
+        homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
+        sys.stdout.write(PrintColor.RESET)
+
+        # Reset, Update
+        self.startTime = homing_global.timer
+        self.startTimestep = homing_global.timestep
+        self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
+        self.elapsedCollisionCount = 0
+
     def update(self):
         super(AgentHoming, self).update()
 
@@ -232,11 +272,7 @@ class AgentHoming(Agent):
         self.readSensors()
 
         # Get orientation to the goal
-        toGoal = Util.normalize(self.goals[self.currentGoalIndex] - self.body.position)
-        forward = Util.normalize(self.body.GetWorldVector((0, 1)))
-        orientation = Util.angle(forward, toGoal) / 180.0
-        orientation = round(orientation, 2)  # only 3 decimals
-
+        orientation = self.orientationToGoal()
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingGoal:
                 self.facingGoal = True
@@ -250,18 +286,18 @@ class AgentHoming(Agent):
         # Select action using AI
         #last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
         last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation, -orientation])
-        action_num = self.brain.update(self.last_reward, last_signal)
-        self.updateDrive(Action(action_num))
-        #self.updateManualDrive()
+        #action_num = self.brain.update(self.last_reward, last_signal)
+        #self.updateDrive(Action(action_num))
+        self.updateManualDrive()
         self.updateFriction()
 
-        # Reward mechanism
-        distance = np.sqrt((self.body.position.x - self.goals[self.currentGoalIndex].x) ** 2 +
-                           (self.body.position.y - self.goals[self.currentGoalIndex].y) ** 2)
-        self.last_reward = -0.5
-        if distance < self.last_distance:  # getting closer
-            self.last_reward = 0.1
+        # Calculate agent's distance to the goal
+        self.distance = self.distanceToGoal()
 
+        # Reward mechanism
+        self.last_reward = -0.5  # Living penalty
+        if self.distance < self.last_distance:  # getting closer
+            self.last_reward = 0.1
         if self.sensor1 < 0.1:
             self.last_reward = -1
         if self.sensor2 < 0.1:
@@ -270,29 +306,17 @@ class AgentHoming(Agent):
             self.last_reward = -1
 
         # Reached Goal
-        if distance < 2.5:
-            self.goalReachedCount += 1
-            self.elapsedTime = homing_global.timer - self.startTime
-            self.elapsedTimestep = homing_global.timestep - self.startTimestep
-
-            self.timeToGoal_window.append(self.elapsedTimestep)
-
-            sys.stdout.write(PrintColor.RED)
-            homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
-            sys.stdout.write(PrintColor.RESET)
-
-            self.startTime = homing_global.timer  # reset
-            self.startTimestep = homing_global.timestep
-            self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
-
+        if self.distance < self.goalReachedThreshold:
+            self.computeGoalReached()
             self.last_reward = 1
             #self.brain.replay()  # experience replay
 
-        self.last_distance = distance
+        self.last_distance = self.distance
         self.elapsedTime = homing_global.timer - self.startTime
         self.elapsedTimestep = homing_global.timestep - self.startTimestep
 
         return
+
 
     def score(self):
         """
