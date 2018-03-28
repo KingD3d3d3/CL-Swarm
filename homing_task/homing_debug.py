@@ -28,7 +28,7 @@ def xprint(agent=None, message="", record=False):
                  "Col2G: {:5.0f}, Col: {:5.0f}"
                  .format(agent.elapsedTime, agent.elapsedTimestep,
                          agent.goalReachedCount, homing_global.timer, homing_global.timestep,
-                         agent.elapsedCollisionCount, agent.collisionCount))
+                         agent.t2GCollisionCount, agent.totalCollisionCount))
 
     if homing_global.record:
         homing_global.fo.write(total_msg + '\n')
