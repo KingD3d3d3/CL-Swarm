@@ -87,7 +87,7 @@ if __name__ == '__main__':
     border = Border(screen=screen, world=world)
 
     # Agent
-    numAgents = 2
+    numAgents = 1
     goal_threshold = 100
     agents = []
     for i in xrange(numAgents):
@@ -160,9 +160,9 @@ if __name__ == '__main__':
             screen.fill((0, 0, 0, 0))
 
         # Update the agents
-        for i in range(1): #xrange(numAgents):
+        for i in xrange(numAgents):
             agents[i].update()
-        agents[1].remainStatic()
+        #agents[1].remainStatic()
 
         # ---------------------- FPS Physics Step Part -----------
         if render:

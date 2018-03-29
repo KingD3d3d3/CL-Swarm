@@ -20,6 +20,8 @@ def xprint(agent=None, message="", record=False):
         tmstp   : timestep passed ( // )
         Col2G   : collision count between 1 goal to another
         Col     : total collision count
+        AgentCol2G   : agent collision count between 1 goal to another
+        AgentCol     : total agent collision count
     """
     total_msg = ("Agent: {:3.0f}, ".format(agent.id) +
                  "{:>30s}".format(message) +

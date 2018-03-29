@@ -53,3 +53,6 @@ homing_task/simulation_logs/
 
 # Bytecode files
 *.pyc
+
+# Excel files
+*.xlsx

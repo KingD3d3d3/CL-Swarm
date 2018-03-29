@@ -48,15 +48,15 @@ class HomingDqn(Dqn):
         # Sequential() creates the foundation of the layers.
         model = Sequential()
 
-        # # # 'Dense' define fully connected layers
-        # model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
-        # #model.add(Dense(24, activation='relu'))  # hidden -> hidden
-        # model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
-
-        # 'Dense' define fully connected layers
-        model.add(Dense(4, activation='relu', input_dim=self.inputCnt))  # input -> hidden
-        model.add(Dense(4, activation='relu'))  # hidden -> hidden
+        # # 'Dense' define fully connected layers
+        model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
+        #model.add(Dense(24, activation='relu'))  # hidden -> hidden
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
+
+        # # 'Dense' define fully connected layers
+        # model.add(Dense(4, activation='relu', input_dim=self.inputCnt))  # input -> hidden
+        # model.add(Dense(4, activation='relu'))  # hidden -> hidden
+        # model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
         # Compile model
         model.compile(loss='mse', optimizer=Adam(lr=self.lr))  # optimizer for stochastic gradient descent
@@ -72,6 +72,23 @@ class Action(Enum):
     TURN_RIGHT = 1
     NOTHING = 2
 
+# Rewards constant
+class Reward:
+    LIVING_PENALTY = -0.5
+    GETTING_CLOSER = 0.1
+    GOAL_REACHED = 1
+
+    @classmethod
+    def sensorReward(cls, x):
+        """
+            Custom cubic regression made with https://mycurvefit.com/
+            Check sensor-reward-function-HomingTask.xls file in /res/ directory
+        """
+        if x == 2.0:
+            return cls.LIVING_PENALTY
+        else:
+            y = -1 + 0.5909357 * x - 0.2114035 * np.power(x, 2) + 0.02046784 * np.power(x, 3)
+            return y
 
 class AgentHoming(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, goal_threshold=100, id=-1, numAgents=0):
@@ -297,29 +314,38 @@ class AgentHoming(Agent):
         # Select action using AI
         #last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
         last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation, -orientation])
-        #action_num = self.brain.update(self.last_reward, last_signal)
-        #self.updateDrive(Action(action_num))
-        self.updateManualDrive()
+        action_num = self.brain.update(self.last_reward, last_signal)
+        self.updateDrive(Action(action_num))
+        #self.updateManualDrive()
         self.updateFriction()
 
         # Calculate agent's distance to the goal
         self.distance = self.distanceToGoal()
 
         # Reward mechanism
-        self.last_reward = -0.5  # Living penalty
+        self.last_reward = Reward.LIVING_PENALTY
+
         if self.distance < self.last_distance:  # getting closer
-            self.last_reward = 0.1
-        if self.sensor1 < 0.1:
-            self.last_reward = -1
-        if self.sensor2 < 0.1:
-            self.last_reward = -1
-        if self.sensor3 < 0.1:
-            self.last_reward = -1
+            self.last_reward = Reward.GETTING_CLOSER
+
+        # Raycast hit
+        if self.sensor1 < self.raycastLength or self.sensor2 < self.raycastLength or self.sensor3 < self.raycastLength:
+            r1 = Reward.sensorReward(self.sensor1)
+            r2 = Reward.sensorReward(self.sensor2)
+            r3 = Reward.sensorReward(self.sensor3)
+            self.last_reward = np.amin(np.array([r1, r2, r3]))
+
+        # if self.sensor1 < 0.1:
+        #     self.last_reward = -1
+        # if self.sensor2 < 0.1:
+        #     self.last_reward = -1
+        # if self.sensor3 < 0.1:
+        #     self.last_reward = -1
 
         # Reached Goal
         if self.distance < self.goalReachedThreshold:
             self.computeGoalReached()
-            self.last_reward = 1
+            self.last_reward = Reward.GOAL_REACHED
             #self.brain.replay()  # experience replay
 
         self.last_distance = self.distance
