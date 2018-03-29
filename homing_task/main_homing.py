@@ -87,7 +87,7 @@ if __name__ == '__main__':
     border = Border(screen=screen, world=world)
 
     # Agent
-    numAgents = 1
+    numAgents = 2
     goal_threshold = 100
     agents = []
     for i in xrange(numAgents):

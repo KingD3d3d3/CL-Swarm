@@ -89,8 +89,8 @@ class AgentHoming(Agent):
         # Collision
         self.t2GCollisionCount = 0
         self.totalCollisionCount = 0
-        self.elapsedTimestepCollision = 0.00  # timestep passed between collision
-        self.startTimestepCollision = 0.00  # start timestep since a collision
+        self.elapsedTimestepCollision = 0.00  # timestep passed between collision (for same objects collision)
+        self.startTimestepCollision = 0.00  # start timestep since a collision (for same objects collision)
         self.lastObjectCollide = None
 
         # Goal
@@ -328,3 +328,18 @@ class AgentHoming(Agent):
         score = self.brain.score()
         return score
 
+    def collisionColor(self):
+        """
+            Change agent color during collision
+        """
+        self.color = Color.DeepSkyBlue
+        self.raycastSideColor = Color.Magenta
+        self.raycastFrontColor = Color.Magenta
+
+    def endCollisionColor(self):
+        """
+            Reset agent color when end of collision
+        """
+        self.color = self.initial_color
+        self.raycastFrontColor = self.initial_raycastFrontColor
+        self.raycastSideColor = self.initial_raycastSideColor
