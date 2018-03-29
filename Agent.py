@@ -41,7 +41,7 @@ class Agent(object):
         self.body = self.world.CreateDynamicBody(
             position=(x, y), userData=self, angle=angle)
         self.fixture = self.body.CreateCircleFixture(
-            radius=radius, density=1, friction=0) # friction=0.3
+            radius=radius, density=1, friction=0, restitution=0)  # friction=0.3
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
         self.action = Action.TURN_LEFT  # default action is turn LEFT
@@ -67,6 +67,13 @@ class Agent(object):
         currentForwardSpeed = currentForwardNormal.Normalize()
         dragForceMagnitude = -50 * currentForwardSpeed #-10
         self.body.ApplyForce(dragForceMagnitude * currentForwardNormal, self.body.worldCenter, True)
+
+    def remainStatic(self):
+        self.updateFriction()
+        speed = 0
+
+        forward_vec = self.body.GetWorldVector((0, 1))
+        self.body.linearVelocity = forward_vec * speed
 
     def update(self):
         # raise NotImplementedError("Update method not implemented")

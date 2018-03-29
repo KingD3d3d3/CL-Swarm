@@ -95,7 +95,7 @@ if __name__ == '__main__':
         randY = random.randint(2, SCREEN_HEIGHT / PPM - 2)
         randAngle = degToRad(random.randint(0, 360))
         a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
-                        radius=1.5, goal_threshold=goal_threshold, id=i)
+                        radius=1.5, goal_threshold=goal_threshold, id=i, numAgents=numAgents)
         agents.append(a)
 
     # Obstacles
@@ -160,13 +160,18 @@ if __name__ == '__main__':
             screen.fill((0, 0, 0, 0))
 
         # Update the agents
-        for i in xrange(numAgents):
+        for i in range(1): #xrange(numAgents):
             agents[i].update()
+        agents[1].remainStatic()
 
         # ---------------------- FPS Physics Step Part -----------
         if render:
             deltaTime = clock.tick(TARGET_FPS) / 1000.0
             fps = clock.get_fps()
+
+            # # Basic Physic step
+            # world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+            # world.ClearForces()
 
             # "Fixed your timestep" technique
             # Physics is stepped by a fixed amount i.e. 1/60s.

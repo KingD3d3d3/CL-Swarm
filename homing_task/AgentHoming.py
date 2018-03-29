@@ -74,7 +74,7 @@ class Action(Enum):
 
 
 class AgentHoming(Agent):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, goal_threshold=100, id=-1):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, goal_threshold=100, id=-1, numAgents=0):
         super(AgentHoming, self).__init__(screen, world, x, y, angle, radius)
 
         if id != -1:  # id == -1 if not set
@@ -89,9 +89,13 @@ class AgentHoming(Agent):
         # Collision
         self.t2GCollisionCount = 0
         self.totalCollisionCount = 0
-        self.elapsedTimestepCollision = 0.00  # timestep passed between collision (for same objects collision)
-        self.startTimestepCollision = 0.00  # start timestep since a collision (for same objects collision)
-        self.lastObjectCollide = None
+        self.elapsedTimestepObstacleCollision = 0.00  # timestep passed between collision (for same objects collision)
+        self.startTimestepObstacleCollision = 0.00  # start timestep since a collision (for same objects collision)
+        self.lastObstacleCollide = None
+        # Collision Agent
+        self.lastAgentCollide = None
+        self.elapsedTimestepAgentCollision = np.zeros(numAgents) # timestep passed between collision (for same objects collision)
+        self.startTimestepAgentCollision = np.zeros(numAgents)   # start timestep since a collision (for same objects collision)
 
         # Goal
         goal1 = pixelsToWorld((goal_threshold, goal_threshold))
@@ -319,7 +323,6 @@ class AgentHoming(Agent):
         self.elapsedTimestep = homing_global.timestep - self.startTimestep
 
         return
-
 
     def score(self):
         """
