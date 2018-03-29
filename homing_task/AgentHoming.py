@@ -86,16 +86,19 @@ class AgentHoming(Agent):
         self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
         #self.brain = HomingDqn(inputCnt=4, actionCnt=len(list(Action)))
 
-        # Collision
+        # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0
-        self.totalCollisionCount = 0
+        self.collisionCount = 0
         self.elapsedTimestepObstacleCollision = 0.00  # timestep passed between collision (for same objects collision)
         self.startTimestepObstacleCollision = 0.00  # start timestep since a collision (for same objects collision)
         self.lastObstacleCollide = None
+
         # Collision Agent
         self.lastAgentCollide = None
         self.elapsedTimestepAgentCollision = np.zeros(numAgents) # timestep passed between collision (for same objects collision)
         self.startTimestepAgentCollision = np.zeros(numAgents)   # start timestep since a collision (for same objects collision)
+        self.t2GAgentCollisionCount = 0
+        self.agentCollisionCount = 0
 
         # Goal
         goal1 = pixelsToWorld((goal_threshold, goal_threshold))
@@ -271,6 +274,7 @@ class AgentHoming(Agent):
         self.startTimestep = homing_global.timestep
         self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
         self.t2GCollisionCount = 0
+        self.t2GAgentCollisionCount = 0
 
     def update(self):
         super(AgentHoming, self).update()

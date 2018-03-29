@@ -79,7 +79,7 @@ class MyContactListener(contactListener):
                 return  # Same agent to obstacle collision in a small time
 
             agent.t2GCollisionCount += 1
-            agent.totalCollisionCount += 1
+            agent.collisionCount += 1
 
             agent.collisionColor()
 
@@ -94,7 +94,7 @@ class MyContactListener(contactListener):
                 return  # Same agent to obstacle collision in a small time
 
             agent.t2GCollisionCount += 1
-            agent.totalCollisionCount += 1
+            agent.collisionCount += 1
 
             agent.collisionColor()
 
@@ -158,7 +158,7 @@ class MyContactListener(contactListener):
             obstacle = objectB
             agent.lastObstacleCollide = obstacle
             agent.t2GCollisionCount += 1
-            agent.totalCollisionCount += 1
+            agent.collisionCount += 1
 
             agent.collisionColor()
 
@@ -170,7 +170,7 @@ class MyContactListener(contactListener):
             obstacle = objectA
             agent.lastObstacleCollide = obstacle
             agent.t2GCollisionCount += 1
-            agent.totalCollisionCount += 1
+            agent.collisionCount += 1
 
             agent.collisionColor()
 
@@ -214,13 +214,13 @@ class MyContactListener(contactListener):
                 return  # Same agent to obstacle collision in a small time
 
             # Agent A
-            agentA.t2GCollisionCount += 1
-            agentA.totalCollisionCount += 1
+            agentA.t2GAgentCollisionCount += 1
+            agentA.agentCollisionCount += 1
             agentA.collisionColor()
 
             # Agent B
-            agentB.t2GCollisionCount += 1
-            agentB.totalCollisionCount += 1
+            agentB.t2GAgentCollisionCount += 1
+            agentB.agentCollisionCount += 1
             agentB.collisionColor()
 
             homing_debug.xprint(agentA, "collision {}: {}".format("Agent", agentB.id))
