@@ -28,11 +28,14 @@ def xprint(agent=None, message="", record=False):
                  ", t2G: {:10.3f}, tmstp2G : {:10.0f}, "
                  "GR: {:5.0f}, t: {:10.3f}, tmstp: {:10.0f}, "
                  "Col2G: {:5.0f}, Col: {:5.0f}, "
-                 "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}"
+                 "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}, "
+                 "Score: {:3.2f}"
                  .format(agent.elapsedTime, agent.elapsedTimestep,
                          agent.goalReachedCount, homing_global.timer, homing_global.timestep,
                          agent.t2GCollisionCount, agent.collisionCount,
-                         agent.t2GAgentCollisionCount, agent.agentCollisionCount)
+                         agent.t2GAgentCollisionCount, agent.agentCollisionCount,
+                         agent.score()
+                         )
                  )
 
     if homing_global.record:

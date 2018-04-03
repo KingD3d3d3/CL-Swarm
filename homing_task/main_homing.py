@@ -212,11 +212,12 @@ if __name__ == '__main__':
         # ---------------------- Rendering Part -------------------
         if render:
             # Draw goals
-            pygame.draw.circle(screen, Color.Red, (goal_threshold, goal_threshold), 20)
             goalFont = pygame.font.SysFont("monospace", 25)
+
+            pygame.draw.circle(screen, Color.Red, (goal_threshold, goal_threshold), 20)
             screen.blit(goalFont.render('1', True, Color.White), (goal_threshold - 8, goal_threshold - 12))
-            pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal_threshold, SCREEN_HEIGHT - goal_threshold),
-                               20)
+
+            pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal_threshold, SCREEN_HEIGHT - goal_threshold), 20)
             screen.blit(goalFont.render('2', True, Color.White),
                         (SCREEN_WIDTH - goal_threshold - 8, SCREEN_HEIGHT - goal_threshold - 12))
 

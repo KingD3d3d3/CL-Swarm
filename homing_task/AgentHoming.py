@@ -15,6 +15,7 @@ try:
     import res.colors as Color
     # from ..res import colors as Color
     from AI.DQN import Dqn
+    from AI.FullDQN import FullDqn
     from Agent import Agent
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
@@ -31,6 +32,7 @@ except:
     logger.info('Running from command line -> Import libraries as package')
     from ..res import colors as Color
     from ..AI.DQN import Dqn
+    from ..AI.FullDQN import FullDqn
     from ..Agent import Agent
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld
@@ -51,6 +53,28 @@ class HomingDqn(Dqn):
         # # 'Dense' define fully connected layers
         model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
         #model.add(Dense(24, activation='relu'))  # hidden -> hidden
+        model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
+
+        # # 'Dense' define fully connected layers
+        # model.add(Dense(4, activation='relu', input_dim=self.inputCnt))  # input -> hidden
+        # model.add(Dense(4, activation='relu'))  # hidden -> hidden
+        # model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
+
+        # Compile model
+        model.compile(loss='mse', optimizer=Adam(lr=self.lr))  # optimizer for stochastic gradient descent
+
+        return model
+
+# ----------- Neural Network Config ----------------
+
+class HomingDqn2(FullDqn):
+    def build_model(self):
+
+        # Sequential() creates the foundation of the layers.
+        model = Sequential()
+        # # 'Dense' define fully connected layers
+        model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
+        # model.add(Dense(24, activation='relu'))  # hidden -> hidden
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
         # # 'Dense' define fully connected layers
@@ -100,7 +124,8 @@ class AgentHoming(Agent):
         self.sensor1 = 0  # left raycast
         self.sensor2 = 0  # middle raycast
         self.sensor3 = 0  # right raycast
-        self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
+        self.brain = HomingDqn2(inputCnt=5, actionCnt=len(list(Action)))
+        #self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
         #self.brain = HomingDqn(inputCnt=4, actionCnt=len(list(Action)))
 
         # Collision with obstacles (walls, obstacles in path)
@@ -328,19 +353,11 @@ class AgentHoming(Agent):
         if self.distance < self.last_distance:  # getting closer
             self.last_reward = Reward.GETTING_CLOSER
 
-        # Raycast hit
         if self.sensor1 < self.raycastLength or self.sensor2 < self.raycastLength or self.sensor3 < self.raycastLength:
             r1 = Reward.sensorReward(self.sensor1)
             r2 = Reward.sensorReward(self.sensor2)
             r3 = Reward.sensorReward(self.sensor3)
             self.last_reward = np.amin(np.array([r1, r2, r3]))
-
-        # if self.sensor1 < 0.1:
-        #     self.last_reward = -1
-        # if self.sensor2 < 0.1:
-        #     self.last_reward = -1
-        # if self.sensor3 < 0.1:
-        #     self.last_reward = -1
 
         # Reached Goal
         if self.distance < self.goalReachedThreshold:

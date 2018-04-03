@@ -1,5 +1,6 @@
 # Basic colors
 Black = (0, 0, 0)
+LightBlack = (100, 100, 100)
 White = (255, 255, 255)
 Red = (255, 0, 0)
 Lime = (0, 255, 0)

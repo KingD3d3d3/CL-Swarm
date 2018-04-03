@@ -1,7 +1,12 @@
 import numpy as np
 import random
 from collections import deque
+import sys
 
+try:
+    import res.print_colors as PrintColor
+except:
+    from ..res import print_colors as PrintColor
 
 # -------------------- MODEL -------------------------
 
@@ -13,18 +18,30 @@ class Model(object):
         # Q-Network
         self.q_network = None
 
+        # Target Network
+        self.target_network = None
+
     def train(self, x, y, nb_epochs=1, verbose=0, batch_len=1):
         """
             Fit the model
         """
-        #self.model.fit(x, y, epochs=nb_epochs, verbose=verbose, batch_size=batch_len)
-        self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose) # keras 1.2.2
+        self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
 
-    def predict(self, state, batch_len=1):
+    def predict(self, state, batch_len=1, target=False):
         """
             Predict q-values given an input state
         """
-        return self.q_network.predict(state, batch_size=batch_len)
+        if target:
+            return self.q_network.predict(state, batch_size=batch_len)
+        else:
+            return self.target_network.predict(state, batch_size=batch_len)
+
+    def updateTargetNetwork(self):
+
+        sys.stdout.write(PrintColor.BLUE)
+        print("update target network")
+        sys.stdout.write(PrintColor.RESET)
+        self.target_network.set_weights(self.q_network.get_weights())
 
 
 # -------------------- MEMORY --------------------------
@@ -54,8 +71,9 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 # DEFAULT HYPERPARAMETERS
 BATCH_SIZE = 32
 MEMORY_CAPACITY = 2000
-GAMMA = 0.9 # Discount Factor
+GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001
+TAU = 500  # update target network frequency
 
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
@@ -63,15 +81,16 @@ EXPLORATION_STEPS = 10000  #1000  # Number of steps over which the initial value
 
 isPrinted = False
 
-class Dqn(object):
+class FullDqn(object):
     def __init__(self, inputCnt, actionCnt, batch_size=BATCH_SIZE, mem_capacity=MEMORY_CAPACITY, gamma=GAMMA,
-                 lr=LEARNING_RATE, brain_file=""):
+                 lr=LEARNING_RATE, tau=TAU, brain_file=""):
 
         # Hyperparameters
         self.batch_size = batch_size
         self.mem_capacity = mem_capacity
         self.gamma = gamma
         self.lr = lr
+        self.tau = tau
 
         self.epsilon = INITIAL_EPSILON
         self.epsilon_step = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
@@ -86,10 +105,11 @@ class Dqn(object):
         self.memory = Memory(mem_capacity)
 
         # Save file of the model
-        self.brain_file = brain_file
+        self.model_file = brain_file
 
-        # Build Q-network
+        # Build Q-network and Target-network
         self.model.q_network = self.build_model()
+        self.model.target_network = self.build_model()
 
         self.last_state = self.preprocess(np.zeros(self.inputCnt))
         self.last_action = 0
@@ -103,6 +123,7 @@ class Dqn(object):
 
         # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
         dummy = self.model.predict(self.zeros_state)
+        dummy2 = self.model.predict(self.zeros_state, target=True)
         self.model.train(self.zeros_x, self.zeros_y)
 
         # Count the number of iterations
@@ -137,6 +158,10 @@ class Dqn(object):
 
         self.steps += 1
 
+        # Update target network
+        if self.steps % self.tau == 0:
+            self.model.updateTargetNetwork()
+
         return action
 
     # Epsilon greedy action-selection policy from now
@@ -166,7 +191,7 @@ class Dqn(object):
         labels = self.model.predict(batch_state, batch_len=self.batch_size)
 
         batch_next_state = np.array(batch_next_state).squeeze(axis=1)
-        q_values = self.model.predict(batch_next_state, batch_len=self.batch_size)
+        q_values_t = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
 
         batch_action = np.array(batch_action)
         batch_reward = np.array(batch_reward)
@@ -178,7 +203,7 @@ class Dqn(object):
             a = batch_action[i]
             r = batch_reward[i]
 
-            target = r + self.gamma * np.amax(q_values[i])
+            target = r + self.gamma * np.amax(q_values_t[i])
             labels[i][a] = target
 
             x[i] = s
