@@ -40,6 +40,9 @@ except:
     from ..Util import *
     import homing_global
 
+
+numAgents = 5
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Homing Task')
@@ -87,7 +90,6 @@ if __name__ == '__main__':
     border = Border(screen=screen, world=world)
 
     # Agent
-    numAgents = 1
     goal_threshold = 100
     agents = []
     for i in xrange(numAgents):
@@ -121,7 +123,6 @@ if __name__ == '__main__':
     running = True
     pause = False
     recording = False
-    f = None
     while running:
         if render:
             # Check the event queue
@@ -152,9 +153,6 @@ if __name__ == '__main__':
             elif not render:
                 deltaTime = clock.tick() / 1000.0
             continue  # go back to loop entry
-
-        # if recording:
-        #     f.write("hello world {}\n".format(homing_global.timestep))
 
         if render:
             screen.fill((0, 0, 0, 0))
@@ -258,10 +256,4 @@ if __name__ == '__main__':
         homing_global.record = False
         homing_global.fo.close()
         print("stop recording")
-
-    # Close file
-    #if recording:
-    #    homing_global.fo.close()
-            #= open("hello.txt", "r")
-        #f.close()
 

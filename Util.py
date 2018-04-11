@@ -57,3 +57,10 @@ def angle(vec1, vec2):
 def megaSlowFunction():
     for i in xrange(500000):
         a = math.sqrt(9123456)
+
+def minMaxNormalizationScale(x, minX, maxX):
+    """
+        Normalize input x to range [-1,1]
+        Using MinMax normalization and scaling
+    """
+    return 2 * (x - minX) / (maxX - minX) - 1

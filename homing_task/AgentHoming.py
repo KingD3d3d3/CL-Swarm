@@ -124,6 +124,7 @@ class AgentHoming(Agent):
         self.sensor1 = 0  # left raycast
         self.sensor2 = 0  # middle raycast
         self.sensor3 = 0  # right raycast
+        self.raycastLength = 2.0
         self.brain = HomingDqn2(inputCnt=5, actionCnt=len(list(Action)))
         #self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
         #self.brain = HomingDqn(inputCnt=4, actionCnt=len(list(Action)))
@@ -158,8 +159,6 @@ class AgentHoming(Agent):
         self.last_distance = 0
         self.distance = 0  # current distance to the goal
         self.goalReachedThreshold = 2.5
-
-        self.raycastLength = 2.0
 
         top_left = self.body.GetWorldVector(vec2(-0.70, 0.70))
         self.raycastLeft_point1 = self.body.worldCenter + top_left * self.radius
@@ -218,19 +217,19 @@ class AgentHoming(Agent):
         # Raycasts
         top_left = self.body.GetWorldVector(vec2(-0.70, 0.70))
         self.raycastLeft_point1 = self.body.worldCenter + top_left * self.radius
-        self.raycastLeft_point2 = self.raycastLeft_point1 + top_left * 2
+        self.raycastLeft_point2 = self.raycastLeft_point1 + top_left * self.raycastLength
         pygame.draw.line(self.screen, self.raycastSideColor, worldToPixels(self.raycastLeft_point1),
                          worldToPixels(self.raycastLeft_point2))  # draw the raycast
 
         forward_vec = self.body.GetWorldVector(vec2(0, 1))
         self.raycastFront_point1 = self.body.worldCenter + forward_vec * self.radius
-        self.raycastFront_point2 = self.raycastFront_point1 + forward_vec * 2
+        self.raycastFront_point2 = self.raycastFront_point1 + forward_vec * self.raycastLength
         pygame.draw.line(self.screen, self.raycastFrontColor, worldToPixels(self.raycastFront_point1),
                          worldToPixels(self.raycastFront_point2))  # draw the raycast
 
         top_right = self.body.GetWorldVector(vec2(0.70, 0.70))  # sqr(2) / 2
         self.raycastRight_point1 = self.body.worldCenter + top_right * self.radius
-        self.raycastRight_point2 = self.raycastRight_point1 + top_right * 2
+        self.raycastRight_point2 = self.raycastRight_point1 + top_right * self.raycastLength
         pygame.draw.line(self.screen, self.raycastSideColor, worldToPixels(self.raycastRight_point1),
                          worldToPixels(self.raycastRight_point2))  # draw the raycast
 
@@ -265,14 +264,17 @@ class AgentHoming(Agent):
         else:
             self.sensor3 = self.raycastLength
 
+    def normalizeSensorsValue(self, val):
+        return Util.minMaxNormalizationScale(val, minX=0.0, maxX=self.raycastLength)
+
     def updateDrive(self, action):
-        speed = 12
+        speed = 12  # m/s
 
         if action == Action.TURN_LEFT:  # Turn Left
-            self.body.angularVelocity = 10  # 5
+            self.body.angularVelocity = 10.5  # 5
             pass
         if action == Action.TURN_RIGHT:  # Turn Right
-            self.body.angularVelocity = -10  # -5
+            self.body.angularVelocity = -10.5  # -5
             pass
         if action == Action.NOTHING:  # Don't turn
             pass
@@ -336,13 +338,20 @@ class AgentHoming(Agent):
                 self.facingGoal = False
                 homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
+        # Normalize sensor's value
+        normSensor1 = self.normalizeSensorsValue(self.sensor1)
+        normSensor2 = self.normalizeSensorsValue(self.sensor2)
+        normSensor3 = self.normalizeSensorsValue(self.sensor3)
+
         # Select action using AI
         #last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
-        last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation, -orientation])
+        last_signal = np.asarray([normSensor1, normSensor2, normSensor3, orientation, -orientation])
         action_num = self.brain.update(self.last_reward, last_signal)
+        self.updateFriction()
+        #print(Action(action_num))
         self.updateDrive(Action(action_num))
         #self.updateManualDrive()
-        self.updateFriction()
+        #self.updateManualDriveTestAngle(10.5)  # 10
 
         # Calculate agent's distance to the goal
         self.distance = self.distanceToGoal()

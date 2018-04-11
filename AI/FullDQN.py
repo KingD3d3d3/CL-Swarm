@@ -73,7 +73,8 @@ BATCH_SIZE = 32
 MEMORY_CAPACITY = 2000
 GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001
-TAU = 500  # update target network frequency
+TAU = 0.01  # 0.001 # update target network rate
+UPDATE_TARGET_TIMESTEP = 1 / TAU
 
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
@@ -83,14 +84,13 @@ isPrinted = False
 
 class FullDqn(object):
     def __init__(self, inputCnt, actionCnt, batch_size=BATCH_SIZE, mem_capacity=MEMORY_CAPACITY, gamma=GAMMA,
-                 lr=LEARNING_RATE, tau=TAU, brain_file=""):
+                 lr=LEARNING_RATE, brain_file=""):
 
         # Hyperparameters
         self.batch_size = batch_size
         self.mem_capacity = mem_capacity
         self.gamma = gamma
         self.lr = lr
-        self.tau = tau
 
         self.epsilon = INITIAL_EPSILON
         self.epsilon_step = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
@@ -159,7 +159,7 @@ class FullDqn(object):
         self.steps += 1
 
         # Update target network
-        if self.steps % self.tau == 0:
+        if self.steps % UPDATE_TARGET_TIMESTEP == 0:
             self.model.updateTargetNetwork()
 
         return action
