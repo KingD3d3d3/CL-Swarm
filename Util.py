@@ -58,9 +58,23 @@ def megaSlowFunction():
     for i in xrange(500000):
         a = math.sqrt(9123456)
 
+
+def minMaxNormalization(x, minX, maxX):
+    """
+        Normalize input x to range [0,1]
+        Using MinMax normalization
+    """
+    if minX == maxX:
+        return 0.5
+    else:
+        return (x - minX) / (maxX - minX)
+
 def minMaxNormalizationScale(x, minX, maxX):
     """
         Normalize input x to range [-1,1]
         Using MinMax normalization and scaling
     """
-    return 2 * (x - minX) / (maxX - minX) - 1
+    if minX == maxX:
+        return 0
+    else:
+        return 2 * (x - minX) / (maxX - minX) - 1

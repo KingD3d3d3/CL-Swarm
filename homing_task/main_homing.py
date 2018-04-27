@@ -28,6 +28,7 @@ try:
 except:
     # Running in command line
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
@@ -40,8 +41,7 @@ except:
     from ..Util import *
     import homing_global
 
-
-numAgents = 5
+numAgents = 1
 
 if __name__ == '__main__':
 
@@ -50,12 +50,13 @@ if __name__ == '__main__':
     parser.add_argument('--print_fps', help='print fps', default='False')
     parser.add_argument('--debug', help='print simulation log', default='True')
     parser.add_argument('--record', help='record simulation log in file', default='False')
+    parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='True')
     args = parser.parse_args()
     render = args.render == 'True'
     print_fps = args.print_fps == 'True'
     homing_global.debug = args.debug == 'True'
     homing_global.record = args.record == 'True'
-
+    fixed_ur_timestep = args.fixed_ur_timestep == 'True'
     deltaTime = 1.0 / TARGET_FPS
     fps = 1.0 / deltaTime
 
@@ -72,6 +73,8 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
 
     myfont = pygame.font.SysFont("monospace", 15)
+
+
     def PrintFPS(text, color=(255, 0, 0, 255)):
         """
         Draw some text at the top status lines
@@ -96,8 +99,11 @@ if __name__ == '__main__':
         randX = random.randint(2, SCREEN_WIDTH / PPM - 2)
         randY = random.randint(2, SCREEN_HEIGHT / PPM - 2)
         randAngle = degToRad(random.randint(0, 360))
+        # a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
+        #                 radius=1.5, goal_threshold=goal_threshold, id=i, numAgents=numAgents)
         a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
-                        radius=1.5, goal_threshold=goal_threshold, id=i, numAgents=numAgents)
+                                 radius=1.5, goal_threshold=goal_threshold, id=i, numAgents=numAgents)
+
         agents.append(a)
 
     # Obstacles
@@ -138,7 +144,8 @@ if __name__ == '__main__':
                         homing_global.record = True
                         filename = homing_global.fileCreate()
                         homing_global.fo = open(filename, 'a')
-                    else:                         # Stop recording
+                        homing_global.writer = csv.writer(homing_global.fo)
+                    else:  # Stop recording
                         print("stop recording")
                         homing_global.record = False
                         homing_global.fo.close()
@@ -160,35 +167,35 @@ if __name__ == '__main__':
         # Update the agents
         for i in xrange(numAgents):
             agents[i].update()
-        #agents[1].remainStatic()
+        # agents[1].remainStatic()
 
         # ---------------------- FPS Physics Step Part -----------
         if render:
             deltaTime = clock.tick(TARGET_FPS) / 1000.0
             fps = clock.get_fps()
 
-            # # Basic Physic step
-            # world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
-            # world.ClearForces()
+            if fixed_ur_timestep:
+                # "Fixed your timestep" technique
+                # Physics is stepped by a fixed amount i.e. 1/60s.
+                # Faster machine i.e. render at 120fps -> step the physics one every 2 frames
+                # Slower machine i.e. render at 30fps -> run the physics twice
+                accumulator += deltaTime
+                while accumulator >= PHYSICS_TIME_STEP:
+                    # Physic step
+                    world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+                    world.ClearForces()
 
-            # "Fixed your timestep" technique
-            # Physics is stepped by a fixed amount i.e. 1/60s.
-            # Faster machine i.e. render at 120fps -> step the physics one every 2 frames
-            # Slower machine i.e. render at 30fps -> run the physics twice
-            accumulator += deltaTime
-            while accumulator >= PHYSICS_TIME_STEP:
-
-                # Physic step
+                    accumulator -= PHYSICS_TIME_STEP
+            else:
+                # Basic Physic step
                 world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
                 world.ClearForces()
-
-                accumulator -= PHYSICS_TIME_STEP
 
         elif not render:
             deltaTime = clock.tick() / 1000.0
             fps = clock.get_fps()
 
-            if deltaTime >= TARGET_FPS: # Frame is faster than target (60fps) -> simulation run faster
+            if deltaTime >= TARGET_FPS:  # Frame is faster than target (60fps) -> simulation run faster
                 accumulator = 0
 
                 # Physic step
@@ -198,7 +205,6 @@ if __name__ == '__main__':
                 accumulator += deltaTime
 
                 while accumulator >= PHYSICS_TIME_STEP:
-
                     # Physic step
                     world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
                     world.ClearForces()
@@ -256,4 +262,3 @@ if __name__ == '__main__':
         homing_global.record = False
         homing_global.fo.close()
         print("stop recording")
-

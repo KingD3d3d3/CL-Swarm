@@ -23,11 +23,11 @@ except:
     import Util
 
 
-# Agent's possible actions
-class Action(Enum):
-    TURN_LEFT = 1
-    TURN_RIGHT = 2
-    NOTHING = 3
+# # Agent's possible actions
+# class Action(Enum):
+#     TURN_LEFT = 1
+#     TURN_RIGHT = 2
+#     NOTHING = 3
 
 
 moveTicker = 0
@@ -48,7 +48,7 @@ class Agent(object):
             radius=radius, density=1, friction=0, restitution=0)  # friction=0.3
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
-        self.action = Action.TURN_LEFT  # default action is turn LEFT
+        #self.action = Action.TURN_LEFT  # default action is turn LEFT
 
         self.updateCalls = 0
 
@@ -67,10 +67,10 @@ class Agent(object):
                                       True)  # kill angular velocity #0.1 #0.3
 
         # Stop the forever roll
-        # currentForwardNormal = self.getForwardVelocity()
-        # currentForwardSpeed = currentForwardNormal.Normalize()
-        # dragForceMagnitude = -50 * currentForwardSpeed #-10
-        # self.body.ApplyForce(dragForceMagnitude * currentForwardNormal, self.body.worldCenter, True)
+        currentForwardNormal = self.getForwardVelocity()
+        currentForwardSpeed = currentForwardNormal.Normalize()
+        dragForceMagnitude = -50 * currentForwardSpeed #-10
+        self.body.ApplyForce(dragForceMagnitude * currentForwardNormal, self.body.worldCenter, True)
 
     def remainStatic(self):
         self.updateFriction()

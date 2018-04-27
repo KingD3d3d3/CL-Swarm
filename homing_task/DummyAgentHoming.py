@@ -42,9 +42,32 @@ except:
     import homing_debug
     import homing_global
 
+
 # ----------- Neural Network Config ----------------
 
-class HomingDqn_withStop(FullDqn):
+class HomingDqn(Dqn):
+    def build_model(self):
+        # Sequential() creates the foundation of the layers.
+        model = Sequential()
+
+        # # 'Dense' define fully connected layers
+        model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
+        #model.add(Dense(24, activation='relu'))  # hidden -> hidden
+        model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
+
+        # # 'Dense' define fully connected layers
+        # model.add(Dense(4, activation='relu', input_dim=self.inputCnt))  # input -> hidden
+        # model.add(Dense(4, activation='relu'))  # hidden -> hidden
+        # model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
+
+        # Compile model
+        model.compile(loss='mse', optimizer=Adam(lr=self.lr))  # optimizer for stochastic gradient descent
+
+        return model
+
+# ----------- Neural Network Config ----------------
+
+class HomingDqn2(FullDqn):
     def build_model(self):
 
         # Sequential() creates the foundation of the layers.
@@ -71,10 +94,7 @@ class HomingDqn_withStop(FullDqn):
 class Action(Enum):
     TURN_LEFT = 0
     TURN_RIGHT = 1
-    KEEP_ORIENTATION = 2
-    STOP = 3
-    STOP_TURN_LEFT = 4
-    STOP_TURN_RIGHT = 5
+    NOTHING = 2
 
 # Rewards constant
 class Reward:
@@ -105,7 +125,9 @@ class AgentHoming(Agent):
         self.sensor2 = 0  # middle raycast
         self.sensor3 = 0  # right raycast
         self.raycastLength = 2.0
-        self.brain = HomingDqn_withStop(inputCnt=5, actionCnt=len(list(Action)))
+        self.brain = HomingDqn2(inputCnt=5, actionCnt=len(list(Action)))
+        #self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
+        #self.brain = HomingDqn(inputCnt=4, actionCnt=len(list(Action)))
 
         # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0
@@ -248,20 +270,14 @@ class AgentHoming(Agent):
     def updateDrive(self, action):
         speed = 12  # m/s
 
-        if action == Action.TURN_LEFT:              # Turn Left
+        if action == Action.TURN_LEFT:  # Turn Left
             self.body.angularVelocity = 10.5  # 5
-        elif action == Action.TURN_RIGHT:           # Turn Right
-            self.body.angularVelocity = -10.5  # -5
-        elif action == Action.KEEP_ORIENTATION:     # Don't turn
             pass
-        elif action == Action.STOP:                 # Stop moving
-            speed = 0
-        elif action == Action.STOP_TURN_LEFT:       # Stop and turn left
-            speed = 0
-            self.body.angularVelocity = 10.5
-        elif action == Action.STOP_TURN_RIGHT:      # Stop and turn right
-            speed = 0
-            self.body.angularVelocity = -10.5
+        if action == Action.TURN_RIGHT:  # Turn Right
+            self.body.angularVelocity = -10.5  # -5
+            pass
+        if action == Action.NOTHING:  # Don't turn
+            pass
 
         forward_vec = self.body.GetWorldVector((0, 1))
         self.body.linearVelocity = forward_vec * speed
