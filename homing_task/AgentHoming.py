@@ -44,7 +44,7 @@ except:
 
 # ----------- Neural Network Config ----------------
 
-class HomingDqn_withStop(FullDqn):
+class HomingDqn(FullDqn):
     def build_model(self):
 
         # Sequential() creates the foundation of the layers.
@@ -105,7 +105,7 @@ class AgentHoming(Agent):
         self.sensor2 = 0  # middle raycast
         self.sensor3 = 0  # right raycast
         self.raycastLength = 2.0
-        self.brain = HomingDqn_withStop(inputCnt=5, actionCnt=len(list(Action)))
+        self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
 
         # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0
