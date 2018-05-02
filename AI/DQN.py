@@ -29,7 +29,7 @@ class Model(object):
 
 # -------------------- MEMORY --------------------------
 
-class Memory(object):  # sample stored as (s, a, r, s_, done)
+class Memory(object):  # pop stored as (s, a, r, s_, done)
 
     def __init__(self, capacity):
         self.capacity = capacity
@@ -149,12 +149,12 @@ class Dqn(object):
 
     def record(self, sample):
         """
-            Add sample to memory
+            Add pop to memory
         """
         self.memory.push(sample)
 
     def replay(self):
-        # If not enough sample in memory
+        # If not enough pop in memory
         if len(self.memory.samples) < self.batch_size:
             return
 

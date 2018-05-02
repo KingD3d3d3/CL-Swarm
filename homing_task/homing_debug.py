@@ -22,7 +22,7 @@ header = ("Agent",
           "Collisions",
           "Agent collisions to goal",
           "Agent collisions",
-          "Learning score"
+          "LS"
           )
 
 
@@ -37,25 +37,25 @@ def xprint(agent=None, event_message=""):
         Col             : total collision count
         AgentCol2G      : agent collision count between 1 goal to another
         AgentCol        : total agent collision count
-        Learning score  : learning score of the agent
+        LS              : learning score of the agent (average of rewards in sliding window)
     """
     global header_write
 
     msg = ("Agent: {:3.0f}, ".format(agent.id) +
-           "{:>30s}".format(event_message) +
+           "{:>28s}".format(event_message) +
            ", tmstp: {:10.0f}, "
            "GR: {:5.0f}, "
            "tmstp2G : {:10.0f}, "
            "Col2G: {:5.0f}, Col: {:5.0f}, "
            "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}, "
-           "Learning Score: {:3.2f}"
+           "LS: {:3.2f}"
            .format(
                homing_global.timestep,
                agent.goalReachedCount,
                agent.elapsedTimestep,
                agent.t2GCollisionCount, agent.collisionCount,
                agent.t2GAgentCollisionCount, agent.agentCollisionCount,
-               agent.score()
+               agent.learning_score()
            )
            )
 
@@ -68,7 +68,7 @@ def xprint(agent=None, event_message=""):
                agent.collisionCount,
                agent.t2GAgentCollisionCount,
                agent.agentCollisionCount,
-               agent.score()
+               agent.learning_score()
                )
 
     # Record data

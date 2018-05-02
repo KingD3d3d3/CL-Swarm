@@ -23,13 +23,6 @@ except:
     import Util
 
 
-# # Agent's possible actions
-# class Action(Enum):
-#     TURN_LEFT = 1
-#     TURN_RIGHT = 2
-#     NOTHING = 3
-
-
 moveTicker = 0
 prev_angle = 999
 go_print_Turn = False
@@ -48,7 +41,6 @@ class Agent(object):
             radius=radius, density=1, friction=0, restitution=0)  # friction=0.3
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
-        #self.action = Action.TURN_LEFT  # default action is turn LEFT
 
         self.updateCalls = 0
 

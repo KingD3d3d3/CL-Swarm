@@ -364,12 +364,12 @@ class AgentHoming(Agent):
 
         return
 
-    def score(self):
+    def learning_score(self):
         """
             Score is the mean of the reward in the sliding window
         """
-        score = self.brain.score()
-        return score
+        learning_score = self.brain.learning_score()
+        return learning_score
 
     def collisionColor(self):
         """

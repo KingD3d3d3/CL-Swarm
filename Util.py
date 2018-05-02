@@ -12,8 +12,6 @@ except:
     logger.info('Running from command line -> Import libraries as package')
     from .Setup import *
 
-# TODO Describe this file
-
 
 def worldToPixels(vector):
     return vector.x * PPM, SCREEN_HEIGHT - vector.y * PPM

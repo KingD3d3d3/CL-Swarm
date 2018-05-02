@@ -43,6 +43,12 @@ class Model(object):
         sys.stdout.write(PrintColor.RESET)
         self.target_network.set_weights(self.q_network.get_weights())
 
+    def get_lower_layers_weights(self):
+        """
+            Get lower layers weights of Q-Network and Target-Network
+        """
+        return self.q_network.layers[0].get_weights(), self.target_network.layers[0].get_weights()
+
 
 # -------------------- MEMORY --------------------------
 
@@ -54,16 +60,25 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 
     def push(self, sample):
         """
-            Append a new event to the memory
+            Append a new sample to the memory
         """
-        self.samples.append(sample)
+        self.samples.append(sample)  # add only one event
 
-    def sample(self, n):
+    def pop(self, n):
         """
             Get n samples randomly
         """
         n = min(n, len(self.samples))
         return random.sample(self.samples, n)
+
+    def receive(self, samples):
+        """
+            Samples : a list of samples
+            Receive samples and append them to the memory
+        """
+        for sp in samples:
+            self.push(sp)
+        #self.samples.extend(sample)
 
 
 # -------------------- DQN AGENT -----------------------
@@ -141,9 +156,10 @@ class FullDqn(object):
 
         new_state = signal
         new_state = self.preprocess(new_state)
-        sample = (self.last_state, self.last_action, self.last_reward, new_state)
-        self.record(sample)
+        experience = (self.last_state, self.last_action, self.last_reward, new_state)
+        self.record(experience)
         action = self.select_action(self.last_state)
+
         # Training each update
         if len(self.memory.samples) > 100:
             if not isPrinted:
@@ -179,11 +195,11 @@ class FullDqn(object):
         self.memory.push(sample)
 
     def replay(self):
-        # If not enough sample in memory
+        # If not enough samples in memory
         if len(self.memory.samples) < self.batch_size:
             return
 
-        batch = self.memory.sample(self.batch_size)
+        batch = self.memory.pop(self.batch_size)
         batch = zip(*batch)
         batch_state, batch_action, batch_reward, batch_next_state = batch
 
@@ -221,9 +237,9 @@ class FullDqn(object):
     def save_model(self, brainfile):
         self.model.q_network.save(brainfile)
 
-    def score(self):
+    def learning_score(self):
         """
             Score is the mean of the reward in the sliding window
         """
-        score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
-        return score
+        learning_score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
+        return learning_score
