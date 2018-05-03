@@ -1,5 +1,4 @@
 from Box2D import b2RayCastCallback, b2Vec2
-from Border import Wall
 
 class RayCastCallback(b2RayCastCallback):
     """

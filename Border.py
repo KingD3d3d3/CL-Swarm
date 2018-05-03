@@ -1,11 +1,21 @@
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (polygonShape)
-
-import res.colors as Color
-from Setup import SCREEN_WIDTH, SCREEN_HEIGHT, PPM
 import random
 import sys
+
+try:
+    # Running in PyCharm
+    import res.colors as Color
+    from Setup import *
+except:
+    # Running in command line
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info('Running from command line -> Import libraries as package')
+    from .res import colors as Color
+    from .Setup import *
 
 
 class Wall(object):

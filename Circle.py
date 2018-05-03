@@ -2,9 +2,19 @@ import pygame
 from pygame.locals import *
 import random, sys
 
-import res.colors as Color
-from Setup import SCREEN_HEIGHT, PPM
-from Util import worldToPixels
+try:
+    from Util import worldToPixels
+    from Setup import *
+    import res.colors as Color
+except:
+    # Running in command line
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    logger.info('Running from command line -> Import libraries as package')
+    from .Util import worldToPixels
+    from .Setup import *
+    from .res import colors as Color
 
 
 class Circle(object):
@@ -43,3 +53,11 @@ class StaticCircle(object):
         position = self.body.transform * self.fixture.shape.pos * PPM
         position = (position[0], SCREEN_HEIGHT - position[1])
         pygame.draw.circle(self.screen, self.color, [int(x) for x in position], int(self.radius * PPM))
+
+        # Id of the obstacle
+        font = pygame.font.SysFont("monospace", 22)
+        idText = font.render(str(self.id), True, Color.LightBlack)
+        offset = [idText.get_rect().width / 2.0, idText.get_rect().height / 2.0]  # to adjust center
+        idPos = (self.body.transform * (0, 0)) * PPM
+        idPos = (idPos[0] - offset[0], SCREEN_HEIGHT - idPos[1] - offset[1])
+        self.screen.blit(idText, idPos)
