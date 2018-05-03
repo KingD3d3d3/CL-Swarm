@@ -1,12 +1,7 @@
 import numpy as np
 import random
 from collections import deque
-import sys
 
-try:
-    import res.print_colors as PrintColor
-except:
-    from ..res import print_colors as PrintColor
 
 # -------------------- MODEL -------------------------
 
@@ -18,41 +13,23 @@ class Model(object):
         # Q-Network
         self.q_network = None
 
-        # Target Network
-        self.target_network = None
-
     def train(self, x, y, nb_epochs=1, verbose=0, batch_len=1):
         """
             Fit the model
         """
-        self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
+        #self.model.fit(x, y, epochs=nb_epochs, verbose=verbose, batch_size=batch_len)
+        self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose) # keras 1.2.2
 
-    def predict(self, state, batch_len=1, target=False):
+    def predict(self, state, batch_len=1):
         """
             Predict q-values given an input state
         """
-        if target:
-            return self.q_network.predict(state, batch_size=batch_len)
-        else:
-            return self.target_network.predict(state, batch_size=batch_len)
-
-    def updateTargetNetwork(self):
-
-        sys.stdout.write(PrintColor.BLUE)
-        print("update target network")
-        sys.stdout.write(PrintColor.RESET)
-        self.target_network.set_weights(self.q_network.get_weights())
-
-    def get_lower_layers_weights(self):
-        """
-            Get lower layers weights of Q-Network and Target-Network
-        """
-        return self.q_network.layers[0].get_weights(), self.target_network.layers[0].get_weights()
+        return self.q_network.predict(state, batch_size=batch_len)
 
 
 # -------------------- MEMORY --------------------------
 
-class Memory(object):  # sample stored as (s, a, r, s_, done)
+class Memory(object):  # pop stored as (s, a, r, s_, done)
 
     def __init__(self, capacity):
         self.capacity = capacity
@@ -60,25 +37,16 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 
     def push(self, sample):
         """
-            Append a new sample to the memory
+            Append a new event to the memory
         """
-        self.samples.append(sample)  # add only one event
+        self.samples.append(sample)
 
-    def pop(self, n):
+    def sample(self, n):
         """
             Get n samples randomly
         """
         n = min(n, len(self.samples))
         return random.sample(self.samples, n)
-
-    def receive(self, samples):
-        """
-            Samples : a list of samples
-            Receive samples and append them to the memory
-        """
-        for sp in samples:
-            self.push(sp)
-        #self.samples.extend(sample)
 
 
 # -------------------- DQN AGENT -----------------------
@@ -86,18 +54,16 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 # DEFAULT HYPERPARAMETERS
 BATCH_SIZE = 32
 MEMORY_CAPACITY = 2000
-GAMMA = 0.9  # Discount Factor
+GAMMA = 0.9 # Discount Factor
 LEARNING_RATE = 0.001
-TAU = 0.01  # 0.001 # update target network rate
-UPDATE_TARGET_TIMESTEP = 1 / TAU
 
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
 EXPLORATION_STEPS = 10000  #1000  # Number of steps over which the initial value of epsilon is linearly annealed to its final value
 
-isPrinted = False
+printTimeToLearn = False
 
-class FullDqn(object):
+class SimpleDQN(object):
     def __init__(self, inputCnt, actionCnt, batch_size=BATCH_SIZE, mem_capacity=MEMORY_CAPACITY, gamma=GAMMA,
                  lr=LEARNING_RATE, brain_file=""):
 
@@ -120,11 +86,10 @@ class FullDqn(object):
         self.memory = Memory(mem_capacity)
 
         # Save file of the model
-        self.model_file = brain_file
+        self.brain_file = brain_file
 
-        # Build Q-network and Target-network
+        # Build Q-network
         self.model.q_network = self.build_model()
-        self.model.target_network = self.build_model()
 
         self.last_state = self.preprocess(np.zeros(self.inputCnt))
         self.last_action = 0
@@ -138,7 +103,6 @@ class FullDqn(object):
 
         # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
         dummy = self.model.predict(self.zeros_state)
-        dummy2 = self.model.predict(self.zeros_state, target=True)
         self.model.train(self.zeros_x, self.zeros_y)
 
         # Count the number of iterations
@@ -152,14 +116,13 @@ class FullDqn(object):
             Core function of the agent's brain
             Return the action to be performed
         """
-        global isPrinted
+        global printTimeToLearn
 
         new_state = signal
         new_state = self.preprocess(new_state)
-        experience = (self.last_state, self.last_action, self.last_reward, new_state)
-        self.record(experience)
+        sample = (self.last_state, self.last_action, self.last_reward, new_state)
+        self.record(sample)
         action = self.select_action(self.last_state)
-
         # Training each update
         if len(self.memory.samples) > 100:
             if not isPrinted:
@@ -174,10 +137,6 @@ class FullDqn(object):
 
         self.steps += 1
 
-        # Update target network
-        if self.steps % UPDATE_TARGET_TIMESTEP == 0:
-            self.model.updateTargetNetwork()
-
         return action
 
     # Epsilon greedy action-selection policy from now
@@ -190,16 +149,16 @@ class FullDqn(object):
 
     def record(self, sample):
         """
-            Add sample to memory
+            Add pop to memory
         """
         self.memory.push(sample)
 
     def replay(self):
-        # If not enough samples in memory
+        # If not enough pop in memory
         if len(self.memory.samples) < self.batch_size:
             return
 
-        batch = self.memory.pop(self.batch_size)
+        batch = self.memory.sample(self.batch_size)
         batch = zip(*batch)
         batch_state, batch_action, batch_reward, batch_next_state = batch
 
@@ -207,7 +166,7 @@ class FullDqn(object):
         labels = self.model.predict(batch_state, batch_len=self.batch_size)
 
         batch_next_state = np.array(batch_next_state).squeeze(axis=1)
-        q_values_t = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
+        q_values = self.model.predict(batch_next_state, batch_len=self.batch_size)
 
         batch_action = np.array(batch_action)
         batch_reward = np.array(batch_reward)
@@ -219,7 +178,7 @@ class FullDqn(object):
             a = batch_action[i]
             r = batch_reward[i]
 
-            target = r + self.gamma * np.amax(q_values_t[i])
+            target = r + self.gamma * np.amax(q_values[i])
             labels[i][a] = target
 
             x[i] = s
@@ -237,9 +196,9 @@ class FullDqn(object):
     def save_model(self, brainfile):
         self.model.q_network.save(brainfile)
 
-    def learning_score(self):
+    def score(self):
         """
             Score is the mean of the reward in the sliding window
         """
-        learning_score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
-        return learning_score
+        score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
+        return score

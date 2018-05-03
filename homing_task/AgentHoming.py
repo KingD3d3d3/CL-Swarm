@@ -14,8 +14,7 @@ try:
     # Running in PyCharm
     import res.colors as Color
     # from ..res import colors as Color
-    from AI.DQN import Dqn
-    from AI.FullDQN import FullDqn
+    from AI.DQN import DQN
     from Agent import Agent
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
@@ -31,8 +30,7 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     from ..res import colors as Color
-    from ..AI.DQN import Dqn
-    from ..AI.FullDQN import FullDqn
+    from ..AI.DQN import DQN
     from ..Agent import Agent
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld
@@ -42,9 +40,11 @@ except:
     import homing_debug
     import homing_global
 
-# ----------- Neural Network Config ----------------
 
-class HomingDqn(FullDqn):
+# ----------- Agent's brain Neural Network Config ----------------
+
+class DQNHoming(DQN):
+
     def build_model(self):
 
         # Sequential() creates the foundation of the layers.
@@ -76,7 +76,7 @@ class Action(Enum):
     STOP_TURN_LEFT = 4
     STOP_TURN_RIGHT = 5
 
-# Rewards constant
+# Rewards Mechanism
 class Reward:
     LIVING_PENALTY = -0.5
     GETTING_CLOSER = 0.1
@@ -95,17 +95,18 @@ class Reward:
             return y
 
 class AgentHoming(Agent):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, goal_threshold=100, id=-1, numAgents=0):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, id=-1, numAgents=0):
+        # numAgents : the total number of agents in the simulation -> create a vector of collision's time for each agent
         super(AgentHoming, self).__init__(screen, world, x, y, angle, radius)
 
-        if id != -1:  # id == -1 if not set
-            self.id = id  # id is set
+        # Agent's ID
+        self.id = id
 
         self.sensor1 = 0  # left raycast
-        self.sensor2 = 0  # middle raycast
+        self.sensor2 = 0  # front raycast
         self.sensor3 = 0  # right raycast
         self.raycastLength = 2.0
-        self.brain = HomingDqn(inputCnt=5, actionCnt=len(list(Action)))
+        self.brain = DQNHoming(inputCnt=5, actionCnt=len(list(Action)), id=self.id)
 
         # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0
@@ -114,46 +115,50 @@ class AgentHoming(Agent):
         self.startTimestepObstacleCollision = 0.00  # start timestep since a collision (for same objects collision)
         self.lastObstacleCollide = None
 
-        # Collision Agent
-        self.lastAgentCollide = None
+        # Collision with Agents
         self.elapsedTimestepAgentCollision = np.zeros(numAgents) # timestep passed between collision (for same objects collision)
         self.startTimestepAgentCollision = np.zeros(numAgents)   # start timestep since a collision (for same objects collision)
         self.t2GAgentCollisionCount = 0
         self.agentCollisionCount = 0
 
         # Goal
-        goal1 = pixelsToWorld((goal_threshold, goal_threshold))
+        goal1 = pixelsToWorld((100, 100))
         goal2 = vec2(SCREEN_WIDTH / PPM - goal1.x, SCREEN_HEIGHT / PPM - goal1.y)
         self.currentGoalIndex = 0
         self.goals = [goal1, goal2]
+        self.goalReachedThreshold = 2.5  # If agent-to-goal distance is less than this value then agent reached the goal
 
+        # Event features
         self.goalReachedCount = 0
         self.startTime = 0.0
         self.startTimestep = 0
         self.elapsedTime = 0.00
         self.elapsedTimestep = 0
 
-        self.last_reward = 0
-        self.last_distance = 0
+        self.last_reward = 0  # last agent's reward
+        self.last_distance = 0  # last agent's distance to the goal
         self.distance = 0  # current distance to the goal
-        self.goalReachedThreshold = 2.5
 
+        # Raycast Left
         top_left = self.body.GetWorldVector(vec2(-0.70, 0.70))
         self.raycastLeft_point1 = self.body.worldCenter + top_left * self.radius
         self.raycastLeft_point2 = self.raycastLeft_point1 + top_left * self.raycastLength
         self.initial_raycastSideColor = Color.Yellow
         self.raycastSideColor = Color.Yellow
 
+        # Raycast Front
         forward_vec = self.body.GetWorldVector(vec2(0, 1))
         self.raycastFront_point1 = self.body.worldCenter + forward_vec * self.radius
         self.raycastFront_point2 = self.raycastFront_point1 + forward_vec * self.raycastLength
         self.initial_raycastFrontColor = Color.Red
         self.raycastFrontColor = Color.Red
 
+        # Raycast Right
         top_right = self.body.GetWorldVector(vec2(0.70, 0.70))  # sqr(2) / 2
         self.raycastRight_point1 = self.body.worldCenter + top_right * self.radius
         self.raycastRight_point2 = self.raycastRight_point1 + top_right * self.raycastLength
 
+        # Keep track of the time it took for agent to reach goal
         self.timeToGoal_window = deque(maxlen=100)
 
         # Get initial orientation to the goal
@@ -192,19 +197,21 @@ class AgentHoming(Agent):
         # pygame.draw.line(self.screen, Color.White, worldToPixels(self.body.worldCenter),
         #                  worldToPixels(self.body.worldCenter + current_forward_normal * self.radius))
 
-        # Raycasts
+        # Raycast Left
         top_left = self.body.GetWorldVector(vec2(-0.70, 0.70))
         self.raycastLeft_point1 = self.body.worldCenter + top_left * self.radius
         self.raycastLeft_point2 = self.raycastLeft_point1 + top_left * self.raycastLength
         pygame.draw.line(self.screen, self.raycastSideColor, worldToPixels(self.raycastLeft_point1),
                          worldToPixels(self.raycastLeft_point2))  # draw the raycast
 
+        # Raycast Front
         forward_vec = self.body.GetWorldVector(vec2(0, 1))
         self.raycastFront_point1 = self.body.worldCenter + forward_vec * self.radius
         self.raycastFront_point2 = self.raycastFront_point1 + forward_vec * self.raycastLength
         pygame.draw.line(self.screen, self.raycastFrontColor, worldToPixels(self.raycastFront_point1),
                          worldToPixels(self.raycastFront_point2))  # draw the raycast
 
+        # Raycast Right
         top_right = self.body.GetWorldVector(vec2(0.70, 0.70))  # sqr(2) / 2
         self.raycastRight_point1 = self.body.worldCenter + top_right * self.radius
         self.raycastRight_point2 = self.raycastRight_point1 + top_right * self.raycastLength
@@ -246,6 +253,9 @@ class AgentHoming(Agent):
         return Util.minMaxNormalizationScale(val, minX=0.0, maxX=self.raycastLength)
 
     def updateDrive(self, action):
+        """
+            Perform agent's movement based on the input action
+        """
         speed = 12  # m/s
 
         if action == Action.TURN_LEFT:              # Turn Left
@@ -293,9 +303,10 @@ class AgentHoming(Agent):
 
         self.timeToGoal_window.append(self.elapsedTimestep)
 
-        sys.stdout.write(PrintColor.RED)
+        # Goal reached event
+        sys.stdout.write(PrintColor.PRINT_RED)
         homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
-        sys.stdout.write(PrintColor.RESET)
+        sys.stdout.write(PrintColor.PRINT_RESET)
 
         # Reset, Update
         self.startTime = homing_global.timer
@@ -305,10 +316,18 @@ class AgentHoming(Agent):
         self.t2GAgentCollisionCount = 0
 
     def update(self):
+        """
+            Main function of the agent
+        """
         super(AgentHoming, self).update()
 
-        # Update sensors value
+        # Read sensor's value
         self.readSensors()
+
+        # Normalize sensor's value
+        normSensor1 = self.normalizeSensorsValue(self.sensor1)
+        normSensor2 = self.normalizeSensorsValue(self.sensor2)
+        normSensor3 = self.normalizeSensorsValue(self.sensor3)
 
         # Get orientation to the goal
         orientation = self.orientationToGoal()
@@ -322,17 +341,11 @@ class AgentHoming(Agent):
                 self.facingGoal = False
                 homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
-        # Normalize sensor's value
-        normSensor1 = self.normalizeSensorsValue(self.sensor1)
-        normSensor2 = self.normalizeSensorsValue(self.sensor2)
-        normSensor3 = self.normalizeSensorsValue(self.sensor3)
-
         # Select action using AI
         #last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
         last_signal = np.asarray([normSensor1, normSensor2, normSensor3, orientation, -orientation])
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
-        #print(Action(action_num))
         self.updateDrive(Action(action_num))
         #self.updateManualDrive()
         #self.updateManualDriveTestAngle(10.5)  # 10
@@ -340,12 +353,14 @@ class AgentHoming(Agent):
         # Calculate agent's distance to the goal
         self.distance = self.distanceToGoal()
 
-        # Reward mechanism
+        # Living Penalty
         self.last_reward = Reward.LIVING_PENALTY
 
+        # Process agent's distance to goal
         if self.distance < self.last_distance:  # getting closer
             self.last_reward = Reward.GETTING_CLOSER
 
+        # Process sensor's value
         if self.sensor1 < self.raycastLength or self.sensor2 < self.raycastLength or self.sensor3 < self.raycastLength:
             r1 = Reward.sensorReward(self.sensor1)
             r2 = Reward.sensorReward(self.sensor2)

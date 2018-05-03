@@ -43,6 +43,40 @@ except:
 
 numAgents = 1
 
+
+def draw():
+    if not render:
+        return
+
+    # Draw goals
+    goalFont = pygame.font.SysFont("monospace", 25)
+    goal1Pos = 100
+
+    # Goal 1
+    pygame.draw.circle(screen, Color.Red, (goal1Pos, goal1Pos), 20)
+    screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
+
+    # Goal 2
+    pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal1Pos, SCREEN_HEIGHT - goal1Pos), 20)
+    screen.blit(goalFont.render('2', True, Color.White),
+                (SCREEN_WIDTH - goal1Pos - 8, SCREEN_HEIGHT - goal1Pos - 12))
+
+    # Moving Objects
+    for i in xrange(numAgents):
+        agents[i].draw()
+
+    # Obstacles
+    circle1.draw()
+    circle2.draw()
+    circle3.draw()
+    circle4.draw()
+
+    # Boundary
+    border.draw()
+
+    # Show FPS
+    PrintFPS(screen, myfont, 'FPS : ' + str('{:3.2f}').format(fps))
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Homing Task')
@@ -61,7 +95,6 @@ if __name__ == '__main__':
     fps = 1.0 / deltaTime
 
     accumulator = 0
-    interpolated = False
 
     # -------------------- Pygame Setup ----------------------
 
@@ -71,18 +104,7 @@ if __name__ == '__main__':
         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
         pygame.display.set_caption('Homing Task Testbed')
     clock = pygame.time.Clock()
-
     myfont = pygame.font.SysFont("monospace", 15)
-
-
-    def PrintFPS(text, color=(255, 0, 0, 255)):
-        """
-        Draw some text at the top status lines
-        and advance to the next line.
-        """
-        screen.blit(myfont.render(
-            text, True, color), (10, 3))
-
 
     # -------------------- PyBox2d World Setup ----------------------
 
@@ -93,29 +115,16 @@ if __name__ == '__main__':
     border = Border(screen=screen, world=world)
 
     # Agent
-    goal_threshold = 100
     agents = []
     for i in xrange(numAgents):
         randX = random.randint(2, SCREEN_WIDTH / PPM - 2)
         randY = random.randint(2, SCREEN_HEIGHT / PPM - 2)
         randAngle = degToRad(random.randint(0, 360))
-        # a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
-        #                 radius=1.5, goal_threshold=goal_threshold, id=i, numAgents=numAgents)
         a = AgentHoming(screen=screen, world=world, x=randX, y=randY, angle=randAngle,
-                                 radius=1.5, goal_threshold=goal_threshold, id=i, numAgents=numAgents)
-
+                        radius=1.5, id=i, numAgents=numAgents)
         agents.append(a)
 
     # Obstacles
-    # box1 = StaticBox(screen=screen, world=world, x=20, y=17, width=2, height=2)
-    # box1.id = 1
-    # box2 = StaticBox(screen=screen, world=world, x=40, y=20, width=2, height=2)
-    # box2.id = 2
-    # box3 = StaticBox(screen=screen, world=world, x=50, y=10, width=2, height=2)
-    # box3.id = 3
-    # box4 = StaticBox(screen=screen, world=world, x=10, y=25, width=2, height=2)
-    # box4.id = 4
-
     circle1 = StaticCircle(screen=screen, world=world, x=20, y=17, radius=2)
     circle1.id = 1
     circle2 = StaticCircle(screen=screen, world=world, x=40, y=20, radius=2)
@@ -124,31 +133,41 @@ if __name__ == '__main__':
     circle3.id = 3
     circle4 = StaticCircle(screen=screen, world=world, x=10, y=25, radius=2)
     circle4.id = 4
+
     # -------------------- Main Game Loop ----------------------
 
     running = True
     pause = False
     recording = False
+    q_weights, t_weights = None, None
     while running:
-        if render:
-            # Check the event queue
-            for event in pygame.event.get():
-                if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                    # The user closed the window or pressed escape
-                    running = False
-                if event.type == KEYDOWN and event.key == K_p:
-                    pause = not pause  # Pause the game
-                if event.type == KEYDOWN and event.key == K_r:
-                    if not homing_global.record:  # Record simulation
-                        print("start recording")
-                        homing_global.record = True
-                        filename = homing_global.fileCreate()
-                        homing_global.fo = open(filename, 'a')
-                        homing_global.writer = csv.writer(homing_global.fo)
-                    else:  # Stop recording
-                        print("stop recording")
-                        homing_global.record = False
-                        homing_global.fo.close()
+        # Check the event queue
+        for event in pygame.event.get():
+            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                # The user closed the window or pressed escape
+                running = False
+            if event.type == KEYDOWN and event.key == K_p:
+                pause = not pause  # Pause the game
+            if event.type == KEYDOWN and event.key == K_r:
+                if not homing_global.record:  # Record simulation
+                    print("start recording")
+                    homing_global.record = True
+                    filename = homing_global.fileCreate()
+                    homing_global.fo = open(filename, 'a')
+                    homing_global.writer = csv.writer(homing_global.fo)
+                else:  # Stop recording
+                    print("stop recording")
+                    homing_global.record = False
+                    homing_global.fo.close()
+            if event.type == KEYDOWN and event.key == K_g:
+                print("GET weights")
+                q_weights, t_weights = agents[0].brain.model.get_lower_layers_weights()
+                print('q_weights', q_weights)
+            if event.type == KEYDOWN and event.key == K_h:
+                print("PUT weights")
+                print('agents[0].brain.model before', agents[0].brain.model.q_network.layers[0].get_weights())
+                agents[0].brain.model.set_lower_layers_weights(q_weights, t_weights)
+                print('agents[0].brain.model now', agents[0].brain.model.q_network.layers[0].get_weights())
 
         # Pause the game
         if pause:
@@ -167,7 +186,6 @@ if __name__ == '__main__':
         # Update the agents
         for i in xrange(numAgents):
             agents[i].update()
-        # agents[1].remainStatic()
 
         # ---------------------- FPS Physics Step Part -----------
         if render:
@@ -214,32 +232,36 @@ if __name__ == '__main__':
         # ---------------------------------------------------------
 
         # ---------------------- Rendering Part -------------------
-        if render:
-            # Draw goals
-            goalFont = pygame.font.SysFont("monospace", 25)
-
-            pygame.draw.circle(screen, Color.Red, (goal_threshold, goal_threshold), 20)
-            screen.blit(goalFont.render('1', True, Color.White), (goal_threshold - 8, goal_threshold - 12))
-
-            pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal_threshold, SCREEN_HEIGHT - goal_threshold), 20)
-            screen.blit(goalFont.render('2', True, Color.White),
-                        (SCREEN_WIDTH - goal_threshold - 8, SCREEN_HEIGHT - goal_threshold - 12))
-
-            # Moving Objects
-            for i in xrange(numAgents):
-                agents[i].draw()
-
-            # Obstacles
-            circle1.draw()
-            circle2.draw()
-            circle3.draw()
-            circle4.draw()
-
-            # Boundary
-            border.draw()
-
-            # Show FPS
-            PrintFPS('FPS : ' + str('{:3.2f}').format(fps))
+        draw()
+        # if render:
+        #     # Draw goals
+        #     goalFont = pygame.font.SysFont("monospace", 25)
+        #     goal1Pos = 100
+        #
+        #     # Goal 1
+        #     pygame.draw.circle(screen, Color.Red, (goal1Pos, goal1Pos), 20)
+        #     screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
+        #
+        #     # Goal 2
+        #     pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal1Pos, SCREEN_HEIGHT - goal1Pos), 20)
+        #     screen.blit(goalFont.render('2', True, Color.White),
+        #                 (SCREEN_WIDTH - goal1Pos - 8, SCREEN_HEIGHT - goal1Pos - 12))
+        #
+        #     # Moving Objects
+        #     for i in xrange(numAgents):
+        #         agents[i].draw()
+        #
+        #     # Obstacles
+        #     circle1.draw()
+        #     circle2.draw()
+        #     circle3.draw()
+        #     circle4.draw()
+        #
+        #     # Boundary
+        #     border.draw()
+        #
+        #     # Show FPS
+        #     PrintFPS(screen, myfont, 'FPS : ' + str('{:3.2f}').format(fps))
         # ---------------------------------------------------------
 
         # Flip the screen

@@ -60,7 +60,7 @@ class ReplayMemory(object):
 
 BATCH_SIZE = 32 # 100
 MEMORY_CAPACITY = 2000 # 100000
-isPrinted = False
+printTimeToLearn = False
 
 class Dqn(object):
 
@@ -111,7 +111,7 @@ class Dqn(object):
         self.optimizer.step() # update the weights according to backward prop using optimizer
 
     def update(self, reward, signal):
-        global isPrinted
+        global printTimeToLearn
 
         new_state = torch.Tensor(signal).float().unsqueeze(0) # convert to Tensor and add fake dim
         event = (self.last_state, new_state, torch.LongTensor([int(self.last_action)]), torch.Tensor([self.last_reward])) # current experience

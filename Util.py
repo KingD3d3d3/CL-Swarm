@@ -13,6 +13,13 @@ except:
     from .Setup import *
 
 
+def PrintFPS(screen, font, text, color=(255, 0, 0, 255)):  # red
+    """
+        Draw fps text at the top left
+    """
+    screen.blit(font.render(
+        text, True, color), (10, 3))
+
 def worldToPixels(vector):
     return vector.x * PPM, SCREEN_HEIGHT - vector.y * PPM
 

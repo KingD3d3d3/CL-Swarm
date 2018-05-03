@@ -2,15 +2,18 @@ import os
 import errno
 import time
 
-timestep = 0
-timer = 0.00
-debug = True
-record = False
-fo = None
-writer = None
+timestep = 0  # timesteps passed since beginning of simulation
+timer = 0.00  # times passed since beginning of simulation
+debug = True  # debug mode flag, if debug mode then print event's message in console
+record = False  # record flag, if yes record simulation's events in file
+fo = None  # file object to open file for recording
+writer = None  # writer object to record events
 
 def fileCreate():
-    # Creating file (and directory if it doesn't exist)
+    """
+        Create record csv file
+        Also create the /simulation_logs/ directory if it doesn't exist
+    """
     timestr = time.strftime("%Y_%m_%d_%H%M%S")
     #filename = "./simulation_logs/" + timestr + "_homing.txt" # txt file
     filename = "./simulation_logs/" + timestr + "_homing.csv"  # CSV file

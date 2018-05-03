@@ -22,25 +22,25 @@ try:
     import Util
     from homing_task.RayCastCallback import RayCastCallback
     import res.print_colors as PrintColor
-    import homing_debug
-    import homing_global
+    import homing_task.homing_debug
+    import homing_task.homing_global
 except:
     # Running in command line
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from ..res import colors as Color
-    from ..AI.DQN import Dqn
-    from ..AI.FullDQN import FullDqn
-    from ..Agent import Agent
-    from ..Setup import *
-    from ..Util import worldToPixels, pixelsToWorld
+    from res import colors as Color
+    from AI.DQN import Dqn
+    from AI.FullDQN import FullDqn
+    from Agent import Agent
+    from Setup import *
+    from Util import worldToPixels, pixelsToWorld
     from .. import Util
-    from .RayCastCallback import RayCastCallback
-    from ..res import print_colors as PrintColor
-    import homing_debug
-    import homing_global
+    from homing_task.RayCastCallback import RayCastCallback
+    from res import print_colors as PrintColor
+    import homing_task.homing_debug
+    import homing_task.homing_global
 
 
 # ----------- Neural Network Config ----------------
@@ -182,10 +182,10 @@ class AgentHoming(Agent):
         orientation = self.orientationToGoal()
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
-            homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+            homing_task.homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-            homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+            homing_task.homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
 
     def draw(self):
@@ -304,18 +304,18 @@ class AgentHoming(Agent):
 
     def computeGoalReached(self):
         self.goalReachedCount += 1
-        self.elapsedTime = homing_global.timer - self.startTime
-        self.elapsedTimestep = homing_global.timestep - self.startTimestep
+        self.elapsedTime = homing_task.homing_global.timer - self.startTime
+        self.elapsedTimestep = homing_task.homing_global.timestep - self.startTimestep
 
         self.timeToGoal_window.append(self.elapsedTimestep)
 
         sys.stdout.write(PrintColor.RED)
-        homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
+        homing_task.homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
         sys.stdout.write(PrintColor.RESET)
 
         # Reset, Update
-        self.startTime = homing_global.timer
-        self.startTimestep = homing_global.timestep
+        self.startTime = homing_task.homing_global.timer
+        self.startTimestep = homing_task.homing_global.timestep
         self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
         self.t2GCollisionCount = 0
         self.t2GAgentCollisionCount = 0
@@ -331,12 +331,12 @@ class AgentHoming(Agent):
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingGoal:
                 self.facingGoal = True
-                homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+                homing_task.homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
 
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             if self.facingGoal:
                 self.facingGoal = False
-                homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+                homing_task.homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         # Normalize sensor's value
         normSensor1 = self.normalizeSensorsValue(self.sensor1)
@@ -375,8 +375,8 @@ class AgentHoming(Agent):
             #self.brain.replay()  # experience replay
 
         self.last_distance = self.distance
-        self.elapsedTime = homing_global.timer - self.startTime
-        self.elapsedTimestep = homing_global.timestep - self.startTimestep
+        self.elapsedTime = homing_task.homing_global.timer - self.startTime
+        self.elapsedTimestep = homing_task.homing_global.timestep - self.startTimestep
 
         return
 
