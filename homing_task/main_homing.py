@@ -44,39 +44,6 @@ except:
 numAgents = 1
 
 
-def draw():
-    if not render:
-        return
-
-    # Draw goals
-    goalFont = pygame.font.SysFont("monospace", 25)
-    goal1Pos = 100
-
-    # Goal 1
-    pygame.draw.circle(screen, Color.Red, (goal1Pos, goal1Pos), 20)
-    screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
-
-    # Goal 2
-    pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal1Pos, SCREEN_HEIGHT - goal1Pos), 20)
-    screen.blit(goalFont.render('2', True, Color.White),
-                (SCREEN_WIDTH - goal1Pos - 8, SCREEN_HEIGHT - goal1Pos - 12))
-
-    # Moving Objects
-    for i in xrange(numAgents):
-        agents[i].draw()
-
-    # Obstacles
-    circle1.draw()
-    circle2.draw()
-    circle3.draw()
-    circle4.draw()
-
-    # Boundary
-    border.draw()
-
-    # Show FPS
-    PrintFPS(screen, myfont, 'FPS : ' + str('{:3.2f}').format(fps))
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Homing Task')
@@ -232,36 +199,35 @@ if __name__ == '__main__':
         # ---------------------------------------------------------
 
         # ---------------------- Rendering Part -------------------
-        draw()
-        # if render:
-        #     # Draw goals
-        #     goalFont = pygame.font.SysFont("monospace", 25)
-        #     goal1Pos = 100
-        #
-        #     # Goal 1
-        #     pygame.draw.circle(screen, Color.Red, (goal1Pos, goal1Pos), 20)
-        #     screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
-        #
-        #     # Goal 2
-        #     pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal1Pos, SCREEN_HEIGHT - goal1Pos), 20)
-        #     screen.blit(goalFont.render('2', True, Color.White),
-        #                 (SCREEN_WIDTH - goal1Pos - 8, SCREEN_HEIGHT - goal1Pos - 12))
-        #
-        #     # Moving Objects
-        #     for i in xrange(numAgents):
-        #         agents[i].draw()
-        #
-        #     # Obstacles
-        #     circle1.draw()
-        #     circle2.draw()
-        #     circle3.draw()
-        #     circle4.draw()
-        #
-        #     # Boundary
-        #     border.draw()
-        #
-        #     # Show FPS
-        #     PrintFPS(screen, myfont, 'FPS : ' + str('{:3.2f}').format(fps))
+        if render:
+            # Draw goals
+            goalFont = pygame.font.SysFont("monospace", 25)
+            goal1Pos = 100
+
+            # Goal 1
+            pygame.draw.circle(screen, Color.Red, (goal1Pos, goal1Pos), 20)
+            screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
+
+            # Goal 2
+            pygame.draw.circle(screen, Color.Red, (SCREEN_WIDTH - goal1Pos, SCREEN_HEIGHT - goal1Pos), 20)
+            screen.blit(goalFont.render('2', True, Color.White),
+                        (SCREEN_WIDTH - goal1Pos - 8, SCREEN_HEIGHT - goal1Pos - 12))
+
+            # Moving Objects
+            for i in xrange(numAgents):
+                agents[i].draw()
+
+            # Obstacles
+            circle1.draw()
+            circle2.draw()
+            circle3.draw()
+            circle4.draw()
+
+            # Boundary
+            border.draw()
+
+            # Show FPS
+            PrintFPS(screen, myfont, 'FPS : ' + str('{:3.2f}').format(fps))
         # ---------------------------------------------------------
 
         # Flip the screen
