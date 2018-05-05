@@ -47,7 +47,6 @@ class SimulationHoming(object):
         self.vel_iters = vel_iters
         self.pos_iters = pos_iters
 
-        self.numAgents = 1
         parser = argparse.ArgumentParser(description='Homing Task')
         parser.add_argument('--render', help='render the simulation', default='True')
         parser.add_argument('--print_fps', help='print fps', default='False')
@@ -70,7 +69,7 @@ class SimulationHoming(object):
         self.screen = None
         if self.render:
             self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), 0, 32)
-            pygame.display.set_caption('Homing Task Testbed')
+            pygame.display.set_caption('Homing Task Simulation')
         self.clock = pygame.time.Clock()
         self.myfont = pygame.font.SysFont("monospace", 15)
 
@@ -86,7 +85,8 @@ class SimulationHoming(object):
         # Border of the map
         self.border = Border(screen=self.screen, world=self.world)
 
-        # Agent
+        # Agents
+        self.numAgents = 1  # total numbers of agents in the simulation
         self.agents = []
         for i in xrange(self.numAgents):
             randX = random.randint(2, self.screen_width / self.ppm - 2)
