@@ -46,7 +46,7 @@ class StaticCircle(object):
         self.body = world.CreateStaticBody(
             position=(x, y), userData=self)
         self.fixture = self.body.CreateCircleFixture(
-            radius=radius, density=1, friction=0.3)
+            radius=radius, density=1, friction=0, restitution=0)  #density=1, friction=0.3)
         self.color = Color.Lime
 
     def draw(self):

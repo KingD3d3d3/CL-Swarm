@@ -97,14 +97,29 @@ class TestbedParametersSharing(object):
             self.agents.append(a)
 
         # Obstacles
-        self.circle1 = StaticCircle(screen=self.screen, world=self.world, x=20, y=17, radius=2)
+        # self.circle1 = StaticCircle(screen=self.screen, world=self.world, x=20, y=17, radius=2)
+        # self.circle1.id = 1
+        # self.circle2 = StaticCircle(screen=self.screen, world=self.world, x=40, y=20, radius=2)
+        # self.circle2.id = 2
+        # self.circle3 = StaticCircle(screen=self.screen, world=self.world, x=50, y=10, radius=2)
+        # self.circle3.id = 3
+        # self.circle4 = StaticCircle(screen=self.screen, world=self.world, x=10, y=25, radius=2)
+        # self.circle4.id = 4
+
+        self.circle1 = StaticCircle(screen=self.screen, world=self.world, x=12.75, y=24, radius=2)
         self.circle1.id = 1
-        self.circle2 = StaticCircle(screen=self.screen, world=self.world, x=40, y=20, radius=2)
+        self.circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=30, radius=2)
         self.circle2.id = 2
-        self.circle3 = StaticCircle(screen=self.screen, world=self.world, x=50, y=10, radius=2)
+        self.circle3 = StaticCircle(screen=self.screen, world=self.world, x=19.75, y=12.25, radius=2)
         self.circle3.id = 3
-        self.circle4 = StaticCircle(screen=self.screen, world=self.world, x=10, y=25, radius=2)
+        self.circle4 = StaticCircle(screen=self.screen, world=self.world, x=32, y=18, radius=2)
         self.circle4.id = 4
+        self.circle5 = StaticCircle(screen=self.screen, world=self.world, x=44.25, y=23.75, radius=2)
+        self.circle5.id = 5
+        self.circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=6, radius=2)
+        self.circle6.id = 6
+        self.circle7 = StaticCircle(screen=self.screen, world=self.world, x=51.25, y=12, radius=2)
+        self.circle7.id = 7
 
         self.q_weights, self.t_weights = None, None
 
@@ -140,12 +155,18 @@ class TestbedParametersSharing(object):
         self.circle2.draw()
         self.circle3.draw()
         self.circle4.draw()
+        self.circle5.draw()
+        self.circle6.draw()
+        self.circle7.draw()
 
         # Boundary
         self.border.draw()
 
         # Show FPS
         PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+
+        #pygame.draw.rect(self.screen, Color.Cyan, (1260, 0, 20, 720))
+        #pygame.draw.circle(self.screen, Color.Cyan, (0, 720), 20)
 
         # Flip the screen
         pygame.display.flip()

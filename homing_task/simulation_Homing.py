@@ -97,6 +97,15 @@ class SimulationHoming(object):
             self.agents.append(a)
 
         # Obstacles
+        # self.circle1 = StaticCircle(screen=self.screen, world=self.world, x=20, y=17, radius=2)
+        # self.circle1.id = 1
+        # self.circle2 = StaticCircle(screen=self.screen, world=self.world, x=40, y=20, radius=2)
+        # self.circle2.id = 2
+        # self.circle3 = StaticCircle(screen=self.screen, world=self.world, x=50, y=10, radius=2)
+        # self.circle3.id = 3
+        # self.circle4 = StaticCircle(screen=self.screen, world=self.world, x=10, y=25, radius=2)
+        # self.circle4.id = 4
+
         self.circle1 = StaticCircle(screen=self.screen, world=self.world, x=20, y=17, radius=2)
         self.circle1.id = 1
         self.circle2 = StaticCircle(screen=self.screen, world=self.world, x=40, y=20, radius=2)
@@ -107,48 +116,6 @@ class SimulationHoming(object):
         self.circle4.id = 4
 
         self.q_weights, self.t_weights = None, None
-
-    def draw(self):
-        """
-            Rendering part
-        """
-        if not self.render:
-            return
-
-        # Reset screen's pixels
-        self.screen.fill((0, 0, 0, 0))
-
-        # Draw goals
-        goalFont = pygame.font.SysFont("monospace", 25)
-        goal1Pos = 100
-
-        # Goal 1
-        pygame.draw.circle(self.screen, Color.Red, (goal1Pos, goal1Pos), 20)
-        self.screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
-
-        # Goal 2
-        pygame.draw.circle(self.screen, Color.Red, (self.screen_width - goal1Pos, self.screen_height - goal1Pos), 20)
-        self.screen.blit(goalFont.render('2', True, Color.White),
-                         (self.screen_width - goal1Pos - 8, self.screen_height - goal1Pos - 12))
-
-        # Moving Objects
-        for i in xrange(self.numAgents):
-            self.agents[i].draw()
-
-        # Obstacles
-        self.circle1.draw()
-        self.circle2.draw()
-        self.circle3.draw()
-        self.circle4.draw()
-
-        # Boundary
-        self.border.draw()
-
-        # Show FPS
-        PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
-
-        # Flip the screen
-        pygame.display.flip()
 
 
     def handle_events(self):
@@ -182,6 +149,7 @@ class SimulationHoming(object):
                 self.agents[0].brain.model.set_lower_layers_weights(self.q_weights, self.t_weights)
                 print('agents[0].brain.model now', self.agents[0].brain.model.q_network.layers[0].get_weights())
 
+
     def update(self):
         """
             Update game logic
@@ -189,6 +157,7 @@ class SimulationHoming(object):
         # Update the agents
         for i in xrange(self.numAgents):
             self.agents[i].update()
+
 
     def fps_physic_step(self):
         """
@@ -234,6 +203,50 @@ class SimulationHoming(object):
                     self.world.ClearForces()
 
                     self.accumulator -= self.physics_timestep
+
+
+    def draw(self):
+        """
+            Rendering part
+        """
+        if not self.render:
+            return
+
+        # Reset screen's pixels
+        self.screen.fill((0, 0, 0, 0))
+
+        # Draw goals
+        goalFont = pygame.font.SysFont("monospace", 25)
+        goal1Pos = 100
+
+        # Goal 1
+        pygame.draw.circle(self.screen, Color.Red, (goal1Pos, goal1Pos), 20)
+        self.screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
+
+        # Goal 2
+        pygame.draw.circle(self.screen, Color.Red, (self.screen_width - goal1Pos, self.screen_height - goal1Pos), 20)
+        self.screen.blit(goalFont.render('2', True, Color.White),
+                         (self.screen_width - goal1Pos - 8, self.screen_height - goal1Pos - 12))
+
+        # Moving Objects
+        for i in xrange(self.numAgents):
+            self.agents[i].draw()
+
+        # Obstacles
+        self.circle1.draw()
+        self.circle2.draw()
+        self.circle3.draw()
+        self.circle4.draw()
+
+        # Boundary
+        self.border.draw()
+
+        # Show FPS
+        PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+
+        # Flip the screen
+        pygame.display.flip()
+
 
     def run(self):
         """

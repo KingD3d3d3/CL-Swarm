@@ -95,12 +95,15 @@ class Reward:
             return y
 
 class AgentHoming(Agent):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, id=-1, numAgents=0):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0):
         # numAgents : the total number of agents in the simulation -> create a vector of collision's time for each agent
         super(AgentHoming, self).__init__(screen, world, x, y, angle, radius)
 
         # Agent's ID
         self.id = id
+
+        # Default speed of the agent
+        self.initialSpeed = 9.5  # 12 m/s
 
         self.sensor1 = 0  # left raycast
         self.sensor2 = 0  # front raycast
@@ -120,6 +123,8 @@ class AgentHoming(Agent):
         self.startTimestepAgentCollision = np.zeros(numAgents)   # start timestep since a collision (for same objects collision)
         self.t2GAgentCollisionCount = 0
         self.agentCollisionCount = 0
+
+        self.currentCollisionCount = 0  # number of objects the agent is colliding at the current timestep
 
         # Goal
         goal1 = pixelsToWorld((100, 100))
@@ -256,7 +261,7 @@ class AgentHoming(Agent):
         """
             Perform agent's movement based on the input action
         """
-        speed = 12  # m/s
+        speed = self.initialSpeed
 
         if action == Action.TURN_LEFT:              # Turn Left
             self.body.angularVelocity = 10.5  # 5
@@ -390,6 +395,8 @@ class AgentHoming(Agent):
         """
             Change agent color during collision
         """
+        self.currentCollisionCount += 1
+
         self.color = Color.DeepSkyBlue
         self.raycastSideColor = Color.Magenta
         self.raycastFrontColor = Color.Magenta
@@ -398,6 +405,10 @@ class AgentHoming(Agent):
         """
             Reset agent color when end of collision
         """
-        self.color = self.initial_color
-        self.raycastFrontColor = self.initial_raycastFrontColor
-        self.raycastSideColor = self.initial_raycastSideColor
+        self.currentCollisionCount -= 1
+        if self.currentCollisionCount < 0:
+            sys.exit('Error! Cannot have currentCollisionCount of negative value')
+        elif self.currentCollisionCount == 0:
+            self.color = self.initial_color
+            self.raycastFrontColor = self.initial_raycastFrontColor
+            self.raycastSideColor = self.initial_raycastSideColor

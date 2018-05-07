@@ -19,31 +19,48 @@ except:
 
 
 class Wall(object):
-    def __init__(self, screen=None, world=None, x=0, y=0, width=50, height=1):
+    def __init__(self, screen=None, world=None, x=0, y=0, width=50, height=1, color=Color.Gray):
         self.screen = screen
         self.body = world.CreateStaticBody(
             position=(x, y),
-            shapes=polygonShape(box=(width, height)),
+            shapes=polygonShape(box=(width, height)),  # (half_width, half_height)
             userData=self
         )
         self.id = random.randint(0, sys.maxint)
+        self.color = color
 
     def draw(self):
         vertices = [(self.body.transform * v) * PPM for v in self.body.fixtures[0].shape.vertices]
         vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
-        pygame.draw.polygon(self.screen, Color.Gray, vertices)
+        pygame.draw.polygon(self.screen, self.color, vertices)
 
 
 class Border(object):
     def __init__(self, screen=None, world=None):
         self.screen = screen
-        bottom = Wall(screen=screen, world=world, x=0, y=0, width=int(SCREEN_WIDTH / PPM), height=1)
+        bottom = Wall(screen=screen, world=world,
+                      x=int((SCREEN_WIDTH / PPM) / 2),
+                      y=0,
+                      width=int((SCREEN_WIDTH / PPM) / 2),
+                      height=1)
         bottom.id = 0
-        right = Wall(screen=screen, world=world, x=int(SCREEN_WIDTH / PPM), y=0, width=1, height=int(SCREEN_HEIGHT / PPM))
+        right = Wall(screen=screen, world=world,
+                     x=int(SCREEN_WIDTH / PPM),
+                     y=int((SCREEN_HEIGHT / PPM) / 2),
+                     width=1,
+                     height=int((SCREEN_HEIGHT / PPM) / 2))
         right.id = 1
-        top = Wall(screen=screen, world=world, x=0, y=int(SCREEN_HEIGHT / PPM), width=int(SCREEN_WIDTH / PPM), height=1)
+        top = Wall(screen=screen, world=world,
+                   x=int((SCREEN_WIDTH / PPM) / 2),
+                   y=int(SCREEN_HEIGHT / PPM),
+                   width=int((SCREEN_WIDTH / PPM) / 2),
+                   height=1)
         top.id = 2
-        left = Wall(screen=screen, world=world, x=0, y=0, width=1, height=int(SCREEN_HEIGHT / PPM))
+        left = Wall(screen=screen, world=world,
+                    x=0,
+                    y=int((SCREEN_HEIGHT / PPM) / 2),
+                    width=1,
+                    height=int((SCREEN_HEIGHT / PPM) / 2))
         left.id = 3
         self.boxList = [bottom, right, top, left]
 

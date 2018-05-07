@@ -42,6 +42,7 @@ class Agent(object):
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
 
+        self.initialSpeed = 12
         self.updateCalls = 0
 
     def getLateralVelocity(self):
@@ -76,7 +77,7 @@ class Agent(object):
         self.updateCalls += 1
 
     def updateManualDriveTestAngle(self, angle):
-        speed = 12
+        speed = self.initialSpeed
         global moveTicker
         global prev_angle
         global go_print_Turn
@@ -134,7 +135,7 @@ class Agent(object):
         self.body.linearVelocity = forward_vec * speed
 
     def updateManualDrive(self):
-        speed = 12
+        speed = self.initialSpeed
 
         key = pygame.key.get_pressed()
         if key[K_LEFT]:  # Turn Left
