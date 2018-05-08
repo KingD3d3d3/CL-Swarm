@@ -60,3 +60,7 @@ fabric.properties
 # Logs
 homing_task/simulation_logs/
 */simulation_logs/
+
+# Neural networks' model
+*/brain_files/
+*.h5

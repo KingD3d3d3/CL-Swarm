@@ -2,6 +2,7 @@ import numpy as np
 import random
 from collections import deque
 import sys
+from keras.models import load_model
 
 try:
     from res.print_colors import *
@@ -86,8 +87,13 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
         for sp in samples:
             self.push(sp)
             # self.samples.extend(sample)
-
-
+    #
+    # def save(self):
+    #     """
+    #         Get n samples randomly
+    #     """
+    #     n = min(n, len(self.samples))
+    #     return random.sample(self.samples, n)
 # -------------------- DQN AGENT -----------------------
 
 # DEFAULT HYPERPARAMETERS
@@ -105,17 +111,23 @@ printTimeToLearn = False
 
 
 class DQN(object):
-    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1):
+    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, training=True):
 
         # Agent's ID
         self.id = id
+
+        # Training flag
+        self.training = training
 
         # Hyperparameters
         self.batch_size = BATCH_SIZE
         self.mem_capacity = MEMORY_CAPACITY
         self.gamma = GAMMA
         self.lr = LEARNING_RATE
-        self.epsilon = INITIAL_EPSILON
+        if self.training:
+            self.epsilon = INITIAL_EPSILON
+        else:
+            self.epsilon = FINAL_EPSILON
         self.epsilon_step = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
 
         # Input - Output
@@ -154,15 +166,14 @@ class DQN(object):
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
 
-    def update(self, reward, signal):
+    def update(self, reward, observation):
         """
             Main function of the agent's brain
             Return the action to be performed
         """
         global printTimeToLearn
 
-        new_state = signal
-        new_state = self.preprocess(new_state)
+        new_state = self.preprocess(observation)
         experience = (self.last_state, self.last_action, self.last_reward, new_state)
         self.record(experience)
 
@@ -170,7 +181,7 @@ class DQN(object):
         action = self.select_action(self.last_state)
 
         # Training each update
-        if len(self.memory.samples) > 100:
+        if self.training and len(self.memory.samples) > 100:
             if not printTimeToLearn:
                 printColor(message="Agent: {:3.0f}".format(self.id) + "{:>28s}".format("time to learn"))
                 printTimeToLearn = True
@@ -204,6 +215,10 @@ class DQN(object):
         self.memory.push(sample)
 
     def replay(self):
+        # If not training then return
+        if not self.training:
+            return
+
         # If not enough samples in memory
         if len(self.memory.samples) < self.batch_size:
             return
@@ -243,8 +258,23 @@ class DQN(object):
         # Input shape in Keras : (batch_size, input_dim)
         return np.reshape(state, [1, self.inputCnt])  # need to add 1 dimension for batch
 
-    def save_model(self, brainfile):
-        self.model.q_network.save(brainfile)
+    def save_model(self, model_file):
+        self.model.q_network.save(model_file)
+    #
+    # def save_memory(self, memory_file):
+    #     self.memory.save(memory_file)
+
+    def load_model(self, model_file):
+        self.model.q_network = load_model(model_file)
+        self.model.target_network_network = load_model(model_file)
+
+        self.stop_train()
+
+    def load_weights(self, model_file):
+        self.model.q_network.load_weights(model_file)
+        self.model.target_network.load_weights(model_file)
+
+        self.stop_train()
 
     def learning_score(self):
         """
@@ -252,3 +282,7 @@ class DQN(object):
         """
         learning_score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
         return learning_score
+
+    def stop_train(self):
+        self.training = False
+        self.epsilon = FINAL_EPSILON

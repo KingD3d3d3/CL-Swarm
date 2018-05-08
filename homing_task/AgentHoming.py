@@ -9,6 +9,9 @@ from keras.optimizers import Adam
 from pygame.locals import *
 import sys
 from collections import deque
+import time
+import os
+import errno
 
 try:
     # Running in PyCharm
@@ -102,6 +105,9 @@ class AgentHoming(Agent):
         # Agent's ID
         self.id = id
 
+        # Training flag
+        self.training = True
+
         # Default speed of the agent
         self.initialSpeed = 9.5  # 12 m/s
 
@@ -109,7 +115,7 @@ class AgentHoming(Agent):
         self.sensor2 = 0  # front raycast
         self.sensor3 = 0  # right raycast
         self.raycastLength = 2.0
-        self.brain = DQNHoming(inputCnt=5, actionCnt=len(list(Action)), id=self.id)
+        self.brain = DQNHoming(inputCnt=5, actionCnt=len(list(Action)), id=self.id, training=self.training)
 
         # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0
@@ -168,13 +174,13 @@ class AgentHoming(Agent):
 
         # Get initial orientation to the goal
         orientation = self.orientationToGoal()
+        self.facingGoal = True  # default
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
             homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
             homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
-
 
     def draw(self):
 
@@ -412,3 +418,62 @@ class AgentHoming(Agent):
             self.color = self.initial_color
             self.raycastFrontColor = self.initial_raycastFrontColor
             self.raycastSideColor = self.initial_raycastSideColor
+
+    def save_brain(self):
+        """
+            Save Agent's brain (neural network) in file
+            Also create the /brain_files/ directory if it doesn't exist
+        """
+        timestr = time.strftime("%Y_%m_%d_%H%M%S")
+        directory = "./brain_files/"
+        network_model = directory + timestr + "_model.h5"  # neural network model file
+
+        if not os.path.exists(os.path.dirname(directory)):
+            try:
+                os.makedirs(os.path.dirname(directory))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        self.brain.save_model(network_model)
+
+    def load_model(self):
+        """
+            Load Agent's model config from file
+            Everything : NN architecture, optimizer, weights, ...
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_model(model_file)
+
+    def load_weights(self):
+        """
+            Load Agent's weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_weights(model_file)
+
+    def save_memory(self):
+        """
+            Save Agent's memory (experiences) in file
+            Also create the /brain_files/ directory if it doesn't exist
+        """
+        timestr = time.strftime("%Y_%m_%d_%H%M%S")
+        directory = "./brain_files/"
+        memory_file = directory + timestr + "_memory.mem"  # neural network model file
+
+        if not os.path.exists(os.path.dirname(directory)):
+            try:
+                os.makedirs(os.path.dirname(directory))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        with open(memory_file, "w") as f:
+            for exp in self.brain.memory.samples:
+                f.write(str(exp) + "\n")
+
+        return

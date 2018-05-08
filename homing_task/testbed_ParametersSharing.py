@@ -97,31 +97,27 @@ class TestbedParametersSharing(object):
             self.agents.append(a)
 
         # Obstacles
-        # self.circle1 = StaticCircle(screen=self.screen, world=self.world, x=20, y=17, radius=2)
-        # self.circle1.id = 1
-        # self.circle2 = StaticCircle(screen=self.screen, world=self.world, x=40, y=20, radius=2)
-        # self.circle2.id = 2
-        # self.circle3 = StaticCircle(screen=self.screen, world=self.world, x=50, y=10, radius=2)
-        # self.circle3.id = 3
-        # self.circle4 = StaticCircle(screen=self.screen, world=self.world, x=10, y=25, radius=2)
-        # self.circle4.id = 4
-
-        self.circle1 = StaticCircle(screen=self.screen, world=self.world, x=12.75, y=24, radius=2)
-        self.circle1.id = 1
-        self.circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=30, radius=2)
-        self.circle2.id = 2
-        self.circle3 = StaticCircle(screen=self.screen, world=self.world, x=19.75, y=12.25, radius=2)
-        self.circle3.id = 3
-        self.circle4 = StaticCircle(screen=self.screen, world=self.world, x=32, y=18, radius=2)
-        self.circle4.id = 4
-        self.circle5 = StaticCircle(screen=self.screen, world=self.world, x=44.25, y=23.75, radius=2)
-        self.circle5.id = 5
-        self.circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=6, radius=2)
-        self.circle6.id = 6
-        self.circle7 = StaticCircle(screen=self.screen, world=self.world, x=51.25, y=12, radius=2)
-        self.circle7.id = 7
-
-        self.q_weights, self.t_weights = None, None
+        self.obstacles = []
+        circle1 = StaticCircle(screen=self.screen, world=self.world, x=12.75, y=24, radius=2)
+        circle1.id = 1
+        #circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=30, radius=2)
+        circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=28, radius=2)
+        circle2.id = 2
+        #circle3 = StaticCircle(screen=self.screen, world=self.world, x=19.75, y=12.25, radius=2)
+        circle3 = StaticCircle(screen=self.screen, world=self.world, x=14.75, y=10, radius=2)
+        circle3.id = 3
+        circle4 = StaticCircle(screen=self.screen, world=self.world, x=32, y=18, radius=2)
+        circle4.id = 4
+        #circle5 = StaticCircle(screen=self.screen, world=self.world, x=44.25, y=23.75, radius=2)
+        circle5 = StaticCircle(screen=self.screen, world=self.world, x=49.25, y=26, radius=2)
+        circle5.id = 5
+        #circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=6, radius=2)
+        circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=8, radius=2)
+        circle6.id = 6
+        circle7 = StaticCircle(screen=self.screen, world=self.world, x=51.25, y=12, radius=2)
+        circle7.id = 7
+        self.obstacles.extend((circle1, circle2, circle3, circle4, circle5, circle6, circle7))
+        self.numObstacles = len(self.obstacles)
 
     def draw(self):
         """
@@ -151,13 +147,8 @@ class TestbedParametersSharing(object):
             self.agents[i].draw()
 
         # Obstacles
-        self.circle1.draw()
-        self.circle2.draw()
-        self.circle3.draw()
-        self.circle4.draw()
-        self.circle5.draw()
-        self.circle6.draw()
-        self.circle7.draw()
+        for i in xrange(self.numObstacles):
+            self.obstacles[i].draw()
 
         # Boundary
         self.border.draw()
@@ -193,15 +184,13 @@ class TestbedParametersSharing(object):
                     print("stop recording")
                     homing_global.record = False
                     homing_global.fo.close()
-            if event.type == KEYDOWN and event.key == K_g:
-                print("GET weights")
-                q_weights, t_weights = self.agents[0].brain.model.get_lower_layers_weights()
-                print('q_weights', q_weights)
-            if event.type == KEYDOWN and event.key == K_h:
-                print("PUT weights")
-                print('agents[0].brain.model before', self.agents[0].brain.model.q_network.layers[0].get_weights())
-                self.agents[0].brain.model.set_lower_layers_weights(self.q_weights, self.t_weights)
-                print('agents[0].brain.model now', self.agents[0].brain.model.q_network.layers[0].get_weights())
+            if event.type == KEYDOWN and event.key == K_b:
+                print("Save Agent's brain and Memory")
+                self.agents[0].save_brain()
+                self.agents[0].save_memory()
+            if event.type == KEYDOWN and event.key == K_l:
+                print("Load brain model")
+                self.agents[0].load_weights()
 
     def update(self):
         """
