@@ -38,6 +38,7 @@ def xprint(agent=None, event_message=""):
         AgentCol2G      : agent collision count between 1 goal to another
         AgentCol        : total agent collision count
         LS              : learning score of the agent (average of rewards in sliding window)
+        t       : time passed (since beginning of simulation)
     """
     global header_write
 
@@ -48,14 +49,16 @@ def xprint(agent=None, event_message=""):
            "tmstp2G : {:10.0f}, "
            "Col2G: {:5.0f}, Col: {:5.0f}, "
            "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}, "
-           "LS: {:3.2f}"
+           "LS: {:3.2f}, "
+           "t: {:10.3f}"
            .format(
                homing_global.timestep,
                agent.goalReachedCount,
                agent.elapsedTimestep,
                agent.t2GCollisionCount, agent.collisionCount,
                agent.t2GAgentCollisionCount, agent.agentCollisionCount,
-               agent.learning_score()
+               agent.learning_score(),
+               homing_global.timer
            )
            )
 

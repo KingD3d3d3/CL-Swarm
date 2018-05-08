@@ -277,6 +277,9 @@ class SimulationHoming(object):
             # Step counter
             homing_global.timestep += 1
 
+            # Time counter
+            homing_global.timer += self.deltaTime
+
     @staticmethod
     def end():
         """
