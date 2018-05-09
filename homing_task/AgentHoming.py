@@ -12,7 +12,7 @@ from collections import deque
 import time
 import os
 import errno
-
+import csv
 try:
     # Running in PyCharm
     import res.colors as Color
@@ -83,7 +83,7 @@ class Action(Enum):
 class Reward:
     LIVING_PENALTY = -0.5
     GETTING_CLOSER = 0.1
-    GOAL_REACHED = 1
+    GOAL_REACHED = 1.0
 
     @classmethod
     def sensorReward(cls, x):
@@ -111,9 +111,9 @@ class AgentHoming(Agent):
         # Default speed of the agent
         self.initialSpeed = 9.5  # 12 m/s
 
-        self.sensor1 = 0  # left raycast
-        self.sensor2 = 0  # front raycast
-        self.sensor3 = 0  # right raycast
+        self.sensor1 = 0.0  # left raycast
+        self.sensor2 = 0.0  # front raycast
+        self.sensor3 = 0.0  # right raycast
         self.raycastLength = 2.0
         self.brain = DQNHoming(inputCnt=5, actionCnt=len(list(Action)), id=self.id, training=self.training)
 
@@ -146,9 +146,9 @@ class AgentHoming(Agent):
         self.elapsedTime = 0.00
         self.elapsedTimestep = 0
 
-        self.last_reward = 0  # last agent's reward
-        self.last_distance = 0  # last agent's distance to the goal
-        self.distance = 0  # current distance to the goal
+        self.last_reward = 0.0  # last agent's reward
+        self.last_distance = 0.0  # last agent's distance to the goal
+        self.distance = 0.0  # current distance to the goal
 
         # Raycast Left
         top_left = self.body.GetWorldVector(vec2(-0.70, 0.70))
@@ -458,12 +458,12 @@ class AgentHoming(Agent):
 
     def save_memory(self):
         """
-            Save Agent's memory (experiences) in file
+            Save Agent's memory (experiences) in csv file
             Also create the /brain_files/ directory if it doesn't exist
         """
         timestr = time.strftime("%Y_%m_%d_%H%M%S")
         directory = "./brain_files/"
-        memory_file = directory + timestr + "_memory.mem"  # neural network model file
+        memory_file = directory + timestr + "_memory.csv"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
             try:
@@ -472,8 +472,15 @@ class AgentHoming(Agent):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        with open(memory_file, "w") as f:
-            for exp in self.brain.memory.samples:
-                f.write(str(exp) + "\n")
+        header = ("State",
+                  "Action",
+                  "Reward",
+                  "Next State"
+                  )
+
+        with open(memory_file, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(self.brain.memory.samples)
 
         return

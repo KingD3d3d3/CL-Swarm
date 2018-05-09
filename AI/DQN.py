@@ -149,7 +149,7 @@ class DQN(object):
 
         self.last_state = self.preprocess(np.zeros(self.inputCnt))
         self.last_action = 0
-        self.last_reward = 0
+        self.last_reward = 0.0
         self.reward_window = deque(maxlen=1000)
 
         # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
