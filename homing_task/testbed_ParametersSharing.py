@@ -191,6 +191,7 @@ class TestbedParametersSharing(object):
             if event.type == KEYDOWN and event.key == K_l:
                 print("Load brain model")
                 self.agents[0].load_weights()
+                self.agents[0].load_memory()
 
     def update(self):
         """

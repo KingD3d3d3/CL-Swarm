@@ -13,6 +13,8 @@ import time
 import os
 import errno
 import csv
+import pandas as pd
+
 try:
     # Running in PyCharm
     import res.colors as Color
@@ -29,6 +31,7 @@ try:
 except:
     # Running in command line
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
@@ -47,9 +50,7 @@ except:
 # ----------- Agent's brain Neural Network Config ----------------
 
 class DQNHoming(DQN):
-
     def build_model(self):
-
         # Sequential() creates the foundation of the layers.
         model = Sequential()
         # # 'Dense' define fully connected layers
@@ -79,6 +80,7 @@ class Action(Enum):
     STOP_TURN_LEFT = 4
     STOP_TURN_RIGHT = 5
 
+
 # Rewards Mechanism
 class Reward:
     LIVING_PENALTY = -0.5
@@ -96,6 +98,7 @@ class Reward:
         else:
             y = -1 + 0.5909357 * x - 0.2114035 * np.power(x, 2) + 0.02046784 * np.power(x, 3)
             return y
+
 
 class AgentHoming(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0):
@@ -125,8 +128,10 @@ class AgentHoming(Agent):
         self.lastObstacleCollide = None
 
         # Collision with Agents
-        self.elapsedTimestepAgentCollision = np.zeros(numAgents) # timestep passed between collision (for same objects collision)
-        self.startTimestepAgentCollision = np.zeros(numAgents)   # start timestep since a collision (for same objects collision)
+        self.elapsedTimestepAgentCollision = np.zeros(
+            numAgents)  # timestep passed between collision (for same objects collision)
+        self.startTimestepAgentCollision = np.zeros(
+            numAgents)  # start timestep since a collision (for same objects collision)
         self.t2GAgentCollisionCount = 0
         self.agentCollisionCount = 0
 
@@ -247,7 +252,7 @@ class AgentHoming(Agent):
         if rayCastFront.hit:
             dist2 = (self.raycastFront_point1 - rayCastFront.point).length  # distance to the hit point
             self.sensor2 = round(dist2, 2)
-            #print('val sensor front', self.sensor2)
+            # print('val sensor front', self.sensor2)
         else:
             self.sensor2 = self.raycastLength
 
@@ -269,18 +274,18 @@ class AgentHoming(Agent):
         """
         speed = self.initialSpeed
 
-        if action == Action.TURN_LEFT:              # Turn Left
+        if action == Action.TURN_LEFT:  # Turn Left
             self.body.angularVelocity = 10.5  # 5
-        elif action == Action.TURN_RIGHT:           # Turn Right
+        elif action == Action.TURN_RIGHT:  # Turn Right
             self.body.angularVelocity = -10.5  # -5
-        elif action == Action.KEEP_ORIENTATION:     # Don't turn
+        elif action == Action.KEEP_ORIENTATION:  # Don't turn
             pass
-        elif action == Action.STOP:                 # Stop moving
+        elif action == Action.STOP:  # Stop moving
             speed = 0
-        elif action == Action.STOP_TURN_LEFT:       # Stop and turn left
+        elif action == Action.STOP_TURN_LEFT:  # Stop and turn left
             speed = 0
             self.body.angularVelocity = 10.5
-        elif action == Action.STOP_TURN_RIGHT:      # Stop and turn right
+        elif action == Action.STOP_TURN_RIGHT:  # Stop and turn right
             speed = 0
             self.body.angularVelocity = -10.5
 
@@ -353,13 +358,13 @@ class AgentHoming(Agent):
                 homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         # Select action using AI
-        #last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
+        # last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
         last_signal = np.asarray([normSensor1, normSensor2, normSensor3, orientation, -orientation])
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
         self.updateDrive(Action(action_num))
-        #self.updateManualDrive()
-        #self.updateManualDriveTestAngle(10.5)  # 10
+        # self.updateManualDrive()
+        # self.updateManualDriveTestAngle(10.5)  # 10
 
         # Calculate agent's distance to the goal
         self.distance = self.distanceToGoal()
@@ -382,7 +387,7 @@ class AgentHoming(Agent):
         if self.distance < self.goalReachedThreshold:
             self.computeGoalReached()
             self.last_reward = Reward.GOAL_REACHED
-            #self.brain.replay()  # experience replay
+            # self.brain.replay()  # experience replay
 
         self.last_distance = self.distance
         self.elapsedTime = homing_global.timer - self.startTime
@@ -472,15 +477,37 @@ class AgentHoming(Agent):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        header = ("State",
-                  "Action",
-                  "Reward",
-                  "Next State"
+        header = ("state",
+                  "action",
+                  "reward",
+                  "next_state"
                   )
 
         with open(memory_file, 'w') as f:
             writer = csv.writer(f)
             writer.writerow(header)
             writer.writerows(self.brain.memory.samples)
+
+        return
+
+    def load_memory(self):
+        """
+            Load memory from file
+        """
+        directory = "./brain_files/"
+        memory_file = directory + "brain" + "_memory.csv"  # neural network model file
+
+        memory_list = []
+        data = pd.read_csv(memory_file)
+
+        remove_bracket = lambda x: x.replace('[', '').replace(']', '')
+        string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
+
+        data['state'] = data['state'].map(remove_bracket).map(string_to_array)
+        data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
+
+        for i, row in data.iterrows():
+            exp = (row['state'], row['action'], row['reward'], row['next_state'])
+            memory_list.append(exp)
 
         return

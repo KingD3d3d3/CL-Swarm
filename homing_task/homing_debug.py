@@ -13,16 +13,16 @@ except:
     import homing_global
 
 header_write = False
-header = ("Agent",
-          "Event",
-          "Timestep",
-          "Goal reached",
-          "Timestep to goal",
-          "Collisions to goal",
-          "Collisions",
-          "Agent collisions to goal",
-          "Agent collisions",
-          "LS"
+header = ("agent",
+          "event",
+          "timestep",
+          "goal_reached",
+          "timestep_to_goal",
+          "collisions_to_goal",
+          "collisions",
+          "agent_collisions_to_goal",
+          "agent_collisions",
+          "learning_score"
           )
 
 

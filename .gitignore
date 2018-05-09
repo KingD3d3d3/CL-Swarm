@@ -64,4 +64,3 @@ homing_task/simulation_logs/
 # Neural networks' model and Memory
 */brain_files/
 *.h5
-*.mem
