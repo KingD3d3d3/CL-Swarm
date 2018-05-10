@@ -487,18 +487,7 @@ class AgentHoming(Agent):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        header = ("state",
-                  "action",
-                  "reward",
-                  "next_state"
-                  )
-
-        with open(memory_file, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerow(header)
-            writer.writerows(self.brain.memory.samples)
-
-        return
+        self.brain.save_memory(memory_file)
 
     def load_memory(self):
         """

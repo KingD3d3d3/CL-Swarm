@@ -3,7 +3,7 @@ import random
 from collections import deque
 import sys
 from keras.models import load_model, clone_model
-
+import csv
 try:
     from res.print_colors import *
 except:
@@ -268,19 +268,23 @@ class DQN(object):
         learning_score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
         return learning_score
 
+    def stop_training(self):
+        """
+            Stop training the Neural Network
+            Stop exploration -> only exploitation
+        """
+        self.training = False
+        self.epsilon = FINAL_EPSILON
+
     def save_model(self, model_file):
         """
-            Save model : neural network, optimizer, loss, etc in 'model_file'
+            Save model (neural network, optimizer, loss, etc ..) in file
         """
         self.model.q_network.save(model_file)
 
-        #
-        # def save_memory(self, memory_file):
-        #     self.memory.save(memory_file)
-
     def load_model(self, model_file):
         """
-            Load model from 'model_file' and set Q-Network, Target-Network
+            Load model from file and set Q-Network, Target-Network
             Default: Stop training
         """
         self.model.q_network = load_model(model_file)
@@ -288,7 +292,7 @@ class DQN(object):
 
     def load_weights(self, model_file):
         """
-            Load weights from 'model_file' and set Q-Network, Target-Network
+            Load weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
         self.model.q_network.load_weights(model_file)
@@ -296,10 +300,9 @@ class DQN(object):
 
     def load_lower_layers_weights(self, model_file):
         """
-            Load lower layers' weights from 'model_file' and set Q-Network, Target-Network
+            Load lower layers' weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
-
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
@@ -310,10 +313,13 @@ class DQN(object):
         if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
             sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
 
-    def stop_training(self):
+    def save_memory(self, memory_file):
         """
-            Stop training the Neural Network
-            Stop exploration -> only exploitation
+            Save agent's experiences in file
         """
-        self.training = False
-        self.epsilon = FINAL_EPSILON
+        header = ("state", "action", "reward", "next_state")
+
+        with open(memory_file, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(self.memory.samples)
