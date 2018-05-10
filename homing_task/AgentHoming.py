@@ -53,9 +53,10 @@ class DQNHoming(DQN):
     def build_model(self):
         # Sequential() creates the foundation of the layers.
         model = Sequential()
-        # # 'Dense' define fully connected layers
+
+        # 'Dense' define fully connected layers
         model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
-        # model.add(Dense(24, activation='relu'))  # hidden -> hidden
+        #model.add(Dense(24, activation='relu'))  # hidden -> hidden
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
         # # 'Dense' define fully connected layers
@@ -101,7 +102,7 @@ class Reward:
 
 
 class AgentHoming(Agent):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0, training=True):
         # numAgents : the total number of agents in the simulation -> create a vector of collision's time for each agent
         super(AgentHoming, self).__init__(screen, world, x, y, angle, radius)
 
@@ -109,7 +110,7 @@ class AgentHoming(Agent):
         self.id = id
 
         # Training flag
-        self.training = True
+        self.training = training
 
         # Default speed of the agent
         self.initialSpeed = 9.5  # 12 m/s
@@ -426,7 +427,7 @@ class AgentHoming(Agent):
 
     def save_brain(self):
         """
-            Save Agent's brain (neural network) in file
+            Save agent's brain (model : neural network, optimizer, loss, etc) in file
             Also create the /brain_files/ directory if it doesn't exist
         """
         timestr = time.strftime("%Y_%m_%d_%H%M%S")
@@ -460,6 +461,15 @@ class AgentHoming(Agent):
         model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_weights(model_file)
+
+    def load_lower_layers_weights(self):
+        """
+            Load Agent's lowe layers' weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_lower_layers_weights(model_file)
 
     def save_memory(self):
         """
@@ -511,3 +521,11 @@ class AgentHoming(Agent):
             memory_list.append(exp)
 
         return
+
+    def stop_training(self):
+        """
+            Stop training the brain (Neural Network)
+            Stop exploration -> only exploitation
+        """
+        self.training = False
+        self.brain.stop_training()

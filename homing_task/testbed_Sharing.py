@@ -19,6 +19,7 @@ try:
     from experimental.EntityManager import EntityManager
     from experimental.Entity import Entity
     import homing_global
+    from res.print_colors import printColor
 except:
     # Running in command line
     import logging
@@ -34,6 +35,7 @@ except:
     from ..Setup import *
     from ..Util import *
     import homing_global
+    from .res.print_colors import printColor
 
 
 class TestbedParametersSharing(object):
@@ -53,16 +55,17 @@ class TestbedParametersSharing(object):
         parser.add_argument('--debug', help='print simulation log', default='True')
         parser.add_argument('--record', help='record simulation log in file', default='False')
         parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='True')
+        parser.add_argument('--training', help='if yes should train agent', default='True')
         args = parser.parse_args()
         self.render = args.render == 'True'
         self.print_fps = args.print_fps == 'True'
         homing_global.debug = args.debug == 'True'
         homing_global.record = args.record == 'True'
         self.fixed_ur_timestep = args.fixed_ur_timestep == 'True'
+        self.training = args.training == 'True'
         self.deltaTime = 1.0 / target_fps
         self.fps = 1.0 / self.deltaTime
         self.accumulator = 0
-
         # -------------------- Pygame Setup ----------------------
 
         pygame.init()
@@ -93,25 +96,21 @@ class TestbedParametersSharing(object):
             randY = random.randint(2, self.screen_height / self.ppm - 2)
             randAngle = degToRad(random.randint(0, 360))
             a = AgentHoming(screen=self.screen, world=self.world, x=randX, y=randY, angle=randAngle,
-                            radius=1.5, id=i, numAgents=self.numAgents)
+                            radius=1.5, id=i, numAgents=self.numAgents, training=self.training)
             self.agents.append(a)
 
         # Obstacles
         self.obstacles = []
         circle1 = StaticCircle(screen=self.screen, world=self.world, x=12.75, y=24, radius=2)
         circle1.id = 1
-        #circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=30, radius=2)
         circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=28, radius=2)
         circle2.id = 2
-        #circle3 = StaticCircle(screen=self.screen, world=self.world, x=19.75, y=12.25, radius=2)
         circle3 = StaticCircle(screen=self.screen, world=self.world, x=14.75, y=10, radius=2)
         circle3.id = 3
         circle4 = StaticCircle(screen=self.screen, world=self.world, x=32, y=18, radius=2)
         circle4.id = 4
-        #circle5 = StaticCircle(screen=self.screen, world=self.world, x=44.25, y=23.75, radius=2)
         circle5 = StaticCircle(screen=self.screen, world=self.world, x=49.25, y=26, radius=2)
         circle5.id = 5
-        #circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=6, radius=2)
         circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=8, radius=2)
         circle6.id = 6
         circle7 = StaticCircle(screen=self.screen, world=self.world, x=51.25, y=12, radius=2)
@@ -175,23 +174,27 @@ class TestbedParametersSharing(object):
                 self.pause = not self.pause  # Pause the game
             if event.type == KEYDOWN and event.key == K_r:
                 if not homing_global.record:  # Record simulation
-                    print("start recording")
+                    printColor(msg="Start recording")
                     homing_global.record = True
                     filename = homing_global.fileCreate()
                     homing_global.fo = open(filename, 'a')
                     homing_global.writer = csv.writer(homing_global.fo)
                 else:  # Stop recording
-                    print("stop recording")
+                    printColor(msg="Stop recording")
                     homing_global.record = False
                     homing_global.fo.close()
-            if event.type == KEYDOWN and event.key == K_b:
-                print("Save Agent's brain and Memory")
+            if event.type == KEYDOWN and event.key == K_s:
+                printColor(msg="Save Agent's brain and Memory")
                 self.agents[0].save_brain()
                 self.agents[0].save_memory()
             if event.type == KEYDOWN and event.key == K_l:
-                print("Load brain model")
+                printColor(msg="Load full model weights")
                 self.agents[0].load_weights()
-                self.agents[0].load_memory()
+                self.agents[0].stop_training()
+            if event.type == KEYDOWN and event.key == K_w:
+                printColor(msg="Load lower layer weights")
+                self.agents[0].load_lower_layers_weights()
+                self.agents[0].stop_training()
 
     def update(self):
         """
@@ -270,7 +273,7 @@ class TestbedParametersSharing(object):
             self.draw()
 
             if self.print_fps:
-                print('FPS : ' + str('{:3.2f}').format(self.fps))
+                printColor(msg='FPS : ' + str('{:3.2f}').format(self.fps))
 
             # Step counter
             homing_global.timestep += 1
@@ -284,12 +287,12 @@ class TestbedParametersSharing(object):
             Last function called before leaving the application
         """
         pygame.quit()
-        print('Pygame Exit')
+        printColor(msg='Pygame Exit')
 
         if homing_global.record:
             homing_global.record = False
             homing_global.fo.close()
-            print("stop recording")
+            printColor(msg="stop recording")
 
 
 if __name__ == '__main__':

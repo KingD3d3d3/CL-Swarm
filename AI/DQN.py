@@ -2,7 +2,7 @@ import numpy as np
 import random
 from collections import deque
 import sys
-from keras.models import load_model
+from keras.models import load_model, clone_model
 
 try:
     from res.print_colors import *
@@ -27,7 +27,8 @@ class Model(object):
         """
             Fit the model
         """
-        self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
+        #self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
+        self.q_network.fit(x, y, batch_size=batch_len, epochs=nb_epochs, verbose=verbose)  # keras 2
 
     def predict(self, state, batch_len=1, target=False):
         """
@@ -46,16 +47,16 @@ class Model(object):
 
     def get_lower_layers_weights(self):
         """
-            Get lower layers weights of Q-Network and Target-Network
+            Get lower layers weights of Q-Network
         """
-        return self.q_network.layers[0].get_weights(), self.target_network.layers[0].get_weights()
+        return self.q_network.layers[0].get_weights()
 
-    def set_lower_layers_weights(self, q_weights, t_weights):
+    def set_lower_layers_weights(self, weights):
         """
             Set lower layers weights of Q-Network and Target-Network
         """
-        self.q_network.layers[0].set_weights(q_weights)
-        self.target_network.layers[0].set_weights(t_weights)
+        self.q_network.layers[0].set_weights(weights)
+        self.target_network.layers[0].set_weights(weights)
 
 
 # -------------------- MEMORY --------------------------
@@ -87,13 +88,15 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
         for sp in samples:
             self.push(sp)
             # self.samples.extend(sample)
-    #
-    # def save(self):
-    #     """
-    #         Get n samples randomly
-    #     """
-    #     n = min(n, len(self.samples))
-    #     return random.sample(self.samples, n)
+            #
+            # def save(self):
+            #     """
+            #         Get n samples randomly
+            #     """
+            #     n = min(n, len(self.samples))
+            #     return random.sample(self.samples, n)
+
+
 # -------------------- DQN AGENT -----------------------
 
 # DEFAULT HYPERPARAMETERS
@@ -183,7 +186,7 @@ class DQN(object):
         # Training each update
         if self.training and len(self.memory.samples) > 100:
             if not printTimeToLearn:
-                printColor(message="Agent: {:3.0f}".format(self.id) + "{:>28s}".format("time to learn"))
+                printColor(msg="Agent: {:3.0f}".format(self.id) + "{:>28s}".format("time to learn"))
                 printTimeToLearn = True
             self.replay()
 
@@ -258,24 +261,6 @@ class DQN(object):
         # Input shape in Keras : (batch_size, input_dim)
         return np.reshape(state, [1, self.inputCnt])  # need to add 1 dimension for batch
 
-    def save_model(self, model_file):
-        self.model.q_network.save(model_file)
-    #
-    # def save_memory(self, memory_file):
-    #     self.memory.save(memory_file)
-
-    def load_model(self, model_file):
-        self.model.q_network = load_model(model_file)
-        self.model.target_network_network = load_model(model_file)
-
-        self.stop_train()
-
-    def load_weights(self, model_file):
-        self.model.q_network.load_weights(model_file)
-        self.model.target_network.load_weights(model_file)
-
-        self.stop_train()
-
     def learning_score(self):
         """
             Score is the mean of the reward in the sliding window
@@ -283,6 +268,52 @@ class DQN(object):
         learning_score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
         return learning_score
 
-    def stop_train(self):
+    def save_model(self, model_file):
+        """
+            Save model : neural network, optimizer, loss, etc in 'model_file'
+        """
+        self.model.q_network.save(model_file)
+
+        #
+        # def save_memory(self, memory_file):
+        #     self.memory.save(memory_file)
+
+    def load_model(self, model_file):
+        """
+            Load model from 'model_file' and set Q-Network, Target-Network
+            Default: Stop training
+        """
+        self.model.q_network = load_model(model_file)
+        self.model.target_network_network = load_model(model_file)
+
+    def load_weights(self, model_file):
+        """
+            Load weights from 'model_file' and set Q-Network, Target-Network
+            Default: Stop training
+        """
+        self.model.q_network.load_weights(model_file)
+        self.model.target_network.load_weights(model_file)
+
+    def load_lower_layers_weights(self, model_file):
+        """
+            Load lower layers' weights from 'model_file' and set Q-Network, Target-Network
+            Default: Stop training
+        """
+
+        model_copy = clone_model(self.model.q_network)
+        model_copy.load_weights(model_file)
+
+        weights = model_copy.layers[0].get_weights()
+
+        self.model.set_lower_layers_weights(weights)
+
+        if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
+            sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
+
+    def stop_training(self):
+        """
+            Stop training the Neural Network
+            Stop exploration -> only exploitation
+        """
         self.training = False
         self.epsilon = FINAL_EPSILON
