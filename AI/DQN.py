@@ -186,7 +186,9 @@ class DQN(object):
         # Training each update
         if self.training and len(self.memory.samples) > 100:
             if not printTimeToLearn:
-                printColor(msg="Agent: {:3.0f}".format(self.id) + "{:>28s}".format("time to learn"))
+                printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                               "{:>28s}".format("time to learn") +
+                               ", tmstp: {:10.0f}".format(self.steps))
                 printTimeToLearn = True
             self.replay()
 

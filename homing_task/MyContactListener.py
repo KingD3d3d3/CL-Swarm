@@ -83,7 +83,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            homing_debug.xprint(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+            homing_debug.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
             return
 
         if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHoming):
@@ -98,7 +98,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            homing_debug.xprint(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+            homing_debug.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
             return
 
     @classmethod
@@ -130,7 +130,7 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            # homing_debug.xprint(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
             agent.startTimestepObstacleCollision = homing_global.timestep  # Start counting
             return
 
@@ -140,7 +140,7 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            # homing_debug.xprint(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
             agent.startTimestepObstacleCollision = homing_global.timestep  # Start counting
             return
 
@@ -162,7 +162,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            homing_debug.xprint(agent, "collision {}: {}".format("Wall", obstacle.id))
+            homing_debug.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
@@ -174,7 +174,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            homing_debug.xprint(agent, "collision {}: {}".format("Wall", obstacle.id))
+            homing_debug.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
             return
 
     @classmethod
@@ -187,7 +187,7 @@ class MyContactListener(contactListener):
             obstacle = objectB
 
             agent.endCollisionColor()
-            # homing_debug.xprint(agent, "end collision {}: {}".format("Wall", obstacle.id))
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
@@ -195,7 +195,7 @@ class MyContactListener(contactListener):
             obstacle = objectA
 
             agent.endCollisionColor()
-            # homing_debug.xprint(agent, "end collision {}: {}".format("Wall", obstacle.id))
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -223,8 +223,8 @@ class MyContactListener(contactListener):
             agentB.agentCollisionCount += 1
             agentB.collisionColor()
 
-            homing_debug.xprint(agentA, "collision {}: {}".format("Agent", agentB.id))
-            homing_debug.xprint(agentB, "collision {}: {}".format("Agent", agentA.id))
+            homing_debug.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
+            homing_debug.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
 
             return
 
@@ -267,7 +267,7 @@ class MyContactListener(contactListener):
 
             agentA.endCollisionColor()
             agentB.endCollisionColor()
-            # homing_debug.xprint(agent, "end collision {}: {}".format("Wall", obstacle.id))
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
 
             agentA.startTimestepAgentCollision[idB] = homing_global.timestep  # Start counting
             agentB.startTimestepAgentCollision[idA] = homing_global.timestep  # Start counting

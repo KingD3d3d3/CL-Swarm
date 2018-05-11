@@ -182,10 +182,10 @@ class AgentHoming(Agent):
         orientation = self.orientationToGoal()
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
-            homing_task.homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+            homing_task.homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-            homing_task.homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+            homing_task.homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
 
     def draw(self):
@@ -310,7 +310,7 @@ class AgentHoming(Agent):
         self.timeToGoal_window.append(self.elapsedTimestep)
 
         sys.stdout.write(PrintColor.RED)
-        homing_task.homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
+        homing_task.homing_debug.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
         sys.stdout.write(PrintColor.RESET)
 
         # Reset, Update
@@ -331,12 +331,12 @@ class AgentHoming(Agent):
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingGoal:
                 self.facingGoal = True
-                homing_task.homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+                homing_task.homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
 
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             if self.facingGoal:
                 self.facingGoal = False
-                homing_task.homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+                homing_task.homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         # Normalize sensor's value
         normSensor1 = self.normalizeSensorsValue(self.sensor1)

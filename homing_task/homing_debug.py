@@ -3,6 +3,7 @@ import sys
 try:
     # Running in PyCharm
     import homing_global
+    from res.print_colors import printColor
 except:
     # Running in command line
     import logging
@@ -11,6 +12,7 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     import homing_global
+    from ..res.print_colors import printColor
 
 header_write = False
 header = ("agent",
@@ -26,7 +28,7 @@ header = ("agent",
           )
 
 
-def xprint(agent=None, event_message=""):
+def printEvent(agent=None, event_message=""):
     """
         Agent           : agent ID
         Event           : event's message
@@ -91,3 +93,7 @@ def xprint(agent=None, event_message=""):
         print(msg)
 
     return
+
+def xprint(msg=""):
+    printColor(msg="{: <40s}".format(msg) +
+                   ", tmstp: {:10.0f}, t: {:10.3f}".format(homing_global.timestep, homing_global.timer))

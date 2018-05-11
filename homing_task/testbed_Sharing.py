@@ -5,6 +5,7 @@ import pygame
 from Box2D.b2 import (world)
 from pygame.locals import *
 import csv
+import matplotlib.pyplot as plt
 
 try:
     # Running in PyCharm
@@ -20,6 +21,7 @@ try:
     from experimental.Entity import Entity
     import homing_global
     from res.print_colors import printColor
+    import homing_debug
 except:
     # Running in command line
     import logging
@@ -35,7 +37,8 @@ except:
     from ..Setup import *
     from ..Util import *
     import homing_global
-    from .res.print_colors import printColor
+    from ..res.print_colors import printColor
+    import homing_debug
 
 
 class TestbedParametersSharing(object):
@@ -66,6 +69,9 @@ class TestbedParametersSharing(object):
         self.deltaTime = 1.0 / target_fps
         self.fps = 1.0 / self.deltaTime
         self.accumulator = 0
+
+        self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
+
         # -------------------- Pygame Setup ----------------------
 
         pygame.init()
@@ -155,12 +161,11 @@ class TestbedParametersSharing(object):
         # Show FPS
         PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
 
-        #pygame.draw.rect(self.screen, Color.Cyan, (1260, 0, 20, 720))
-        #pygame.draw.circle(self.screen, Color.Cyan, (0, 720), 20)
+        # pygame.draw.rect(self.screen, Color.Cyan, (1260, 0, 20, 720))
+        # pygame.draw.circle(self.screen, Color.Cyan, (0, 720), 20)
 
         # Flip the screen
         pygame.display.flip()
-
 
     def handle_events(self):
         """
@@ -174,27 +179,29 @@ class TestbedParametersSharing(object):
                 self.pause = not self.pause  # Pause the game
             if event.type == KEYDOWN and event.key == K_r:
                 if not homing_global.record:  # Record simulation
-                    printColor(msg="Start recording")
+                    homing_debug.xprint(msg="Start recording")
                     homing_global.record = True
                     filename = homing_global.fileCreate()
                     homing_global.fo = open(filename, 'a')
                     homing_global.writer = csv.writer(homing_global.fo)
                 else:  # Stop recording
-                    printColor(msg="Stop recording")
+                    homing_debug.xprint(msg="Stop recording")
                     homing_global.record = False
                     homing_global.fo.close()
             if event.type == KEYDOWN and event.key == K_s:
-                printColor(msg="Save Agent's brain and Memory")
+                homing_debug.xprint(msg="Save Agent's brain and Memory")
                 self.agents[0].save_brain()
                 self.agents[0].save_memory()
             if event.type == KEYDOWN and event.key == K_l:
-                printColor(msg="Load full model weights")
+                homing_debug.xprint(msg="Load full model weights")
                 self.agents[0].load_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
-                printColor(msg="Load lower layer weights")
+                homing_debug.xprint(msg="Load lower layer weights")
                 self.agents[0].load_lower_layers_weights()
                 self.agents[0].stop_training()
+            if event.type == KEYDOWN and event.key == K_p: # plot Agent's learning scores
+                self.plot_learning_scores()
 
     def update(self):
         """
@@ -203,6 +210,7 @@ class TestbedParametersSharing(object):
         # Update the agents
         for i in xrange(self.numAgents):
             self.agents[i].update()
+        self.learning_scores.append(self.agents[0].learning_score())  # appending the learning score
 
     def fps_physic_step(self):
         """
@@ -281,19 +289,27 @@ class TestbedParametersSharing(object):
             # Time counter
             homing_global.timer += self.deltaTime
 
-    @staticmethod
-    def end():
+    def end(self):
         """
             Last function called before leaving the application
         """
         pygame.quit()
-        printColor(msg='Pygame Exit')
+        homing_debug.xprint(msg='Pygame Exit')
 
         if homing_global.record:
             homing_global.record = False
             homing_global.fo.close()
-            printColor(msg="stop recording")
+            homing_debug.xprint(msg="Stop recording")
 
+        self.plot_learning_scores()
+
+    def plot_learning_scores(self):
+        plt.plot(self.learning_scores)
+        plt.xlabel('Timestep')
+        plt.ylabel('Learning Score')
+        plt.title('Agent\'s Learning Score over Timestep')
+        plt.grid(True)
+        plt.show(block=False)
 
 if __name__ == '__main__':
     simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,

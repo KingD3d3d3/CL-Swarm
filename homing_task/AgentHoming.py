@@ -183,10 +183,10 @@ class AgentHoming(Agent):
         self.facingGoal = True  # default
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
-            homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+            homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-            homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+            homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
     def draw(self):
 
@@ -322,7 +322,7 @@ class AgentHoming(Agent):
 
         # Goal reached event
         sys.stdout.write(PrintColor.PRINT_RED)
-        homing_debug.xprint(self, "reached goal: {}".format(self.currentGoalIndex + 1))
+        homing_debug.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
         sys.stdout.write(PrintColor.PRINT_RESET)
 
         # Reset, Update
@@ -351,12 +351,12 @@ class AgentHoming(Agent):
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingGoal:
                 self.facingGoal = True
-                homing_debug.xprint(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+                homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
 
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             if self.facingGoal:
                 self.facingGoal = False
-                homing_debug.xprint(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+                homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         # Select action using AI
         # last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
