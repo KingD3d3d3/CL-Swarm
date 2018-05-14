@@ -5,6 +5,12 @@ import pygame
 from Box2D.b2 import (vec2, pi)
 from enum import Enum
 from pygame.locals import *
+import time
+import os
+import errno
+import csv
+import pandas as pd
+import numpy as np
 
 try:
     # Running in PyCharm
@@ -29,7 +35,7 @@ go_print_Turn = False
 prev_turned_angle = 0
 
 class Agent(object):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, training=True):
         self.screen = screen
         self.world = world
 
@@ -44,6 +50,12 @@ class Agent(object):
 
         self.initialSpeed = 12
         self.updateCalls = 0
+
+        self.brain = None
+        # Training flag
+        self.training = training
+
+
 
     def getLateralVelocity(self):
         currentRightNormal = self.body.GetWorldVector(vec2(1, 0))
@@ -158,3 +170,104 @@ class Agent(object):
         current_forward_normal = self.body.GetWorldVector((0, 1))
         pygame.draw.line(self.screen, Color.White, worldToPixels(self.body.worldCenter),
                          worldToPixels(self.body.worldCenter + current_forward_normal * self.radius))
+
+    def learning_score(self):
+        """
+            Score is the mean of the reward in the sliding window
+        """
+        learning_score = self.brain.learning_score()
+        return learning_score
+
+    def save_brain(self):
+        """
+            Save agent's brain (model : neural network, optimizer, loss, etc) in file
+            Also create the /brain_files/ directory if it doesn't exist
+        """
+        timestr = time.strftime("%Y_%m_%d_%H%M%S")
+        directory = "./brain_files/"
+        network_model = directory + timestr + "_model.h5"  # neural network model file
+
+        if not os.path.exists(os.path.dirname(directory)):
+            try:
+                os.makedirs(os.path.dirname(directory))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        self.brain.save_model(network_model)
+
+    def load_model(self):
+        """
+            Load Agent's model config from file
+            Everything : NN architecture, optimizer, weights, ...
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_model(model_file)
+
+    def load_weights(self):
+        """
+            Load Agent's weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_weights(model_file)
+
+    def load_lower_layers_weights(self):
+        """
+            Load Agent's lowe layers' weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_lower_layers_weights(model_file)
+
+    def save_memory(self):
+        """
+            Save Agent's memory (experiences) in csv file
+            Also create the /brain_files/ directory if it doesn't exist
+        """
+        timestr = time.strftime("%Y_%m_%d_%H%M%S")
+        directory = "./brain_files/"
+        memory_file = directory + timestr + "_memory.csv"  # neural network model file
+
+        if not os.path.exists(os.path.dirname(directory)):
+            try:
+                os.makedirs(os.path.dirname(directory))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        self.brain.save_memory(memory_file)
+
+    def load_memory(self):
+        """
+            Load memory from file
+        """
+        directory = "./brain_files/"
+        memory_file = directory + "brain" + "_memory.csv"  # neural network model file
+
+        memory_list = []
+        data = pd.read_csv(memory_file)
+
+        remove_bracket = lambda x: x.replace('[', '').replace(']', '')
+        string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
+
+        data['state'] = data['state'].map(remove_bracket).map(string_to_array)
+        data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
+
+        for i, row in data.iterrows():
+            exp = (row['state'], row['action'], row['reward'], row['next_state'])
+            memory_list.append(exp)
+
+        return
+
+    def stop_training(self):
+        """
+            Stop training the brain (Neural Network)
+            Stop exploration -> only exploitation
+        """
+        self.training = False
+        self.brain.stop_training()

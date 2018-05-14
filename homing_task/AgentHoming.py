@@ -104,7 +104,7 @@ class Reward:
 class AgentHoming(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0, training=True):
         # numAgents : the total number of agents in the simulation -> create a vector of collision's time for each agent
-        super(AgentHoming, self).__init__(screen, world, x, y, angle, radius)
+        super(AgentHoming, self).__init__(screen, world, x, y, angle, radius, training)
 
         # Agent's ID
         self.id = id
@@ -396,16 +396,7 @@ class AgentHoming(Agent):
 
         return
 
-    def learning_score(self):
-        # TODO Put this method in Superclass
-        """
-            Score is the mean of the reward in the sliding window
-        """
-        learning_score = self.brain.learning_score()
-        return learning_score
-
     def collisionColor(self):
-        # TODO Put this method in Superclass
         """
             Change agent color during collision
         """
@@ -416,7 +407,6 @@ class AgentHoming(Agent):
         self.raycastFrontColor = Color.Magenta
 
     def endCollisionColor(self):
-        # TODO Put this method in Superclass
         """
             Reset agent color when end of collision
         """
@@ -427,104 +417,3 @@ class AgentHoming(Agent):
             self.color = self.initial_color
             self.raycastFrontColor = self.initial_raycastFrontColor
             self.raycastSideColor = self.initial_raycastSideColor
-
-    def save_brain(self):
-        # TODO Put this method in Superclass
-        """
-            Save agent's brain (model : neural network, optimizer, loss, etc) in file
-            Also create the /brain_files/ directory if it doesn't exist
-        """
-        timestr = time.strftime("%Y_%m_%d_%H%M%S")
-        directory = "./brain_files/"
-        network_model = directory + timestr + "_model.h5"  # neural network model file
-
-        if not os.path.exists(os.path.dirname(directory)):
-            try:
-                os.makedirs(os.path.dirname(directory))
-            except OSError as exc:  # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-
-        self.brain.save_model(network_model)
-
-    def load_model(self):
-        # TODO Put this method in Superclass
-        """
-            Load Agent's model config from file
-            Everything : NN architecture, optimizer, weights, ...
-        """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
-
-        self.brain.load_model(model_file)
-
-    def load_weights(self):
-        # TODO Put this method in Superclass
-        """
-            Load Agent's weights from file
-        """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
-
-        self.brain.load_weights(model_file)
-
-    def load_lower_layers_weights(self):
-        # TODO Put this method in Superclass
-        """
-            Load Agent's lowe layers' weights from file
-        """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
-
-        self.brain.load_lower_layers_weights(model_file)
-
-    def save_memory(self):
-        # TODO Put this method in Superclass
-        """
-            Save Agent's memory (experiences) in csv file
-            Also create the /brain_files/ directory if it doesn't exist
-        """
-        timestr = time.strftime("%Y_%m_%d_%H%M%S")
-        directory = "./brain_files/"
-        memory_file = directory + timestr + "_memory.csv"  # neural network model file
-
-        if not os.path.exists(os.path.dirname(directory)):
-            try:
-                os.makedirs(os.path.dirname(directory))
-            except OSError as exc:  # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-
-        self.brain.save_memory(memory_file)
-
-    def load_memory(self):
-        # TODO Put this method in Superclass
-        """
-            Load memory from file
-        """
-        directory = "./brain_files/"
-        memory_file = directory + "brain" + "_memory.csv"  # neural network model file
-
-        memory_list = []
-        data = pd.read_csv(memory_file)
-
-        remove_bracket = lambda x: x.replace('[', '').replace(']', '')
-        string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
-
-        data['state'] = data['state'].map(remove_bracket).map(string_to_array)
-        data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
-
-        for i, row in data.iterrows():
-            exp = (row['state'], row['action'], row['reward'], row['next_state'])
-            memory_list.append(exp)
-
-        return
-
-    def stop_training(self):
-        # TODO Put this method in Superclass
-        """
-            Stop training the brain (Neural Network)
-            Stop exploration -> only exploitation
-        """
-        self.training = False
-        self.brain.stop_training()
