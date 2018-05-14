@@ -101,7 +101,8 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 
 # DEFAULT HYPERPARAMETERS
 BATCH_SIZE = 32
-MEMORY_CAPACITY = 2000
+# B is typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
+MEMORY_CAPACITY = 10000 # 2000
 GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001
 TAU = 0.01  # 0.001 # update target network rate

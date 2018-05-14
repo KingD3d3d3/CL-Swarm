@@ -20,10 +20,10 @@ try:
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
-    from homing_task.RayCastCallback import RayCastCallback
+    from task_homing.RayCastCallback import RayCastCallback
     import res.print_colors as PrintColor
-    import homing_task.homing_debug
-    import homing_task.homing_global
+    import task_homing.homing_debug
+    import task_homing.homing_global
 except:
     # Running in command line
     import logging
@@ -37,10 +37,10 @@ except:
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     from .. import Util
-    from homing_task.RayCastCallback import RayCastCallback
+    from task_homing.RayCastCallback import RayCastCallback
     from res import print_colors as PrintColor
-    import homing_task.homing_debug
-    import homing_task.homing_global
+    import task_homing.homing_debug
+    import task_homing.homing_global
 
 
 # ----------- Neural Network Config ----------------
@@ -182,10 +182,10 @@ class AgentHoming(Agent):
         orientation = self.orientationToGoal()
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
-            homing_task.homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+            task_homing.homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-            homing_task.homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+            task_homing.homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
 
     def draw(self):
@@ -304,18 +304,18 @@ class AgentHoming(Agent):
 
     def computeGoalReached(self):
         self.goalReachedCount += 1
-        self.elapsedTime = homing_task.homing_global.timer - self.startTime
-        self.elapsedTimestep = homing_task.homing_global.timestep - self.startTimestep
+        self.elapsedTime = task_homing.homing_global.timer - self.startTime
+        self.elapsedTimestep = task_homing.homing_global.timestep - self.startTimestep
 
         self.timeToGoal_window.append(self.elapsedTimestep)
 
         sys.stdout.write(PrintColor.RED)
-        homing_task.homing_debug.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
+        task_homing.homing_debug.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
         sys.stdout.write(PrintColor.RESET)
 
         # Reset, Update
-        self.startTime = homing_task.homing_global.timer
-        self.startTimestep = homing_task.homing_global.timestep
+        self.startTime = task_homing.homing_global.timer
+        self.startTimestep = task_homing.homing_global.timestep
         self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
         self.t2GCollisionCount = 0
         self.t2GAgentCollisionCount = 0
@@ -331,12 +331,12 @@ class AgentHoming(Agent):
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingGoal:
                 self.facingGoal = True
-                homing_task.homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+                task_homing.homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
 
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             if self.facingGoal:
                 self.facingGoal = False
-                homing_task.homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+                task_homing.homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         # Normalize sensor's value
         normSensor1 = self.normalizeSensorsValue(self.sensor1)
@@ -375,8 +375,8 @@ class AgentHoming(Agent):
             #self.brain.replay()  # experience replay
 
         self.last_distance = self.distance
-        self.elapsedTime = homing_task.homing_global.timer - self.startTime
-        self.elapsedTimestep = homing_task.homing_global.timestep - self.startTimestep
+        self.elapsedTime = task_homing.homing_global.timer - self.startTime
+        self.elapsedTimestep = task_homing.homing_global.timestep - self.startTimestep
 
         return
 

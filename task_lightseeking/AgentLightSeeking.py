@@ -24,10 +24,10 @@ try:
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
-    from homing_task.RayCastCallback import RayCastCallback
+    from task_lightseeking.RayCastCallback import RayCastCallback
     import res.print_colors as PrintColor
-    import homing_debug
-    import homing_global
+    import lightseeking_debug
+    import lightseeking_global
 except:
     # Running in command line
     import logging
@@ -43,20 +43,20 @@ except:
     from .. import Util
     from .RayCastCallback import RayCastCallback
     from ..res import print_colors as PrintColor
-    import homing_debug
-    import homing_global
+    import lightseeking_debug
+    import lightseeking_global
 
 
 # ----------- Agent's brain Neural Network Config ----------------
 
-class DQNHoming(DQN):
+class DQNLightSeeking(DQN):
     def build_model(self):
         # Sequential() creates the foundation of the layers.
         model = Sequential()
 
         # 'Dense' define fully connected layers
         model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
-        #model.add(Dense(24, activation='relu'))  # hidden -> hidden
+        model.add(Dense(24, activation='relu'))  # hidden -> hidden
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
         # # 'Dense' define fully connected layers
@@ -91,20 +91,23 @@ class Reward:
     @classmethod
     def sensorReward(cls, x):
         """
-            Custom cubic regression made with https://mycurvefit.com/
-            Check sensor-reward-function-HomingTask.xls file in /res/ directory
+            Linear Regression
+            x                   y
+            1                 -0.5=LIVING_PENALTY
+            0                 -1
+            #Custom cubic regression made with https://mycurvefit.com/
+            #Check sensor-reward-function-HomingTask.xls file in /res/ directory
         """
-        if x == 2.0:
-            return cls.LIVING_PENALTY
-        else:
-            y = -1 + 0.5909357 * x - 0.2114035 * np.power(x, 2) + 0.02046784 * np.power(x, 3)
-            return y
+        #y = -1 + 0.5909357 * x - 0.2114035 * np.power(x, 2) + 0.02046784 * np.power(x, 3)
+        #y = -1 + 1.155556 * x - 0.7666667 * np.power(x, 2) + 0.1111111 * np.power(x, 3)
+        y = 0.5 * x - 1
+        return round(y, 1)
 
 
-class AgentHoming(Agent):
+class AgentLightSeeking(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0, training=True):
         # numAgents : the total number of agents in the simulation -> create a vector of collision's time for each agent
-        super(AgentHoming, self).__init__(screen, world, x, y, angle, radius, training)
+        super(AgentLightSeeking, self).__init__(screen, world, x, y, angle, radius, training)
 
         # Agent's ID
         self.id = id
@@ -119,7 +122,7 @@ class AgentHoming(Agent):
         self.sensor2 = 0.0  # front raycast
         self.sensor3 = 0.0  # right raycast
         self.raycastLength = 2.0
-        self.brain = DQNHoming(inputCnt=5, actionCnt=len(list(Action)), id=self.id, training=self.training)
+        self.brain = DQNLightSeeking(inputCnt=5, actionCnt=len(list(Action)), id=self.id, training=self.training)
 
         # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0
@@ -152,6 +155,7 @@ class AgentHoming(Agent):
         self.elapsedTime = 0.00
         self.elapsedTimestep = 0
 
+        self.maxReward = Reward.GETTING_CLOSER
         self.last_reward = 0.0  # last agent's reward
         self.last_distance = 0.0  # last agent's distance to the goal
         self.distance = 0.0  # current distance to the goal
@@ -183,10 +187,10 @@ class AgentHoming(Agent):
         self.facingGoal = True  # default
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
-            homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+            lightseeking_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-            homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+            lightseeking_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
     def draw(self):
 
@@ -315,19 +319,19 @@ class AgentHoming(Agent):
 
     def computeGoalReached(self):
         self.goalReachedCount += 1
-        self.elapsedTime = homing_global.timer - self.startTime
-        self.elapsedTimestep = homing_global.timestep - self.startTimestep
+        self.elapsedTime = lightseeking_global.timer - self.startTime
+        self.elapsedTimestep = lightseeking_global.timestep - self.startTimestep
 
         self.timeToGoal_window.append(self.elapsedTimestep)
 
         # Goal reached event
         sys.stdout.write(PrintColor.PRINT_RED)
-        homing_debug.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
+        lightseeking_debug.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
         sys.stdout.write(PrintColor.PRINT_RESET)
 
         # Reset, Update
-        self.startTime = homing_global.timer
-        self.startTimestep = homing_global.timestep
+        self.startTime = lightseeking_global.timer
+        self.startTimestep = lightseeking_global.timestep
         self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
         self.t2GCollisionCount = 0
         self.t2GAgentCollisionCount = 0
@@ -336,7 +340,7 @@ class AgentHoming(Agent):
         """
             Main function of the agent
         """
-        super(AgentHoming, self).update()
+        super(AgentLightSeeking, self).update()
 
         # Read sensor's value
         self.readSensors()
@@ -351,12 +355,12 @@ class AgentHoming(Agent):
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             if not self.facingGoal:
                 self.facingGoal = True
-                homing_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
+                lightseeking_debug.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
 
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             if self.facingGoal:
                 self.facingGoal = False
-                homing_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
+                lightseeking_debug.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
         # Select action using AI
         # last_signal = np.asarray([self.sensor1, self.sensor2, self.sensor3, orientation])
@@ -391,8 +395,8 @@ class AgentHoming(Agent):
             # self.brain.replay()  # experience replay
 
         self.last_distance = self.distance
-        self.elapsedTime = homing_global.timer - self.startTime
-        self.elapsedTimestep = homing_global.timestep - self.startTimestep
+        self.elapsedTime = lightseeking_global.timer - self.startTime
+        self.elapsedTimestep = lightseeking_global.timestep - self.startTimestep
 
         return
 

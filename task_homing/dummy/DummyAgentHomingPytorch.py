@@ -10,7 +10,7 @@ from AI.pytorch import Dqn
 from Agent import Agent
 from Setup import *
 from Util import worldToPixels, pixelsToWorld, normalize, angle
-from homing_task.RayCastCallback import RayCastCallback
+from task_homing.RayCastCallback import RayCastCallback
 
 
 # -------------------- Agent ----------------------
