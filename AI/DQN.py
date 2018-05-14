@@ -110,8 +110,6 @@ INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
 EXPLORATION_STEPS = 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value
 
-printTimeToLearn = False
-
 
 class DQN(object):
     def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, training=True):
@@ -121,6 +119,7 @@ class DQN(object):
 
         # Training flag
         self.training = training
+        self.printTimeToLearn = False
 
         # Hyperparameters
         self.batch_size = BATCH_SIZE
@@ -174,8 +173,6 @@ class DQN(object):
             Main function of the agent's brain
             Return the action to be performed
         """
-        global printTimeToLearn
-
         new_state = self.preprocess(observation)
         experience = (self.last_state, self.last_action, self.last_reward, new_state)
         self.record(experience)
@@ -185,11 +182,6 @@ class DQN(object):
 
         # Training each update
         if self.training and len(self.memory.samples) > 100:
-            if not printTimeToLearn:
-                printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                               "{:>28s}".format("time to learn") +
-                               ", tmstp: {:10.0f}".format(self.steps))
-                printTimeToLearn = True
             self.replay()
 
         self.last_action = action
@@ -227,6 +219,12 @@ class DQN(object):
         # If not enough samples in memory
         if len(self.memory.samples) < self.batch_size:
             return
+
+        if not self.printTimeToLearn:
+            printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                           "{:>28s}".format("time to learn") +
+                           ", tmstp: {:10.0f}".format(self.steps))
+            self.printTimeToLearn = True
 
         batch = self.memory.pop(self.batch_size)
         batch = zip(*batch)

@@ -17,8 +17,6 @@ try:
     from MyContactListener import MyContactListener
     from Setup import *
     from Util import *
-    from experimental.EntityManager import EntityManager
-    from experimental.Entity import Entity
     import homing_global
     from res.print_colors import printColor
     import homing_debug
