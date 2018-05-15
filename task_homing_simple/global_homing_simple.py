@@ -2,7 +2,7 @@ import os
 import errno
 import time
 
-timestep = 0  # timesteps passed since beginning of simulation
+timestep = 1  # 0 # timesteps passed since beginning of simulation
 timer = 0.00  # times passed since beginning of simulation
 debug = True  # debug mode flag, if debug mode then print event's message in console
 record = False  # record flag, if yes record simulation's events in file
@@ -16,7 +16,7 @@ def fileCreate():
     """
     timestr = time.strftime("%Y_%m_%d_%H%M%S")
     #filename = "./simulation_logs/" + timestr + "_homing.txt" # txt file
-    filename = "./simulation_logs/" + timestr + "_homing.csv"  # CSV file
+    filename = "./simulation_logs/" + timestr + "_homing_simple.csv"  # CSV file
 
     if not os.path.exists(os.path.dirname(filename)):
         try:

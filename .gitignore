@@ -54,6 +54,9 @@ fabric.properties
 # Excel files
 *.xlsx
 
+# Png files
+*.png
+
 # CSV files
 *.csv
 
@@ -64,3 +67,6 @@ homing_task/simulation_logs/
 # Neural networks' model and Memory
 */brain_files/
 *.h5
+
+# Learning scores
+*/learning_scores/

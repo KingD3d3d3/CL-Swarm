@@ -6,10 +6,14 @@ from Box2D.b2 import (world)
 from pygame.locals import *
 import csv
 import matplotlib.pyplot as plt
-
+import time
+import os
+import errno
+import csv
+import numpy as np
 try:
     # Running in PyCharm
-    from AgentLightSeeking import AgentLightSeeking
+    from AgentHomingSimple import AgentHomingSimple
     import res.colors as Color
     from Border import Border
     from Circle import StaticCircle
@@ -17,9 +21,9 @@ try:
     from MyContactListener import MyContactListener
     from Setup import *
     from Util import *
-    import lightseeking_debug
+    import debug_homing_simple
     from res.print_colors import printColor
-    import lightseeking_global
+    import global_homing_simple
 except:
     # Running in command line
     import logging
@@ -27,16 +31,16 @@ except:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from .AgentLightSeeking import AgentLightSeeking
+    from .AgentHomingSimple import AgentHomingSimple
     from ..Border import Border
     from ..Circle import StaticCircle
     from ..res import colors as Color
     from .MyContactListener import MyContactListener
     from ..Setup import *
     from ..Util import *
-    import lightseeking_debug
+    import debug_homing_simple
     from ..res.print_colors import printColor
-    import lightseeking_global
+    import global_homing_simple
 
 
 class TestbedParametersSharing(object):
@@ -60,8 +64,8 @@ class TestbedParametersSharing(object):
         args = parser.parse_args()
         self.render = args.render == 'True'
         self.print_fps = args.print_fps == 'True'
-        lightseeking_global.debug = args.debug == 'True'
-        lightseeking_global.record = args.record == 'True'
+        global_homing_simple.debug = args.debug == 'True'
+        global_homing_simple.record = args.record == 'True'
         self.fixed_ur_timestep = args.fixed_ur_timestep == 'True'
         self.training = args.training == 'True'
         self.deltaTime = 1.0 / target_fps # 0.016666
@@ -99,7 +103,7 @@ class TestbedParametersSharing(object):
             randX = random.randint(2, self.screen_width / self.ppm - 2)
             randY = random.randint(2, self.screen_height / self.ppm - 2)
             randAngle = degToRad(random.randint(0, 360))
-            a = AgentLightSeeking(screen=self.screen, world=self.world, x=randX, y=randY, angle=randAngle,
+            a = AgentHomingSimple(screen=self.screen, world=self.world, x=randX, y=randY, angle=randAngle,
                                   radius=1.5, id=i, numAgents=self.numAgents, training=self.training)
             self.agents.append(a)
 
@@ -153,26 +157,26 @@ class TestbedParametersSharing(object):
             if event.type == KEYDOWN and event.key == K_p:
                 self.pause = not self.pause  # Pause the game
             if event.type == KEYDOWN and event.key == K_r:
-                if not lightseeking_global.record:  # Record simulation
-                    lightseeking_debug.xprint(msg="Start recording")
-                    lightseeking_global.record = True
-                    filename = lightseeking_global.fileCreate()
-                    lightseeking_global.fo = open(filename, 'a')
-                    lightseeking_global.writer = csv.writer(lightseeking_global.fo)
+                if not global_homing_simple.record:  # Record simulation
+                    debug_homing_simple.xprint(msg="Start recording")
+                    global_homing_simple.record = True
+                    filename = global_homing_simple.fileCreate()
+                    global_homing_simple.fo = open(filename, 'a')
+                    global_homing_simple.writer = csv.writer(global_homing_simple.fo)
                 else:  # Stop recording
-                    lightseeking_debug.xprint(msg="Stop recording")
-                    lightseeking_global.record = False
-                    lightseeking_global.fo.close()
+                    debug_homing_simple.xprint(msg="Stop recording")
+                    global_homing_simple.record = False
+                    global_homing_simple.fo.close()
             if event.type == KEYDOWN and event.key == K_s:
-                lightseeking_debug.xprint(msg="Save Agent's brain and Memory")
+                debug_homing_simple.xprint(msg="Save Agent's brain and Memory")
                 self.agents[0].save_brain()
                 self.agents[0].save_memory()
             if event.type == KEYDOWN and event.key == K_l:
-                lightseeking_debug.xprint(msg="Load full model weights")
+                debug_homing_simple.xprint(msg="Load full model weights")
                 self.agents[0].load_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
-                lightseeking_debug.xprint(msg="Load lower layer weights")
+                debug_homing_simple.xprint(msg="Load lower layer weights")
                 self.agents[0].load_lower_layers_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_p:  # plot Agent's learning scores
@@ -185,10 +189,17 @@ class TestbedParametersSharing(object):
         # Update the agents
         for i in xrange(self.numAgents):
             self.agents[i].update()
-        self.learning_scores.append(self.agents[0].learning_score())  # appending the learning score
-        if self.agents[0].learning_score() > self.agents[0].maxReward:
-            self.running = False
-            printColor(msg="achieved maximum reward")
+        agent0_LS = self.agents[0].learning_score() # learning score of agent 0
+        self.learning_scores.append(agent0_LS)  # appending the learning score
+
+        # if round(agent0_LS, 2) >= self.agents[0].maxReward:
+        #     printColor(msg="Achieved maximum reward")
+        #     print('agent0_LS', agent0_LS)
+        #     debug_homing_simple.xprint(msg="Save Agent's brain and Memory")
+        #     self.agents[0].save_brain()
+        #     self.agents[0].save_memory()
+        #     self.plot_learning_scores(save=True)
+        #     self.running = False
 
     def fps_physic_step(self):
         """
@@ -262,26 +273,26 @@ class TestbedParametersSharing(object):
                 printColor(msg='FPS : ' + str('{:3.2f}').format(self.fps))
 
             # Step counter
-            lightseeking_global.timestep += 1
+            global_homing_simple.timestep += 1
 
             # Time counter
-            lightseeking_global.timer += self.deltaTime
+            global_homing_simple.timer += self.deltaTime
 
     def end(self):
         """
             Last function called before leaving the application
         """
         pygame.quit()
-        lightseeking_debug.xprint(msg='Pygame Exit')
+        debug_homing_simple.xprint(msg='Pygame Exit')
 
-        if lightseeking_global.record:
-            lightseeking_global.record = False
-            lightseeking_global.fo.close()
-            lightseeking_debug.xprint(msg="Stop recording")
+        if global_homing_simple.record:
+            global_homing_simple.record = False
+            global_homing_simple.fo.close()
+            debug_homing_simple.xprint(msg="Stop recording")
 
         self.plot_learning_scores()
 
-    def plot_learning_scores(self):
+    def plot_learning_scores(self, save=False):
         plt.plot(self.learning_scores)
         plt.xlabel('Timestep')
         plt.ylabel('Learning Score')
@@ -289,6 +300,31 @@ class TestbedParametersSharing(object):
         plt.grid(True)
         plt.show(block=False)
 
+        if save:
+            timestr = time.strftime("%Y_%m_%d_%H%M%S")
+            directory = "./learning_scores/"
+            ls_file = directory + timestr + "_ls.csv"  # learning scores file
+            ls_fig = directory + timestr + "_ls.png"  # learning scores figure image
+
+            if not os.path.exists(os.path.dirname(directory)):
+                try:
+                    os.makedirs(os.path.dirname(directory))
+                except OSError as exc:  # Guard against race condition
+                    if exc.errno != errno.EEXIST:
+                        raise
+
+            plt.savefig(ls_fig)
+
+            header = ("timestep", "learning_scores")
+
+            timesteps = np.arange(1, len(self.learning_scores) + 1)
+            ls_over_tmstp = zip(timesteps, self.learning_scores)
+
+            with open(ls_file, 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(header)
+                writer.writerows(ls_over_tmstp)
+            pass
 
 if __name__ == '__main__':
     simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,

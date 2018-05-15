@@ -5,10 +5,10 @@ try:
     # Running in PyCharm
     import res.colors as Color
     from Circle import StaticCircle
-    from AgentLightSeeking import AgentLightSeeking
+    from AgentHomingSimple import AgentHomingSimple
     from Border import Wall
-    import lightseeking_debug
-    import lightseeking_global
+    import debug_homing_simple
+    import global_homing_simple
 except:
     # Running in command line
     import logging
@@ -17,10 +17,10 @@ except:
     logger.info('Running from command line -> Import libraries as package')
     from ..res import colors as Color
     from ..Circle import StaticCircle
-    from .AgentLightSeeking import AgentLightSeeking
+    from .AgentHomingSimple import AgentHomingSimple
     from ..Border import Wall
-    import lightseeking_debug
-    import lightseeking_global
+    import debug_homing_simple
+    import global_homing_simple
 
 EPSILON_TIMESTEP = 10  # 30
 
@@ -71,7 +71,7 @@ class MyContactListener(contactListener):
             Compute if agent to obstacle collision
         """
 
-        if isinstance(objectA, AgentLightSeeking) and isinstance(objectB, StaticCircle):
+        if isinstance(objectA, AgentHomingSimple) and isinstance(objectB, StaticCircle):
             agent = objectA
             obstacle = objectB
 
@@ -83,10 +83,10 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            lightseeking_debug.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+            debug_homing_simple.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
             return
 
-        if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentLightSeeking):
+        if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHomingSimple):
             agent = objectB
             obstacle = objectA
 
@@ -98,7 +98,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            lightseeking_debug.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+            debug_homing_simple.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
             return
 
     @classmethod
@@ -107,10 +107,10 @@ class MyContactListener(contactListener):
             Check if time between successive collision between the same agent and same obstacles was too short
         """
         if agent.lastObstacleCollide == obstacle:  # same objects colliding
-            agent.elapsedTimestepObstacleCollision = lightseeking_global.timestep - agent.startTimestepObstacleCollision
+            agent.elapsedTimestepObstacleCollision = global_homing_simple.timestep - agent.startTimestepObstacleCollision
 
             if agent.elapsedTimestepObstacleCollision <= EPSILON_TIMESTEP:  # Check elapsed timestep
-                agent.startTimestepObstacleCollision = lightseeking_global.timestep  # update based on elapsed time
+                agent.startTimestepObstacleCollision = global_homing_simple.timestep  # update based on elapsed time
 
                 # Keep colors
                 agent.collisionColor()
@@ -124,24 +124,24 @@ class MyContactListener(contactListener):
         """
             Compute if agent to wall end of collision
         """
-        if isinstance(objectA, AgentLightSeeking) and isinstance(objectB, StaticCircle):
+        if isinstance(objectA, AgentHomingSimple) and isinstance(objectB, StaticCircle):
             agent = objectA
             obstacle = objectB
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            # lightseeking_debug.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
-            agent.startTimestepObstacleCollision = lightseeking_global.timestep  # Start counting
+            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
+            agent.startTimestepObstacleCollision = global_homing_simple.timestep  # Start counting
             return
 
-        if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentLightSeeking):
+        if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHomingSimple):
             agent = objectB
             obstacle = objectA
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            # lightseeking_debug.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
-            agent.startTimestepObstacleCollision = lightseeking_global.timestep  # Start counting
+            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
+            agent.startTimestepObstacleCollision = global_homing_simple.timestep  # Start counting
             return
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -153,7 +153,7 @@ class MyContactListener(contactListener):
         """
             Compute if agent to wall collision
         """
-        if isinstance(objectA, AgentLightSeeking) and isinstance(objectB, Wall):
+        if isinstance(objectA, AgentHomingSimple) and isinstance(objectB, Wall):
             agent = objectA
             obstacle = objectB
             agent.lastObstacleCollide = obstacle
@@ -162,10 +162,10 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            lightseeking_debug.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+            debug_homing_simple.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
             return
 
-        if isinstance(objectA, Wall) and isinstance(objectB, AgentLightSeeking):
+        if isinstance(objectA, Wall) and isinstance(objectB, AgentHomingSimple):
             agent = objectB
             obstacle = objectA
             agent.lastObstacleCollide = obstacle
@@ -174,7 +174,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            lightseeking_debug.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+            debug_homing_simple.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
             return
 
     @classmethod
@@ -182,20 +182,20 @@ class MyContactListener(contactListener):
         """
             Compute if agent to wall end of collision
         """
-        if isinstance(objectA, AgentLightSeeking) and isinstance(objectB, Wall):
+        if isinstance(objectA, AgentHomingSimple) and isinstance(objectB, Wall):
             agent = objectA
             obstacle = objectB
 
             agent.endCollisionColor()
-            # lightseeking_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
+            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
 
-        if isinstance(objectA, Wall) and isinstance(objectB, AgentLightSeeking):
+        if isinstance(objectA, Wall) and isinstance(objectB, AgentHomingSimple):
             agent = objectB
             obstacle = objectA
 
             agent.endCollisionColor()
-            # lightseeking_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
+            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -206,7 +206,7 @@ class MyContactListener(contactListener):
         """
             Compute if agent to agent collision
         """
-        if isinstance(objectA, AgentLightSeeking) and isinstance(objectB, AgentLightSeeking):
+        if isinstance(objectA, AgentHomingSimple) and isinstance(objectB, AgentHomingSimple):
             agentA = objectA
             agentB = objectB
 
@@ -223,8 +223,8 @@ class MyContactListener(contactListener):
             agentB.agentCollisionCount += 1
             agentB.collisionColor()
 
-            lightseeking_debug.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
-            lightseeking_debug.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
+            debug_homing_simple.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
+            debug_homing_simple.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
 
             return
 
@@ -236,14 +236,14 @@ class MyContactListener(contactListener):
         idA = agentA.id
         idB = agentB.id
 
-        agentA.elapsedTimestepAgentCollision[idB] = lightseeking_global.timestep - agentA.startTimestepAgentCollision[idB]
-        agentB.elapsedTimestepAgentCollision[idA] = lightseeking_global.timestep - agentB.startTimestepAgentCollision[idA]
+        agentA.elapsedTimestepAgentCollision[idB] = global_homing_simple.timestep - agentA.startTimestepAgentCollision[idB]
+        agentB.elapsedTimestepAgentCollision[idA] = global_homing_simple.timestep - agentB.startTimestepAgentCollision[idA]
 
         if agentA.elapsedTimestepAgentCollision[idB] <= EPSILON_TIMESTEP \
                 and agentB.elapsedTimestepAgentCollision[idA] <= EPSILON_TIMESTEP:  # Check elapsed timestep
 
-            agentA.startTimestepAgentCollision[idB] = lightseeking_global.timestep  # update based on elapsed time
-            agentB.startTimestepAgentCollision[idA] = lightseeking_global.timestep  # update based on elapsed time
+            agentA.startTimestepAgentCollision[idB] = global_homing_simple.timestep  # update based on elapsed time
+            agentB.startTimestepAgentCollision[idA] = global_homing_simple.timestep  # update based on elapsed time
 
             # Keep colors
             agentA.collisionColor()
@@ -258,7 +258,7 @@ class MyContactListener(contactListener):
         """
             Compute if agent to agent end of collision
         """
-        if isinstance(objectA, AgentLightSeeking) and isinstance(objectB, AgentLightSeeking):
+        if isinstance(objectA, AgentHomingSimple) and isinstance(objectB, AgentHomingSimple):
             agentA = objectA
             agentB = objectB
 
@@ -267,9 +267,9 @@ class MyContactListener(contactListener):
 
             agentA.endCollisionColor()
             agentB.endCollisionColor()
-            # lightseeking_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
+            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
 
-            agentA.startTimestepAgentCollision[idB] = lightseeking_global.timestep  # Start counting
-            agentB.startTimestepAgentCollision[idA] = lightseeking_global.timestep  # Start counting
+            agentA.startTimestepAgentCollision[idB] = global_homing_simple.timestep  # Start counting
+            agentB.startTimestepAgentCollision[idA] = global_homing_simple.timestep  # Start counting
             return
     # ------------------------------------------------------------------------------------------------------------------

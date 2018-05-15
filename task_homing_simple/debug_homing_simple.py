@@ -2,7 +2,7 @@ import sys
 
 try:
     # Running in PyCharm
-    import lightseeking_global
+    import global_homing_simple
     from res.print_colors import printColor
 except:
     # Running in command line
@@ -11,7 +11,7 @@ except:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    import lightseeking_global
+    import global_homing_simple
     from ..res.print_colors import printColor
 
 header_write = False
@@ -54,19 +54,20 @@ def printEvent(agent=None, event_message=""):
            "LS: {:3.2f}, "
            "t: {:10.3f}"
            .format(
-               lightseeking_global.timestep,
+               global_homing_simple.timestep,
                agent.goalReachedCount,
                agent.elapsedTimestep,
                agent.t2GCollisionCount, agent.collisionCount,
                agent.t2GAgentCollisionCount, agent.agentCollisionCount,
                agent.learning_score(),
-               lightseeking_global.timer
+               agent.learning_score(),
+               global_homing_simple.timer
            )
            )
 
     msg_csv = (agent.id,
                event_message,
-               lightseeking_global.timestep,
+               global_homing_simple.timestep,
                agent.goalReachedCount,
                agent.elapsedTimestep,
                agent.t2GCollisionCount,
@@ -77,23 +78,23 @@ def printEvent(agent=None, event_message=""):
                )
 
     # Record data
-    if lightseeking_global.record:
+    if global_homing_simple.record:
 
         # Write header only once at the beginning
         if not header_write:
             if len(header) != len(msg_csv):
                 sys.exit("Header doesn't match csv data")
-            lightseeking_global.writer.writerow(header)
+            global_homing_simple.writer.writerow(header)
             header_write = True
 
-        lightseeking_global.writer.writerow(msg_csv)
+        global_homing_simple.writer.writerow(msg_csv)
 
     # Don't print in non-debug mode
-    if lightseeking_global.debug:
+    if global_homing_simple.debug:
         print(msg)
 
     return
 
 def xprint(msg=""):
     printColor(msg="{: <40s}".format(msg) +
-                   ", tmstp: {:10.0f}, t: {:10.3f}".format(lightseeking_global.timestep, lightseeking_global.timer))
+                   ", tmstp: {:10.0f}, t: {:10.3f}".format(global_homing_simple.timestep, global_homing_simple.timer))
