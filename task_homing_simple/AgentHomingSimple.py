@@ -127,7 +127,8 @@ class AgentHomingSimple(Agent):
         self.sensor2 = 0.0  # front raycast
         self.sensor3 = 0.0  # right raycast
         self.raycastLength = 2.0
-        self.brain = DQNHomingSimple(inputCnt=5, actionCnt=len(list(Action)), id=self.id, training=self.training)
+        self.brain = DQNHomingSimple(inputCnt=5, actionCnt=len(list(Action)), id=self.id,
+                                     training=self.training, ratio_update=10)
 
         # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0

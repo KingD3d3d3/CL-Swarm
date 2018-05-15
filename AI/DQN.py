@@ -113,7 +113,7 @@ EXPLORATION_STEPS = 10000  # 1000  # Number of steps over which initial value of
 
 
 class DQN(object):
-    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, training=True):
+    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, training=True, ratio_update=1):
 
         # Agent's ID
         self.id = id
@@ -166,6 +166,10 @@ class DQN(object):
         # Count the number of iterations
         self.steps = 0
 
+        # Number of iterations for learning update
+        self.ratio_update = ratio_update # Default 1 means the agent learns every timestep
+        self.update_counter = 0
+
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
 
@@ -182,7 +186,7 @@ class DQN(object):
         action = self.select_action(self.last_state)
 
         # Training each update
-        if self.training and len(self.memory.samples) > 100:
+        if self.training and len(self.memory.samples) > 100 and self.update_counter % self.ratio_update == 0:
             self.replay()
 
         self.last_action = action
@@ -191,6 +195,8 @@ class DQN(object):
         self.reward_window.append(reward)
 
         self.steps += 1
+
+        self.update_counter += 1
 
         # Update target network
         if self.steps % UPDATE_TARGET_TIMESTEP == 0:
