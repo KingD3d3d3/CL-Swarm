@@ -188,7 +188,7 @@ class TestbedParametersSharing(object):
                     homing_global.fo.close()
             if event.type == KEYDOWN and event.key == K_s:
                 homing_debug.xprint(msg="Save Agent's brain and Memory")
-                self.agents[0].save_brain()
+                self.agents[0].save_model()
                 self.agents[0].save_memory()
             if event.type == KEYDOWN and event.key == K_l:
                 homing_debug.xprint(msg="Load full model weights")
@@ -196,7 +196,7 @@ class TestbedParametersSharing(object):
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
                 homing_debug.xprint(msg="Load lower layer weights")
-                self.agents[0].load_lower_layers_weights()
+                self.agents[0].load_h1_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_p: # plot Agent's learning scores
                 self.plot_learning_scores()

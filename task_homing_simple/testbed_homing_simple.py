@@ -2,7 +2,7 @@ import random
 import argparse
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
-from Box2D.b2 import (world)
+from Box2D.b2 import (world, vec2)
 from pygame.locals import *
 import csv
 import matplotlib.pyplot as plt
@@ -11,6 +11,7 @@ import os
 import errno
 import csv
 import numpy as np
+
 try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
@@ -20,7 +21,8 @@ try:
     from Box import StaticBox
     from MyContactListener import MyContactListener
     from Setup import *
-    from Util import *
+    from Util import worldToPixels, pixelsToWorld
+    import Util
     import debug_homing_simple
     from res.print_colors import printColor
     import global_homing_simple
@@ -37,7 +39,8 @@ except:
     from ..res import colors as Color
     from .MyContactListener import MyContactListener
     from ..Setup import *
-    from ..Util import *
+    from ..Util import worldToPixels, pixelsToWorld
+    from .. import Util
     import debug_homing_simple
     from ..res.print_colors import printColor
     import global_homing_simple
@@ -60,7 +63,13 @@ class TestbedParametersSharing(object):
         parser.add_argument('--debug', help='print simulation log', default='True')
         parser.add_argument('--record', help='record simulation log in file', default='False')
         parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='True')
-        parser.add_argument('--training', help='if yes should train agent', default='True')
+        parser.add_argument('--training', help='train agent', default='True')
+        parser.add_argument('--collision_avoidance', help='agent learns collision avoidance behavior', default='True')
+        parser.add_argument('--save_brain', help='save neural networks model and memory', default='False')
+        parser.add_argument('--load_full_weights', help='load full weights of neural networks from master to learning agent', default='False')
+        parser.add_argument('--load_h1_weights', help='load hidden layer 1 weights of neural networks from master to learning agent', default='False')
+        parser.add_argument('--load_h1h2_weights', help='load hidden layer 1 and 2 weights of neural networks from master to learning agent', default='False')
+        parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
         args = parser.parse_args()
         self.render = args.render == 'True'
         self.print_fps = args.print_fps == 'True'
@@ -68,13 +77,24 @@ class TestbedParametersSharing(object):
         global_homing_simple.record = args.record == 'True'
         self.fixed_ur_timestep = args.fixed_ur_timestep == 'True'
         self.training = args.training == 'True'
-        self.deltaTime = 1.0 / target_fps # 0.016666
-        self.fps = 1.0 / self.deltaTime
-        self.accumulator = 0
+        self.collision_avoidance = args.collision_avoidance == 'True'
+        self.save_brain = args.save_brain == 'True'
 
+        self.save_learning_score = args.save_learning_score == 'True'
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
+        # Record simulation
+        if global_homing_simple.record:
+            debug_homing_simple.xprint(msg="Start recording")
+            filename = global_homing_simple.fileCreate()
+            global_homing_simple.fo = open(filename, 'a')
+            global_homing_simple.writer = csv.writer(global_homing_simple.fo)
+
         # -------------------- Pygame Setup ----------------------
+
+        self.deltaTime = 1.0 / target_fps  # 0.016666
+        self.fps = 1.0 / self.deltaTime
+        self.accumulator = 0
 
         pygame.init()
         self.screen = None
@@ -88,7 +108,11 @@ class TestbedParametersSharing(object):
         self.pause = False
         self.recording = False
 
-        # -------------------- PyBox2d World Setup ----------------------
+        # -------------------- Environment and PyBox2d World Setup ----------------------
+
+        # Goal positions
+        self.goal1 = (100, 100)
+        self.goal2 = (self.screen_width - self.goal1[0], self.screen_height - self.goal1[1])
 
         # Create the world
         self.world = world(gravity=(0, 0), doSleep=True, contactListener=MyContactListener())  # gravity = (0, -10)
@@ -100,12 +124,39 @@ class TestbedParametersSharing(object):
         self.numAgents = 1  # total numbers of agents in the simulation
         self.agents = []
         for i in xrange(self.numAgents):
-            randX = random.randint(2, self.screen_width / self.ppm - 2)
-            randY = random.randint(2, self.screen_height / self.ppm - 2)
-            randAngle = degToRad(random.randint(0, 360))
-            a = AgentHomingSimple(screen=self.screen, world=self.world, x=randX, y=randY, angle=randAngle,
-                                  radius=1.5, id=i, numAgents=self.numAgents, training=self.training)
+            # randX = random.randint(2, self.screen_width / self.ppm - 2)
+            # randY = random.randint(2, self.screen_height / self.ppm - 2)
+            #randAngle = degToRad(random.randint(0, 360))
+            start_pos = pixelsToWorld(self.goal2) # start from goal 2
+
+            toGoal = Util.normalize(pixelsToWorld(self.goal1) - start_pos)
+            forward = vec2(0, 1)
+            angleDeg = Util.angle(forward, toGoal)
+            angle = Util.degToRad(angleDeg)
+            angle = -angle # start by looking at goal1
+            a = AgentHomingSimple(screen=self.screen, world=self.world, x=start_pos.x, y=start_pos.y, angle=angle,
+                                  radius=1.5, id=i, numAgents=self.numAgents, training=self.training,
+                                  collision_avoidance=self.collision_avoidance)
             self.agents.append(a)
+
+        # Load full weights to agent
+        self.load_full_weights = args.load_full_weights == 'True'
+        if self.load_full_weights:
+            debug_homing_simple.xprint(msg="Load full model weights")
+            self.agents[0].load_weights()
+            self.agents[0].stop_exploring()
+
+        # Load full weights to agent
+        self.load_h1_weights = args.load_h1_weights == 'True'
+        if self.load_h1_weights:
+            debug_homing_simple.xprint(msg="Load 1st hidden layer weights")
+            self.agents[0].load_h1_weights()
+
+        # Load full weights to agent
+        self.load_h1h2_weights = args.load_h1h2_weights == 'True'
+        if self.load_h1h2_weights:
+            debug_homing_simple.xprint(msg="Load 1st and 2nd hidden layer weights")
+            self.agents[0].load_h1h2_weights()
 
     def draw(self):
         """
@@ -122,11 +173,11 @@ class TestbedParametersSharing(object):
         goal1Pos = 100
 
         # Goal 1
-        pygame.draw.circle(self.screen, Color.Red, (goal1Pos, goal1Pos), 20)
+        pygame.draw.circle(self.screen, Color.Red, self.goal1, 20)
         self.screen.blit(goalFont.render('1', True, Color.White), (goal1Pos - 8, goal1Pos - 12))
 
         # Goal 2
-        pygame.draw.circle(self.screen, Color.Red, (self.screen_width - goal1Pos, self.screen_height - goal1Pos), 20)
+        pygame.draw.circle(self.screen, Color.Red, self.goal2, 20)
         self.screen.blit(goalFont.render('2', True, Color.White),
                          (self.screen_width - goal1Pos - 8, self.screen_height - goal1Pos - 12))
 
@@ -138,7 +189,7 @@ class TestbedParametersSharing(object):
         self.border.draw()
 
         # Show FPS
-        PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+        Util.PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
 
         # pygame.draw.rect(self.screen, Color.Cyan, (1260, 0, 20, 720))
         # pygame.draw.circle(self.screen, Color.Cyan, (0, 720), 20)
@@ -169,18 +220,23 @@ class TestbedParametersSharing(object):
                     global_homing_simple.fo.close()
             if event.type == KEYDOWN and event.key == K_s:
                 debug_homing_simple.xprint(msg="Save Agent's brain and Memory")
-                self.agents[0].save_brain()
+                self.agents[0].save_model()
                 self.agents[0].save_memory()
+            if event.type == KEYDOWN and event.key == K_b:
+                debug_homing_simple.xprint(msg="Load full model")
+                self.agents[0].load_model()
+                self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_l:
                 debug_homing_simple.xprint(msg="Load full model weights")
                 self.agents[0].load_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
                 debug_homing_simple.xprint(msg="Load lower layer weights")
-                self.agents[0].load_lower_layers_weights()
+                self.agents[0].load_h1_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_p:  # plot Agent's learning scores
-                self.plot_learning_scores()
+                #self.plot_learning_scores()
+                pass
 
     def update(self):
         """
@@ -189,17 +245,18 @@ class TestbedParametersSharing(object):
         # Update the agents
         for i in xrange(self.numAgents):
             self.agents[i].update()
-        agent0_LS = self.agents[0].learning_score() # learning score of agent 0
-        self.learning_scores.append(agent0_LS)  # appending the learning score
+        ls = self.agents[0].learning_score()  # learning score of agent 0
+        self.learning_scores.append(ls)  # appending the learning score
 
-        # if round(agent0_LS, 2) >= self.agents[0].maxReward:
-        #     printColor(msg="Achieved maximum reward")
-        #     print('agent0_LS', agent0_LS)
-        #     debug_homing_simple.xprint(msg="Save Agent's brain and Memory")
-        #     self.agents[0].save_brain()
-        #     self.agents[0].save_memory()
-        #     self.plot_learning_scores(save=True)
-        #     self.running = False
+        if self.agents[0].goalReachedCount >= 100: # After reaching 100 goals
+            if round(ls, 2) >= self.agents[0].maxReward: # need to achieve max of reward
+                printColor(msg="Achieved maximum reward")
+                debug_homing_simple.xprint(msg="Save Agent's NN model and Memory")
+                if self.save_brain:
+                    self.agents[0].save_brain()
+                if self.save_learning_score:
+                    self.plot_learning_scores(save=True)
+                self.running = False
 
     def fps_physic_step(self):
         """
@@ -231,9 +288,9 @@ class TestbedParametersSharing(object):
             self.fps = self.clock.get_fps()
 
             if self.deltaTime <= self.target_fps:  # Frame is faster than target (60fps) -> simulation run faster
-                self.accumulator = 0
 
                 # Physic step
+                #self.world.Step(self.physics_timestep, self.vel_iters, self.pos_iters)
                 self.world.Step(self.physics_timestep, self.vel_iters, self.pos_iters)
                 self.world.ClearForces()
             else:
@@ -325,6 +382,7 @@ class TestbedParametersSharing(object):
                 writer.writerow(header)
                 writer.writerows(ls_over_tmstp)
             pass
+
 
 if __name__ == '__main__':
     simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,

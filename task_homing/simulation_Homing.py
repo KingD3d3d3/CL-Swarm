@@ -146,7 +146,7 @@ class SimulationHoming(object):
             if event.type == KEYDOWN and event.key == K_h:
                 print("PUT weights")
                 print('agents[0].brain.model before', self.agents[0].brain.model.q_network.layers[0].get_weights())
-                self.agents[0].brain.model.set_lower_layers_weights(self.q_weights, self.t_weights)
+                self.agents[0].brain.model.set_h1_weights(self.q_weights, self.t_weights)
                 print('agents[0].brain.model now', self.agents[0].brain.model.q_network.layers[0].get_weights())
 
 

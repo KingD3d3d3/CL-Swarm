@@ -83,7 +83,11 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            debug_homing_simple.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+
+            # Log event only when collision avoidance behavior
+            if agent.collision_avoidance:
+                debug_homing_simple.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+
             return
 
         if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHomingSimple):
@@ -98,7 +102,10 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            debug_homing_simple.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+            # Log event only when collision avoidance behavior
+            if agent.collision_avoidance:
+                debug_homing_simple.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+
             return
 
     @classmethod
@@ -162,7 +169,10 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            debug_homing_simple.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+            # Log event only when collision avoidance behavior
+            if agent.collision_avoidance:
+                debug_homing_simple.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHomingSimple):
@@ -174,7 +184,10 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            debug_homing_simple.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+            # Log event only when collision avoidance behavior
+            if agent.collision_avoidance:
+                debug_homing_simple.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+
             return
 
     @classmethod
@@ -223,8 +236,12 @@ class MyContactListener(contactListener):
             agentB.agentCollisionCount += 1
             agentB.collisionColor()
 
-            debug_homing_simple.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
-            debug_homing_simple.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
+            # Log event only when collision avoidance behavior
+            if agentA.collision_avoidance:
+                debug_homing_simple.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
+
+            if agentB.collision_avoidance:
+                debug_homing_simple.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
 
             return
 

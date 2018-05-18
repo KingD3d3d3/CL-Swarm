@@ -51,13 +51,21 @@ class Model(object):
         """
         return self.q_network.layers[0].get_weights()
 
-    def set_lower_layers_weights(self, weights):
+    def set_h1_weights(self, weights):
         """
             Set lower layers weights of Q-Network and Target-Network
         """
         self.q_network.layers[0].set_weights(weights)
         self.target_network.layers[0].set_weights(weights)
 
+    def set_h1h2_weights(self, weights_h1, weights_h2):
+        """
+            Set lower layers weights of Q-Network and Target-Network
+        """
+        self.q_network.layers[0].set_weights(weights_h1)
+        self.q_network.layers[1].set_weights(weights_h2)
+        self.target_network.layers[0].set_weights(weights_h1)
+        self.target_network.layers[1].set_weights(weights_h2)
 
 # -------------------- MEMORY --------------------------
 
@@ -229,7 +237,7 @@ class DQN(object):
 
         if not self.printTimeToLearn:
             printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                           "{:>28s}".format("time to learn") +
+                           "{:>25s}".format("time to learn") +
                            ", tmstp: {:10.0f}".format(self.steps))
             self.printTimeToLearn = True
 
@@ -283,6 +291,12 @@ class DQN(object):
         self.training = False
         self.epsilon = FINAL_EPSILON
 
+    def stop_exploring(self):
+        """
+            Stop exploration -> only exploitation
+        """
+        self.epsilon = FINAL_EPSILON
+
     def save_model(self, model_file):
         """
             Save model (neural network, optimizer, loss, etc ..) in file
@@ -305,7 +319,7 @@ class DQN(object):
         self.model.q_network.load_weights(model_file)
         self.model.target_network.load_weights(model_file)
 
-    def load_lower_layers_weights(self, model_file):
+    def load_h1_weights(self, model_file):
         """
             Load lower layers' weights from file and set Q-Network, Target-Network
             Default: Stop training
@@ -315,10 +329,26 @@ class DQN(object):
 
         weights = model_copy.layers[0].get_weights()
 
-        self.model.set_lower_layers_weights(weights)
+        self.model.set_h1_weights(weights)
 
         if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
             sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
+
+    def load_h1h2_weights(self, model_file):
+        """
+            Load lower layers' weights from file and set Q-Network, Target-Network
+            Default: Stop training
+        """
+        model_copy = clone_model(self.model.q_network)
+        model_copy.load_weights(model_file)
+
+        weights_h1 = model_copy.layers[0].get_weights()
+        weights_h2 = model_copy.layers[1].get_weights()
+
+        self.model.set_h1h2_weights(weights_h1, weights_h2)
+
+        # if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
+        #     sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
 
     def save_memory(self, memory_file):
         """

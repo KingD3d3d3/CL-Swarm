@@ -30,7 +30,10 @@ def pixelsToWorld((a, b)):
 
 def normalize(vector):
     length = vector.length
-    invLength = 1.0 / length
+    if length == 0.:
+        invLength = 0.
+    else:
+        invLength = 1.0 / length
     return vec2(vector.x * invLength, vector.y * invLength)
 
 

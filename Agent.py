@@ -180,7 +180,15 @@ class Agent(object):
 
     def save_brain(self):
         """
-            Save agent's brain (model : neural network, optimizer, loss, etc) in file
+            Save agent's brain (neural network model and memory) in file
+            Call save_model() and save_memory()
+        """
+        self.save_model()
+        self.save_memory()
+
+    def save_model(self):
+        """
+            Save agent's model (neural network, optimizer, loss, etc) in file
             Also create the /brain_files/ directory if it doesn't exist
         """
         timestr = time.strftime("%Y_%m_%d_%H%M%S")
@@ -215,14 +223,23 @@ class Agent(object):
 
         self.brain.load_weights(model_file)
 
-    def load_lower_layers_weights(self):
+    def load_h1_weights(self):
         """
-            Load Agent's lowe layers' weights from file
+            Load Agent's 1st hidden layer weights from file
         """
         directory = "./brain_files/"
         model_file = directory + "brain" + "_model.h5"  # neural network model file
 
-        self.brain.load_lower_layers_weights(model_file)
+        self.brain.load_h1_weights(model_file)
+
+    def load_h1h2_weights(self):
+        """
+            Load Agent's 1st and 2nd hidden layer weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_h1h2_weights(model_file)
 
     def save_memory(self):
         """
@@ -271,3 +288,9 @@ class Agent(object):
         """
         self.training = False
         self.brain.stop_training()
+
+    def stop_exploring(self):
+        """
+            Stop exploration -> only exploitation
+        """
+        self.brain.stop_exploring()

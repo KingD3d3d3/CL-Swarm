@@ -44,15 +44,18 @@ def printEvent(agent=None, event_message=""):
     """
     global header_write
 
+    global_homing_simple.event_count += 1 # increment the event counter
+
     msg = ("Agent: {:3.0f}, ".format(agent.id) +
-           "{:>28s}".format(event_message) +
+           "{:>25s}".format(event_message) + # 28
            ", tmstp: {:10.0f}, "
            "GR: {:5.0f}, "
-           "tmstp2G : {:10.0f}, "
+           "tmstp2G : {:8.0f}, "
            "Col2G: {:5.0f}, Col: {:5.0f}, "
            "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}, "
            "LS: {:3.2f}, "
-           "t: {:10.3f}"
+           "t: {:10.3f}, "
+           "event_count: {:5.0f}"
            .format(
                global_homing_simple.timestep,
                agent.goalReachedCount,
@@ -60,8 +63,8 @@ def printEvent(agent=None, event_message=""):
                agent.t2GCollisionCount, agent.collisionCount,
                agent.t2GAgentCollisionCount, agent.agentCollisionCount,
                agent.learning_score(),
-               agent.learning_score(),
-               global_homing_simple.timer
+               global_homing_simple.timer,
+               global_homing_simple.event_count
            )
            )
 
@@ -96,5 +99,5 @@ def printEvent(agent=None, event_message=""):
     return
 
 def xprint(msg=""):
-    printColor(msg="{: <40s}".format(msg) +
+    printColor(msg="{: <37s}".format(msg) +
                    ", tmstp: {:10.0f}, t: {:10.3f}".format(global_homing_simple.timestep, global_homing_simple.timer))
