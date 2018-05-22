@@ -87,7 +87,7 @@ class Action(Enum):
 class Reward:
     GETTING_CLOSER = 0.1
 
-    # LIVING_PENALTY = -0.5
+    LIVING_PENALTY = -0.5
     GOAL_REACHED = 1.0
 
     @classmethod
@@ -344,7 +344,7 @@ class AgentHomingSimple(Agent):
             sensorReward = np.amin(r) # take the min value
 
         # Overall reward
-        reward = flagGC * Reward.GETTING_CLOSER + sensorReward + flagGR * Reward.GOAL_REACHED
+        reward = flagGC * Reward.GETTING_CLOSER + sensorReward + flagGR * Reward.GOAL_REACHED #+ Reward.LIVING_PENALTY
 
         return reward
 
@@ -388,6 +388,7 @@ class AgentHomingSimple(Agent):
                           orientation, -orientation])
         else:
             last_signal = np.asarray([orientation, -orientation]) # states when no collision avoidance
+            #last_signal = np.asarray([orientation])
 
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()

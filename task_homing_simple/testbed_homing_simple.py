@@ -11,6 +11,7 @@ import os
 import errno
 import csv
 import numpy as np
+import sys
 
 try:
     # Running in PyCharm
@@ -26,6 +27,7 @@ try:
     import debug_homing_simple
     from res.print_colors import printColor
     import global_homing_simple
+    import res.print_colors as PrintColor
 except:
     # Running in command line
     import logging
@@ -44,10 +46,14 @@ except:
     import debug_homing_simple
     from ..res.print_colors import printColor
     import global_homing_simple
-
+    from ..res import print_colors as PrintColor
 
 class TestbedParametersSharing(object):
-    def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters):
+    def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters,
+                 simulation_id=0):
+
+        self.simulation_id = simulation_id
+        debug_homing_simple.xprint(msg='simulation_id: {}, Starting Setup'.format(self.simulation_id))
 
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -57,20 +63,6 @@ class TestbedParametersSharing(object):
         self.vel_iters = vel_iters
         self.pos_iters = pos_iters
 
-        parser = argparse.ArgumentParser(description='Testbed Parameters Sharing')
-        parser.add_argument('--render', help='render the simulation', default='True')
-        parser.add_argument('--print_fps', help='print fps', default='False')
-        parser.add_argument('--debug', help='print simulation log', default='True')
-        parser.add_argument('--record', help='record simulation log in file', default='False')
-        parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='True')
-        parser.add_argument('--training', help='train agent', default='True')
-        parser.add_argument('--collision_avoidance', help='agent learns collision avoidance behavior', default='True')
-        parser.add_argument('--save_brain', help='save neural networks model and memory', default='False')
-        parser.add_argument('--load_full_weights', help='load full weights of neural networks from master to learning agent', default='False')
-        parser.add_argument('--load_h1_weights', help='load hidden layer 1 weights of neural networks from master to learning agent', default='False')
-        parser.add_argument('--load_h1h2_weights', help='load hidden layer 1 and 2 weights of neural networks from master to learning agent', default='False')
-        parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
-        args = parser.parse_args()
         self.render = args.render == 'True'
         self.print_fps = args.print_fps == 'True'
         global_homing_simple.debug = args.debug == 'True'
@@ -79,8 +71,12 @@ class TestbedParametersSharing(object):
         self.training = args.training == 'True'
         self.collision_avoidance = args.collision_avoidance == 'True'
         self.save_brain = args.save_brain == 'True'
-
         self.save_learning_score = args.save_learning_score == 'True'
+        self.load_full_weights = args.load_full_weights == 'True'
+        self.load_h1_weights = args.load_h1_weights == 'True'
+        self.load_h1h2_weights = args.load_h1h2_weights == 'True'
+        self.max_timesteps = int(args.max_timesteps)
+
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
         # Record simulation
@@ -92,11 +88,12 @@ class TestbedParametersSharing(object):
 
         # -------------------- Pygame Setup ----------------------
 
+        pygame.init()
+
         self.deltaTime = 1.0 / target_fps  # 0.016666
         self.fps = 1.0 / self.deltaTime
         self.accumulator = 0
 
-        pygame.init()
         self.screen = None
         if self.render:
             self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), 0, 32)
@@ -140,23 +137,22 @@ class TestbedParametersSharing(object):
             self.agents.append(a)
 
         # Load full weights to agent
-        self.load_full_weights = args.load_full_weights == 'True'
         if self.load_full_weights:
             debug_homing_simple.xprint(msg="Load full model weights")
             self.agents[0].load_weights()
             self.agents[0].stop_exploring()
 
         # Load full weights to agent
-        self.load_h1_weights = args.load_h1_weights == 'True'
         if self.load_h1_weights:
             debug_homing_simple.xprint(msg="Load 1st hidden layer weights")
             self.agents[0].load_h1_weights()
 
         # Load full weights to agent
-        self.load_h1h2_weights = args.load_h1h2_weights == 'True'
         if self.load_h1h2_weights:
             debug_homing_simple.xprint(msg="Load 1st and 2nd hidden layer weights")
             self.agents[0].load_h1h2_weights()
+
+        debug_homing_simple.xprint(msg='simulation_id: {}, Setup complete, Start simulation'.format(self.simulation_id))
 
     def draw(self):
         """
@@ -189,7 +185,8 @@ class TestbedParametersSharing(object):
         self.border.draw()
 
         # Show FPS
-        Util.PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+        Util.PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps)
+                      + ' Simulation : {}'.format(self.simulation_id))
 
         # pygame.draw.rect(self.screen, Color.Cyan, (1260, 0, 20, 720))
         # pygame.draw.circle(self.screen, Color.Cyan, (0, 720), 20)
@@ -207,6 +204,8 @@ class TestbedParametersSharing(object):
                 self.running = False
             if event.type == KEYDOWN and event.key == K_p:
                 self.pause = not self.pause  # Pause the game
+                if self.pause:
+                    debug_homing_simple.xprint(msg='simulation_id: {}, Paused simulation'.format(self.simulation_id))
             if event.type == KEYDOWN and event.key == K_r:
                 if not global_homing_simple.record:  # Record simulation
                     debug_homing_simple.xprint(msg="Start recording")
@@ -248,15 +247,19 @@ class TestbedParametersSharing(object):
         ls = self.agents[0].learning_score()  # learning score of agent 0
         self.learning_scores.append(ls)  # appending the learning score
 
-        if self.agents[0].goalReachedCount >= 100: # After reaching 100 goals
-            if round(ls, 2) >= self.agents[0].maxReward: # need to achieve max of reward
-                printColor(msg="Achieved maximum reward")
-                debug_homing_simple.xprint(msg="Save Agent's NN model and Memory")
-                if self.save_brain:
-                    self.agents[0].save_brain()
-                if self.save_learning_score:
-                    self.plot_learning_scores(save=True)
+        # Reached max number of timesteps
+        if self.max_timesteps != -1 and global_homing_simple.timestep >= self.max_timesteps:
                 self.running = False
+
+        # if self.agents[0].goalReachedCount >= 100: # After reaching 100 goals
+        #     if round(ls, 2) >= self.agents[0].maxReward: # need to achieve max of reward
+        #         printColor(msg="Achieved maximum reward")
+        #         debug_homing_simple.xprint(msg="Save Agent's NN model and Memory")
+        #         if self.save_brain:
+        #             self.agents[0].save_brain()
+        #         if self.save_learning_score:
+        #             self.plot_learning_scores(save=True)
+        #         self.running = False
 
     def fps_physic_step(self):
         """
@@ -339,15 +342,14 @@ class TestbedParametersSharing(object):
         """
             Last function called before leaving the application
         """
-        pygame.quit()
-        debug_homing_simple.xprint(msg='Pygame Exit')
+        debug_homing_simple.xprint(msg='simulation_id: {}, Exit'.format(self.simulation_id))
 
         if global_homing_simple.record:
             global_homing_simple.record = False
             global_homing_simple.fo.close()
             debug_homing_simple.xprint(msg="Stop recording")
 
-        self.plot_learning_scores()
+        #self.plot_learning_scores()
 
     def plot_learning_scores(self, save=False):
         plt.plot(self.learning_scores)
@@ -358,7 +360,7 @@ class TestbedParametersSharing(object):
         plt.show(block=False)
 
         if save:
-            timestr = time.strftime("%Y_%m_%d_%H%M%S")
+            timestr = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
             directory = "./learning_scores/"
             ls_file = directory + timestr + "_ls.csv"  # learning scores file
             ls_fig = directory + timestr + "_ls.png"  # learning scores figure image
@@ -385,7 +387,50 @@ class TestbedParametersSharing(object):
 
 
 if __name__ == '__main__':
-    simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
-                                          PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
-    simulation.run()
-    simulation.end()
+
+    # -------------------- Simulation Parameters ----------------------
+
+    parser = argparse.ArgumentParser(description='Testbed Parameters Sharing')
+    parser.add_argument('--render', help='render the simulation', default='True')
+    parser.add_argument('--print_fps', help='print fps', default='False')
+    parser.add_argument('--debug', help='print simulation log', default='True')
+    parser.add_argument('--record', help='record simulation log in file', default='False')
+    parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='True')
+    parser.add_argument('--training', help='train agent', default='True')
+    parser.add_argument('--collision_avoidance', help='agent learns collision avoidance behavior', default='True')
+    parser.add_argument('--save_brain', help='save neural networks model and memory', default='False')
+    parser.add_argument('--load_full_weights',
+                        help='load full weights of neural networks from master to learning agent', default='False')
+    parser.add_argument('--load_h1_weights',
+                        help='load hidden layer 1 weights of neural networks from master to learning agent',
+                        default='False')
+    parser.add_argument('--load_h1h2_weights',
+                        help='load hidden layer 1 and 2 weights of neural networks from master to learning agent',
+                        default='False')
+    parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
+    parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
+    parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
+    args = parser.parse_args()
+
+    multi_simulation = int(args.multi_simulation)
+
+    # Run simulation
+    if multi_simulation == 1:
+        simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
+                                              PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+        simulation.run()
+        simulation.end()
+    else:
+        for i in xrange(multi_simulation):
+            simID = i + 1
+            sys.stdout.write(PrintColor.PRINT_GREEN)
+            print("Instantiate simulation: {}".format(simID))
+            sys.stdout.write(PrintColor.PRINT_RESET)
+
+            simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
+                                                  PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
+                                                  simulation_id=simID)
+            simulation.run()
+            simulation.end()
+            global_homing_simple.reset_global()
+        print("All simulation finished")
