@@ -1,6 +1,7 @@
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (vec2)
 import math
+import time
 
 try:
     from Setup import *
@@ -86,3 +87,13 @@ def minMaxNormalizationScale(x, minX, maxX):
         return 0
     else:
         return 2 * (x - minX) / (maxX - minX) - 1
+
+
+start_time = time.time()
+def get_time():
+    elapsed_time = time.time() - start_time
+
+    m, s = divmod(elapsed_time, 60)
+    h, m = divmod(m, 60)
+    formated = "%dh %02dm %02ds" % (h, m, s)
+    return formated

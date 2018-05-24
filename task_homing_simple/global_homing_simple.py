@@ -11,15 +11,15 @@ writer = None  # writer object to record events
 event_count = 0
 timestr = time.strftime("%Y_%m_%d_%H%M%S")
 
-def fileCreate():
+def fileCreate(dir, extension):
     """
         Create record csv file
-        Also create the /simulation_logs/ directory if it doesn't exist
+        Also create the directory if it doesn't exist
     """
     global timestr
 
     timestr = time.strftime("%Y_%m_%d_%H%M%S")
-    filename = "./simulation_logs/" + timestr + "_homing_simple.csv"  # CSV file
+    filename = dir + timestr + extension
 
     if not os.path.exists(os.path.dirname(filename)):
         try:
@@ -30,7 +30,7 @@ def fileCreate():
 
     return filename
 
-def reset_global():
+def reset_simulation_global():
     global timestep
     global timer
     global debug
@@ -48,3 +48,4 @@ def reset_global():
     writer = None  # writer object to record events
     event_count = 0
     timestr = time.strftime("%Y_%m_%d_%H%M%S")
+

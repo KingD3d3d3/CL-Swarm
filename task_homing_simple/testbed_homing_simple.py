@@ -50,7 +50,7 @@ except:
 
 class TestbedParametersSharing(object):
     def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters,
-                 simulation_id=0):
+                 simulation_id=0, directory_name="./simulation_logs/", extension_name="_homing_simple.csv"):
 
         self.simulation_id = simulation_id
         debug_homing_simple.xprint(msg='simulation_id: {}, Starting Setup'.format(self.simulation_id))
@@ -82,7 +82,7 @@ class TestbedParametersSharing(object):
         # Record simulation
         if global_homing_simple.record:
             debug_homing_simple.xprint(msg="Start recording")
-            filename = global_homing_simple.fileCreate()
+            filename = global_homing_simple.fileCreate(dir=directory_name, extension=extension_name)
             global_homing_simple.fo = open(filename, 'a')
             global_homing_simple.writer = csv.writer(global_homing_simple.fo)
 
@@ -244,8 +244,9 @@ class TestbedParametersSharing(object):
         # Update the agents
         for i in xrange(self.numAgents):
             self.agents[i].update()
-        ls = self.agents[0].learning_score()  # learning score of agent 0
-        self.learning_scores.append(ls)  # appending the learning score
+
+        #ls = self.agents[0].learning_score()  # learning score of agent 0
+        #self.learning_scores.append(ls)  # appending the learning score
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and global_homing_simple.timestep >= self.max_timesteps:
@@ -414,13 +415,18 @@ if __name__ == '__main__':
 
     multi_simulation = int(args.multi_simulation)
 
+    directory_name = "./simulation_logs/"
     # Run simulation
     if multi_simulation == 1:
         simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
-                                              PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+                                              PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
+                                              directory_name=directory_name)
         simulation.run()
         simulation.end()
-    else:
+    else: # Multiple
+        max_timesteps = int(args.max_timesteps)
+        timestr = time.strftime("%Y_%m_%d_%H%M%S")
+        directory_name = "./simulation_logs/" + timestr + "_" + str(multi_simulation) + "sim_" + str(max_timesteps) + "timesteps/"
         for i in xrange(multi_simulation):
             simID = i + 1
             sys.stdout.write(PrintColor.PRINT_GREEN)
@@ -429,8 +435,8 @@ if __name__ == '__main__':
 
             simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
                                                   PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
-                                                  simulation_id=simID)
+                                                  simulation_id=simID, directory_name=directory_name)
             simulation.run()
             simulation.end()
-            global_homing_simple.reset_global()
+            global_homing_simple.reset_simulation_global()
         print("All simulation finished")

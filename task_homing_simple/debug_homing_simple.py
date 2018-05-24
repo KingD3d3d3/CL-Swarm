@@ -4,6 +4,7 @@ try:
     # Running in PyCharm
     import global_homing_simple
     from res.print_colors import printColor
+    import Util
 except:
     # Running in command line
     import logging
@@ -13,6 +14,7 @@ except:
     logger.info('Running from command line -> Import libraries as package')
     import global_homing_simple
     from ..res.print_colors import printColor
+    from .. import Util
 
 header_write = False
 header = ("agent",
@@ -54,8 +56,8 @@ def printEvent(agent=None, event_message=""):
            "Col2G: {:5.0f}, Col: {:5.0f}, "
            "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}, "
            "LS: {:3.2f}, "
-           "t: {:10.3f}, "
-           "event_count: {:5.0f}"
+           "event_count: {:5.0f}, "
+           "t: {}"
            .format(
                global_homing_simple.timestep,
                agent.goalReachedCount,
@@ -63,8 +65,8 @@ def printEvent(agent=None, event_message=""):
                agent.t2GCollisionCount, agent.collisionCount,
                agent.t2GAgentCollisionCount, agent.agentCollisionCount,
                agent.learning_score(),
-               global_homing_simple.timer,
-               global_homing_simple.event_count
+               global_homing_simple.event_count,
+               Util.get_time()
            )
            )
 
@@ -100,4 +102,4 @@ def printEvent(agent=None, event_message=""):
 
 def xprint(msg=""):
     printColor(msg="{: <37s}".format(msg) +
-                   ", tmstp: {:10.0f}, t: {:10.3f}".format(global_homing_simple.timestep, global_homing_simple.timer))
+                   ", tmstp: {:10.0f}, t: {}".format(global_homing_simple.timestep, Util.get_time()))
