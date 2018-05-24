@@ -4,8 +4,7 @@ import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (world, vec2)
 from pygame.locals import *
-import csv
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import time
 import os
 import errno
@@ -352,39 +351,39 @@ class TestbedParametersSharing(object):
 
         #self.plot_learning_scores()
 
-    def plot_learning_scores(self, save=False):
-        plt.plot(self.learning_scores)
-        plt.xlabel('Timestep')
-        plt.ylabel('Learning Score')
-        plt.title('Agent\'s Learning Score over Timestep')
-        plt.grid(True)
-        plt.show(block=False)
-
-        if save:
-            timestr = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
-            directory = "./learning_scores/"
-            ls_file = directory + timestr + "_ls.csv"  # learning scores file
-            ls_fig = directory + timestr + "_ls.png"  # learning scores figure image
-
-            if not os.path.exists(os.path.dirname(directory)):
-                try:
-                    os.makedirs(os.path.dirname(directory))
-                except OSError as exc:  # Guard against race condition
-                    if exc.errno != errno.EEXIST:
-                        raise
-
-            plt.savefig(ls_fig)
-
-            header = ("timestep", "learning_scores")
-
-            timesteps = np.arange(1, len(self.learning_scores) + 1)
-            ls_over_tmstp = zip(timesteps, self.learning_scores)
-
-            with open(ls_file, 'w') as f:
-                writer = csv.writer(f)
-                writer.writerow(header)
-                writer.writerows(ls_over_tmstp)
-            pass
+    # def plot_learning_scores(self, save=False):
+    #     plt.plot(self.learning_scores)
+    #     plt.xlabel('Timestep')
+    #     plt.ylabel('Learning Score')
+    #     plt.title('Agent\'s Learning Score over Timestep')
+    #     plt.grid(True)
+    #     plt.show(block=False)
+    #
+    #     if save:
+    #         timestr = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
+    #         directory = "./learning_scores/"
+    #         ls_file = directory + timestr + "_ls.csv"  # learning scores file
+    #         ls_fig = directory + timestr + "_ls.png"  # learning scores figure image
+    #
+    #         if not os.path.exists(os.path.dirname(directory)):
+    #             try:
+    #                 os.makedirs(os.path.dirname(directory))
+    #             except OSError as exc:  # Guard against race condition
+    #                 if exc.errno != errno.EEXIST:
+    #                     raise
+    #
+    #         plt.savefig(ls_fig)
+    #
+    #         header = ("timestep", "learning_scores")
+    #
+    #         timesteps = np.arange(1, len(self.learning_scores) + 1)
+    #         ls_over_tmstp = zip(timesteps, self.learning_scores)
+    #
+    #         with open(ls_file, 'w') as f:
+    #             writer = csv.writer(f)
+    #             writer.writerow(header)
+    #             writer.writerows(ls_over_tmstp)
+    #         pass
 
 
 if __name__ == '__main__':
