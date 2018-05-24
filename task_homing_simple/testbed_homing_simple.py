@@ -87,8 +87,6 @@ class TestbedParametersSharing(object):
 
         # -------------------- Pygame Setup ----------------------
 
-        pygame.init()
-
         self.deltaTime = 1.0 / target_fps  # 0.016666
         self.fps = 1.0 / self.deltaTime
         self.accumulator = 0
@@ -387,6 +385,8 @@ class TestbedParametersSharing(object):
 
 
 if __name__ == '__main__':
+
+    pygame.init()
 
     # -------------------- Simulation Parameters ----------------------
 
