@@ -95,6 +95,9 @@ class TestbedParametersSharing(object):
         self.prev_goalreached = 0
         self.prev_goalreached_stored = False
 
+        # Brain directory
+        self.brain_dir = simulation_dir + "brain_files/" + str(simulation_id) + "/"
+
         # -------------------- Pygame Setup ----------------------
 
         self.deltaTime = 1.0 / target_fps  # 0.016666
@@ -222,7 +225,7 @@ class TestbedParametersSharing(object):
                     global_homing_simple.record = False
                     global_homing_simple.fo.close()
             if event.type == KEYDOWN and event.key == K_s:
-                self.agents[0].save_brain(dir=self.simulation_dir)
+                self.agents[0].save_brain(dir=self.brain_dir)
             if event.type == KEYDOWN and event.key == K_b:
                 self.agents[0].load_model()
                 self.agents[0].stop_training()
@@ -251,7 +254,7 @@ class TestbedParametersSharing(object):
         if self.save_network_freq != -1:
             if global_homing_simple.timestep % self.save_network_freq == 0:
                 print('timestep', global_homing_simple.timestep)
-                self.agents[0].save_model(dir=self.simulation_dir)
+                self.agents[0].save_model(dir=self.brain_dir)
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and global_homing_simple.timestep >= self.max_timesteps:
