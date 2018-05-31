@@ -211,6 +211,7 @@ class Agent(object):
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Save Agent's model") +
                        ", file: {}".format(network_model) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
     def save_memory(self, dir):
@@ -233,6 +234,7 @@ class Agent(object):
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Save Agent's memory") +
                        ", file: {}".format(memory_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
     def load_model(self):
@@ -247,6 +249,7 @@ class Agent(object):
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load full model") +
                        ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
     def load_weights(self):
@@ -261,6 +264,7 @@ class Agent(object):
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load model full weights") +
                        ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
     def load_h1_weights(self):
@@ -275,6 +279,7 @@ class Agent(object):
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load 1st hidden layer weights") +
                        ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
     def load_h1h2_weights(self):
@@ -289,6 +294,7 @@ class Agent(object):
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load 1st and 2nd hidden layer weights") +
                        ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
     def load_memory(self):
@@ -314,6 +320,7 @@ class Agent(object):
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load full memory") +
                        ", file: {}".format(memory_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
     def stop_training(self):

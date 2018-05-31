@@ -243,7 +243,7 @@ class DQN(object):
         if not self.printTimeToLearn:
             printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                            "{:>25s}".format("time to learn") +
-                           ", tmstp: {:10.0f}".format(self.steps) +
+                           ", tmstp: {:10.0f}".format(Global.timestep) +
                            ", t: {}".format(Global.get_time()))
             self.printTimeToLearn = True
 

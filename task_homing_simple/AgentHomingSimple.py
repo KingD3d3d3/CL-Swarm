@@ -29,6 +29,7 @@ try:
     import res.print_colors as PrintColor
     import debug_homing_simple
     import global_homing_simple
+    import Global
 except:
     # Running in command line
     import logging
@@ -46,6 +47,7 @@ except:
     from ..res import print_colors as PrintColor
     import debug_homing_simple
     import global_homing_simple
+    import Global
 
 
 # ----------- Agent's brain Neural Network Config ----------------
@@ -307,7 +309,7 @@ class AgentHomingSimple(Agent):
     def computeGoalReached(self):
         self.goalReachedCount += 1
         self.elapsedTime = global_homing_simple.timer - self.startTime
-        self.elapsedTimestep = global_homing_simple.timestep - self.startTimestep
+        self.elapsedTimestep = Global.timestep - self.startTimestep
 
         self.timeToGoal_window.append(self.elapsedTimestep)
 
@@ -318,7 +320,7 @@ class AgentHomingSimple(Agent):
 
         # Reset, Update
         self.startTime = global_homing_simple.timer
-        self.startTimestep = global_homing_simple.timestep
+        self.startTimestep = Global.timestep
         self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
         self.t2GCollisionCount = 0
         self.t2GAgentCollisionCount = 0
@@ -407,7 +409,7 @@ class AgentHomingSimple(Agent):
 
         self.last_distance = self.distance
         self.elapsedTime = global_homing_simple.timer - self.startTime
-        self.elapsedTimestep = global_homing_simple.timestep - self.startTimestep
+        self.elapsedTimestep = Global.timestep - self.startTimestep
 
         return
 

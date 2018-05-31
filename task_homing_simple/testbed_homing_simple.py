@@ -252,12 +252,12 @@ class TestbedParametersSharing(object):
 
         # Save neural networks model frequently
         if self.save_network_freq != -1:
-            if global_homing_simple.timestep % self.save_network_freq == 0:
-                print('timestep', global_homing_simple.timestep)
+            if Global.timestep % self.save_network_freq == 0:
+                #print('timestep', Global.timestep)
                 self.agents[0].save_model(dir=self.brain_dir)
 
         # Reached max number of timesteps
-        if self.max_timesteps != -1 and global_homing_simple.timestep >= self.max_timesteps:
+        if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
 
             if not self.prev_goalreached_stored:
                 self.prev_goalreached = self.agents[0].goalReachedCount
@@ -340,7 +340,7 @@ class TestbedParametersSharing(object):
                 printColor(msg='FPS : ' + str('{:3.2f}').format(self.fps))
 
             # Step counter
-            global_homing_simple.timestep += 1
+            Global.timestep += 1
 
             # Time counter
             global_homing_simple.timer += self.deltaTime
@@ -426,6 +426,7 @@ if __name__ == '__main__':
 
     # Run simulation
     max_timesteps = int(args.max_timesteps)
+    total_timesteps = 0
     timestr = time.strftime("%Y_%m_%d_%H%M%S")
     directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + str(max_timesteps) + "timesteps/"
     for i in xrange(multi_simulation):
@@ -439,11 +440,13 @@ if __name__ == '__main__':
                                               simulation_id=simID, simulation_dir=directory_name)
         simulation.run()
         simulation.end()
+        total_timesteps += Global.timestep
         global_homing_simple.reset_simulation_global()
     print("All simulation finished")
 
     # Save whole simulation summary in file (completion time, number of simulation, etc)
     file = open(directory_name + "summary.txt", "w")
     file.write("Number of simulations: {}\n"
-               "Total simulations time: {}".format(multi_simulation, Global.get_time()))
+               "Total simulations time: {}\n"
+               "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
     file.close()

@@ -10,6 +10,7 @@ try:
     from Border import Wall
     import debug_homing_simple
     import global_homing_simple
+    import Global
 except:
     # Running in command line
     import logging
@@ -22,6 +23,7 @@ except:
     from ..Border import Wall
     import debug_homing_simple
     import global_homing_simple
+    import Global
 
 EPSILON_TIMESTEP = 10  # 30
 
@@ -112,10 +114,10 @@ class MyContactListener(contactListener):
             Check if time between successive collision between the same agent and same obstacles was too short
         """
         if agent.lastObstacleCollide == obstacle:  # same objects colliding
-            agent.elapsedTimestepObstacleCollision = global_homing_simple.timestep - agent.startTimestepObstacleCollision
+            agent.elapsedTimestepObstacleCollision = Global.timestep - agent.startTimestepObstacleCollision
 
             if agent.elapsedTimestepObstacleCollision <= EPSILON_TIMESTEP:  # Check elapsed timestep
-                agent.startTimestepObstacleCollision = global_homing_simple.timestep  # update based on elapsed time
+                agent.startTimestepObstacleCollision = Global.timestep  # update based on elapsed time
 
                 # Keep colors
                 agent.collisionColor()
@@ -135,7 +137,7 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            agent.startTimestepObstacleCollision = global_homing_simple.timestep  # Start counting
+            agent.startTimestepObstacleCollision = Global.timestep  # Start counting
             return
 
         if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHomingSimple):
@@ -144,7 +146,7 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            agent.startTimestepObstacleCollision = global_homing_simple.timestep  # Start counting
+            agent.startTimestepObstacleCollision = Global.timestep  # Start counting
             return
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -245,14 +247,14 @@ class MyContactListener(contactListener):
         idA = agentA.id
         idB = agentB.id
 
-        agentA.elapsedTimestepAgentCollision[idB] = global_homing_simple.timestep - agentA.startTimestepAgentCollision[idB]
-        agentB.elapsedTimestepAgentCollision[idA] = global_homing_simple.timestep - agentB.startTimestepAgentCollision[idA]
+        agentA.elapsedTimestepAgentCollision[idB] = Global.timestep - agentA.startTimestepAgentCollision[idB]
+        agentB.elapsedTimestepAgentCollision[idA] = Global.timestep - agentB.startTimestepAgentCollision[idA]
 
         if agentA.elapsedTimestepAgentCollision[idB] <= EPSILON_TIMESTEP \
                 and agentB.elapsedTimestepAgentCollision[idA] <= EPSILON_TIMESTEP:  # Check elapsed timestep
 
-            agentA.startTimestepAgentCollision[idB] = global_homing_simple.timestep  # update based on elapsed time
-            agentB.startTimestepAgentCollision[idA] = global_homing_simple.timestep  # update based on elapsed time
+            agentA.startTimestepAgentCollision[idB] = Global.timestep  # update based on elapsed time
+            agentB.startTimestepAgentCollision[idA] = Global.timestep  # update based on elapsed time
 
             # Keep colors
             agentA.collisionColor()
@@ -278,7 +280,7 @@ class MyContactListener(contactListener):
             agentB.endCollisionColor()
             # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
 
-            agentA.startTimestepAgentCollision[idB] = global_homing_simple.timestep  # Start counting
-            agentB.startTimestepAgentCollision[idA] = global_homing_simple.timestep  # Start counting
+            agentA.startTimestepAgentCollision[idB] = Global.timestep  # Start counting
+            agentB.startTimestepAgentCollision[idA] = Global.timestep  # Start counting
             return
     # ------------------------------------------------------------------------------------------------------------------

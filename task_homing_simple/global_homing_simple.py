@@ -2,8 +2,9 @@ from __future__ import division
 import os
 import errno
 import time
+import Global
 
-timestep = 1  # 0 # timesteps passed since beginning of simulation
+#timestep = 1  # 0 # timesteps passed since beginning of simulation
 timer = 0.00  # times passed since beginning of simulation
 debug = True  # debug mode flag, if debug mode then print event's message in console
 record = False  # record flag, if yes record simulation's events in file
@@ -33,7 +34,7 @@ def fileCreate(dir, extension):
     return filename
 
 def reset_simulation_global():
-    global timestep
+    #global timestep
     global timer
     global debug
     global record
@@ -43,7 +44,7 @@ def reset_simulation_global():
     global event_count
     global timestr
 
-    timestep = 1  # 0 # timesteps passed since beginning of simulation
+    Global.timestep = 1  # 0 # timesteps passed since beginning of simulation
     timer = 0.00  # times passed since beginning of simulation
     debug = True  # debug mode flag, if debug mode then print event's message in console
     record = False  # record flag, if yes record simulation's events in file
