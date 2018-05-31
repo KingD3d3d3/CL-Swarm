@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)

@@ -1,3 +1,4 @@
+from __future__ import division
 import sys
 
 try:
@@ -5,6 +6,7 @@ try:
     import global_homing_simple
     from res.print_colors import printColor
     import Util
+    import Global
 except:
     # Running in command line
     import logging
@@ -15,8 +17,9 @@ except:
     import global_homing_simple
     from ..res.print_colors import printColor
     from .. import Util
+    import Global
 
-header_write = False
+#header_write = False
 header = ("agent",
           "event",
           "timestep",
@@ -44,8 +47,6 @@ def printEvent(agent=None, event_message=""):
         LS              : learning score of the agent (average of rewards in sliding window)
         t       : time passed (since beginning of simulation)
     """
-    global header_write
-
     global_homing_simple.event_count += 1 # increment the event counter
 
     msg = ("Agent: {:3.0f}, ".format(agent.id) +
@@ -66,7 +67,7 @@ def printEvent(agent=None, event_message=""):
                agent.t2GAgentCollisionCount, agent.agentCollisionCount,
                agent.learning_score(),
                global_homing_simple.event_count,
-               Util.get_time()
+               Global.get_time()
            )
            )
 
@@ -86,11 +87,11 @@ def printEvent(agent=None, event_message=""):
     if global_homing_simple.record:
 
         # Write header only once at the beginning
-        if not header_write:
+        if not global_homing_simple.header_write:
             if len(header) != len(msg_csv):
                 sys.exit("Header doesn't match csv data")
             global_homing_simple.writer.writerow(header)
-            header_write = True
+            global_homing_simple.header_write = True
 
         global_homing_simple.writer.writerow(msg_csv)
 
@@ -102,4 +103,4 @@ def printEvent(agent=None, event_message=""):
 
 def xprint(msg=""):
     printColor(msg="{: <37s}".format(msg) +
-                   ", tmstp: {:10.0f}, t: {}".format(global_homing_simple.timestep, Util.get_time()))
+                   ", tmstp: {:10.0f}, t: {}".format(global_homing_simple.timestep, Global.get_time()))

@@ -1,3 +1,4 @@
+from __future__ import division
 from Box2D.b2 import (vec2)
 from Util import *
 

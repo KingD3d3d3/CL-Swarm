@@ -1,3 +1,5 @@
+from __future__ import division
+
 import random
 import argparse
 import pygame
@@ -27,6 +29,7 @@ try:
     from res.print_colors import printColor
     import global_homing_simple
     import res.print_colors as PrintColor
+    import Global
 except:
     # Running in command line
     import logging
@@ -46,10 +49,11 @@ except:
     from ..res.print_colors import printColor
     import global_homing_simple
     from ..res import print_colors as PrintColor
+    import Global
 
 class TestbedParametersSharing(object):
     def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters,
-                 simulation_id=0, directory_name="./simulation_logs/", extension_name="_homing_simple.csv"):
+                 simulation_id=0, simulation_dir="./simulation_data/", simulation_file_extension="_homing_simple.csv"):
 
         self.simulation_id = simulation_id
         debug_homing_simple.xprint(msg='simulation_id: {}, Starting Setup'.format(self.simulation_id))
@@ -75,15 +79,21 @@ class TestbedParametersSharing(object):
         self.load_h1_weights = args.load_h1_weights == 'True'
         self.load_h1h2_weights = args.load_h1h2_weights == 'True'
         self.max_timesteps = int(args.max_timesteps)
+        self.save_network_freq = int(args.save_network_freq)
 
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
         # Record simulation
+        self.simulation_dir = simulation_dir
+        self.simulation_file_extension = simulation_file_extension
         if global_homing_simple.record:
             debug_homing_simple.xprint(msg="Start recording")
-            filename = global_homing_simple.fileCreate(dir=directory_name, extension=extension_name)
+            filename = global_homing_simple.fileCreate(dir=self.simulation_dir, extension=self.simulation_file_extension)
             global_homing_simple.fo = open(filename, 'a')
             global_homing_simple.writer = csv.writer(global_homing_simple.fo)
+
+        self.prev_goalreached = 0
+        self.prev_goalreached_stored = False
 
         # -------------------- Pygame Setup ----------------------
 
@@ -117,7 +127,7 @@ class TestbedParametersSharing(object):
         # Agents
         self.numAgents = 1  # total numbers of agents in the simulation
         self.agents = []
-        for i in xrange(self.numAgents):
+        for j in xrange(self.numAgents):
             # randX = random.randint(2, self.screen_width / self.ppm - 2)
             # randY = random.randint(2, self.screen_height / self.ppm - 2)
             #randAngle = degToRad(random.randint(0, 360))
@@ -129,24 +139,21 @@ class TestbedParametersSharing(object):
             angle = Util.degToRad(angleDeg)
             angle = -angle # start by looking at goal1
             a = AgentHomingSimple(screen=self.screen, world=self.world, x=start_pos.x, y=start_pos.y, angle=angle,
-                                  radius=1.5, id=i, numAgents=self.numAgents, training=self.training,
+                                  radius=1.5, id=j, numAgents=self.numAgents, training=self.training,
                                   collision_avoidance=self.collision_avoidance)
             self.agents.append(a)
 
         # Load full weights to agent
         if self.load_full_weights:
-            debug_homing_simple.xprint(msg="Load full model weights")
             self.agents[0].load_weights()
             self.agents[0].stop_exploring()
 
         # Load full weights to agent
         if self.load_h1_weights:
-            debug_homing_simple.xprint(msg="Load 1st hidden layer weights")
             self.agents[0].load_h1_weights()
 
         # Load full weights to agent
         if self.load_h1h2_weights:
-            debug_homing_simple.xprint(msg="Load 1st and 2nd hidden layer weights")
             self.agents[0].load_h1h2_weights()
 
         debug_homing_simple.xprint(msg='simulation_id: {}, Setup complete, Start simulation'.format(self.simulation_id))
@@ -175,8 +182,8 @@ class TestbedParametersSharing(object):
                          (self.screen_width - goal1Pos - 8, self.screen_height - goal1Pos - 12))
 
         # Moving Objects
-        for i in xrange(self.numAgents):
-            self.agents[i].draw()
+        for j in xrange(self.numAgents):
+            self.agents[j].draw()
 
         # Boundary
         self.border.draw()
@@ -207,7 +214,7 @@ class TestbedParametersSharing(object):
                 if not global_homing_simple.record:  # Record simulation
                     debug_homing_simple.xprint(msg="Start recording")
                     global_homing_simple.record = True
-                    filename = global_homing_simple.fileCreate()
+                    filename = global_homing_simple.fileCreate(dir=self.simulation_dir, extension=self.simulation_file_extension)
                     global_homing_simple.fo = open(filename, 'a')
                     global_homing_simple.writer = csv.writer(global_homing_simple.fo)
                 else:  # Stop recording
@@ -215,19 +222,14 @@ class TestbedParametersSharing(object):
                     global_homing_simple.record = False
                     global_homing_simple.fo.close()
             if event.type == KEYDOWN and event.key == K_s:
-                debug_homing_simple.xprint(msg="Save Agent's brain and Memory")
-                self.agents[0].save_model()
-                self.agents[0].save_memory()
+                self.agents[0].save_brain(dir=self.simulation_dir)
             if event.type == KEYDOWN and event.key == K_b:
-                debug_homing_simple.xprint(msg="Load full model")
                 self.agents[0].load_model()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_l:
-                debug_homing_simple.xprint(msg="Load full model weights")
                 self.agents[0].load_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
-                debug_homing_simple.xprint(msg="Load lower layer weights")
                 self.agents[0].load_h1_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_p:  # plot Agent's learning scores
@@ -239,25 +241,29 @@ class TestbedParametersSharing(object):
             Update game logic
         """
         # Update the agents
-        for i in xrange(self.numAgents):
-            self.agents[i].update()
+        for j in xrange(self.numAgents):
+            self.agents[j].update()
 
         #ls = self.agents[0].learning_score()  # learning score of agent 0
         #self.learning_scores.append(ls)  # appending the learning score
 
+        # Save neural networks model frequently
+        if self.save_network_freq != -1:
+            if global_homing_simple.timestep % self.save_network_freq == 0:
+                print('timestep', global_homing_simple.timestep)
+                self.agents[0].save_model(dir=self.simulation_dir)
+
         # Reached max number of timesteps
         if self.max_timesteps != -1 and global_homing_simple.timestep >= self.max_timesteps:
-                self.running = False
 
-        # if self.agents[0].goalReachedCount >= 100: # After reaching 100 goals
-        #     if round(ls, 2) >= self.agents[0].maxReward: # need to achieve max of reward
-        #         printColor(msg="Achieved maximum reward")
-        #         debug_homing_simple.xprint(msg="Save Agent's NN model and Memory")
-        #         if self.save_brain:
-        #             self.agents[0].save_brain()
-        #         if self.save_learning_score:
-        #             self.plot_learning_scores(save=True)
-        #         self.running = False
+            if not self.prev_goalreached_stored:
+                self.prev_goalreached = self.agents[0].goalReachedCount
+                self.prev_goalreached_stored = True
+
+            # wait 1 more last Reached-goal
+            current = self.agents[0].goalReachedCount
+            if current - self.prev_goalreached == 1:
+                self.running = False
 
     def fps_physic_step(self):
         """
@@ -410,32 +416,31 @@ if __name__ == '__main__':
     parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
     parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
+    parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
 
-    directory_name = "./simulation_logs/"
     # Run simulation
-    if multi_simulation == 1:
+    max_timesteps = int(args.max_timesteps)
+    timestr = time.strftime("%Y_%m_%d_%H%M%S")
+    directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + str(max_timesteps) + "timesteps/"
+    for i in xrange(multi_simulation):
+        simID = i + 1
+        sys.stdout.write(PrintColor.PRINT_GREEN)
+        print("Instantiate simulation: {}".format(simID))
+        sys.stdout.write(PrintColor.PRINT_RESET)
+
         simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
                                               PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
-                                              directory_name=directory_name)
+                                              simulation_id=simID, simulation_dir=directory_name)
         simulation.run()
         simulation.end()
-    else: # Multiple
-        max_timesteps = int(args.max_timesteps)
-        timestr = time.strftime("%Y_%m_%d_%H%M%S")
-        directory_name = "./simulation_logs/" + timestr + "_" + str(multi_simulation) + "sim_" + str(max_timesteps) + "timesteps/"
-        for i in xrange(multi_simulation):
-            simID = i + 1
-            sys.stdout.write(PrintColor.PRINT_GREEN)
-            print("Instantiate simulation: {}".format(simID))
-            sys.stdout.write(PrintColor.PRINT_RESET)
+        global_homing_simple.reset_simulation_global()
+    print("All simulation finished")
 
-            simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
-                                                  PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
-                                                  simulation_id=simID, directory_name=directory_name)
-            simulation.run()
-            simulation.end()
-            global_homing_simple.reset_simulation_global()
-        print("All simulation finished")
+    # Save whole simulation summary in file (completion time, number of simulation, etc)
+    file = open(directory_name + "summary.txt", "w")
+    file.write("Number of simulations: {}\n"
+               "Total simulations time: {}".format(multi_simulation, Global.get_time()))
+    file.close()

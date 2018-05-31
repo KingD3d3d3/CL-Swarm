@@ -1,3 +1,4 @@
+from __future__ import division
 import pygame
 from pygame.locals import *
 
@@ -24,7 +25,9 @@ if __name__ == '__main__':
     clock = pygame.time.Clock()
 
     myfont = pygame.font.SysFont("monospace", 30)
-    def PrintScreen(text, color=(255, 0, 0, 255), pos=(0,0)):
+
+
+    def PrintScreen(text, color=(255, 0, 0, 255), pos=(0, 0)):
         """
         Draw some text at the top status lines
         and advance to the next line.
@@ -32,7 +35,10 @@ if __name__ == '__main__':
         screen.blit(myfont.render(
             text, True, color), pos)
 
+
     fpsFont = pygame.font.SysFont("monospace", 15)
+
+
     def PrintFPS(text, color=(255, 0, 0, 255)):
         """
         Draw some text at the top status lines
@@ -40,6 +46,8 @@ if __name__ == '__main__':
         """
         screen.blit(fpsFont.render(
             text, True, color), (10, 3))
+
+
     # -------------------- Main Game Loop ----------------------
 
     timeCount = 0
@@ -53,11 +61,11 @@ if __name__ == '__main__':
                 # The user closed the window or pressed escape
                 running = False
             if event.type == KEYDOWN and event.key == K_p:
-                pause = not pause # Pause the game
+                pause = not pause  # Pause the game
 
         screen.fill((0, 0, 0, 0))
 
-        PrintScreen('HELLO WORLD', pos=(SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+        PrintScreen('HELLO WORLD', pos=(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2))
 
         deltaTime = clock.tick() / 1000.0
         fps = clock.get_fps()

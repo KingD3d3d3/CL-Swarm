@@ -1,9 +1,10 @@
+from __future__ import division
 import pandas as pd
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
     # Import dataset
-    data = pd.read_csv("../simulation_logs/2018_05_18_132731_normal_train_homing_simple.csv")
+    data = pd.read_csv("../simulation_log/2018_05_18_132731_normal_train_homing_simple.csv")
 
     # Get data Goal Reached
     X = data[data['event'].str.startswith('reached goal')]['goal_reached']

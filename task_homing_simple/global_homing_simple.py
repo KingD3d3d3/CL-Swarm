@@ -1,3 +1,4 @@
+from __future__ import division
 import os
 import errno
 import time
@@ -6,6 +7,7 @@ timestep = 1  # 0 # timesteps passed since beginning of simulation
 timer = 0.00  # times passed since beginning of simulation
 debug = True  # debug mode flag, if debug mode then print event's message in console
 record = False  # record flag, if yes record simulation's events in file
+header_write = False # Write header of record file only once at the beginning of each simulation
 fo = None  # file object to open file for recording
 writer = None  # writer object to record events
 event_count = 0
@@ -35,6 +37,7 @@ def reset_simulation_global():
     global timer
     global debug
     global record
+    global header_write
     global fo
     global writer
     global event_count
@@ -44,6 +47,7 @@ def reset_simulation_global():
     timer = 0.00  # times passed since beginning of simulation
     debug = True  # debug mode flag, if debug mode then print event's message in console
     record = False  # record flag, if yes record simulation's events in file
+    header_write = False # Write header of record file only once at the beginning of each simulation
     fo = None  # file object to open file for recording
     writer = None  # writer object to record events
     event_count = 0

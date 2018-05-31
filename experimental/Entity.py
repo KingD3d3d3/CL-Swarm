@@ -1,3 +1,4 @@
+from __future__ import division
 class Entity(object):
 
     def __init__(self, entityManager, gameObject):

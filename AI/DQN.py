@@ -1,13 +1,17 @@
+from __future__ import division
 import numpy as np
 import random
 from collections import deque
 import sys
 from keras.models import load_model, clone_model
 import csv
+
 try:
     from res.print_colors import *
+    import Global
 except:
     from ..res.print_colors import *
+    import Global
 
 
 # -------------------- MODEL -------------------------
@@ -27,7 +31,7 @@ class Model(object):
         """
             Fit the model
         """
-        #self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
+        # self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
         self.q_network.fit(x, y, batch_size=batch_len, epochs=nb_epochs, verbose=verbose)  # keras 2
 
     def predict(self, state, batch_len=1, target=False):
@@ -66,6 +70,7 @@ class Model(object):
         self.q_network.layers[1].set_weights(weights_h2)
         self.target_network.layers[0].set_weights(weights_h1)
         self.target_network.layers[1].set_weights(weights_h2)
+
 
 # -------------------- MEMORY --------------------------
 
@@ -110,7 +115,7 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 # DEFAULT HYPERPARAMETERS
 BATCH_SIZE = 32
 # B is typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
-MEMORY_CAPACITY = 10000 # 2000
+MEMORY_CAPACITY = 10000  # 2000
 GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001
 TAU = 0.01  # 0.001 # update target network rate
@@ -167,15 +172,15 @@ class DQN(object):
         self.zeros_state = np.zeros([1, self.inputCnt])
         self.zeros_x = np.zeros((1, self.inputCnt))
         self.zeros_y = np.zeros((1, self.actionCnt))
-        dummy = self.model.predict(self.zeros_state)
-        dummy2 = self.model.predict(self.zeros_state, target=True)
+        self.model.predict(self.zeros_state)
+        self.model.predict(self.zeros_state, target=True)
         self.model.train(self.zeros_x, self.zeros_y)
 
         # Count the number of iterations
         self.steps = 0
 
         # Number of iterations for learning update
-        self.ratio_update = ratio_update # Default 1 means the agent learns every timestep
+        self.ratio_update = ratio_update  # Default 1 means the agent learns every timestep
         self.update_counter = 0
 
     def build_model(self):
@@ -238,7 +243,8 @@ class DQN(object):
         if not self.printTimeToLearn:
             printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                            "{:>25s}".format("time to learn") +
-                           ", tmstp: {:10.0f}".format(self.steps))
+                           ", tmstp: {:10.0f}".format(self.steps) +
+                           ", t: {}".format(Global.get_time()))
             self.printTimeToLearn = True
 
         batch = self.memory.pop(self.batch_size)

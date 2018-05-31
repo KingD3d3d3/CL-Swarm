@@ -1,6 +1,8 @@
+from __future__ import division
 import pygame
 from pygame.locals import *
 import math
+
 
 def slowFunction():
     for i in xrange(1000000):
@@ -15,27 +17,22 @@ class Simulation(object):
         pygame.init()
         self.clock = pygame.time.Clock()
 
-        timeCount = 0
-        stepCount = 0
         self.running = True
 
     def run(self):
-        for i in xrange(2):
-            #while self.running:
+        for j in xrange(2):
+            # while self.running:
             slowFunction()
 
             deltaTime = self.clock.tick() / 1000.0
-            fps = self.clock.get_fps()
 
             # Show FPS
             print('deltaTime: {}'.format(deltaTime))
-                #self.running = False
+            # self.running = False
 
     def end(self):
         pygame.quit()
         print('Done! simulation: {}'.format(self.simulation_id))
-
-
 
 
 if __name__ == '__main__':

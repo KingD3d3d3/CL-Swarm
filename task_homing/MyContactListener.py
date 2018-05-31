@@ -1,3 +1,4 @@
+from __future__ import division
 from Box2D.b2 import (world, polygonShape, vec2, contactListener)
 import pygame, sys
 

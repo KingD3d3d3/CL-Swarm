@@ -12,6 +12,11 @@
           <option value="E731" />
           <option value="E261" />
           <option value="E305" />
+          <option value="E501" />
+          <option value="W391" />
+          <option value="E128" />
+          <option value="E262" />
+          <option value="E301" />
         </list>
       </option>
     </inspection_tool>
@@ -30,6 +35,8 @@
       <option name="ignoredNames">
         <list>
           <option value="id" />
+          <option value="file" />
+          <option value="dir" />
         </list>
       </option>
     </inspection_tool>

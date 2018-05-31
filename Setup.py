@@ -1,3 +1,4 @@
+from __future__ import division
 # TODO Describe this file
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720  # 640, 480

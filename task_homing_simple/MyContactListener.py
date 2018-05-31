@@ -1,3 +1,4 @@
+from __future__ import division
 from Box2D.b2 import (world, polygonShape, vec2, contactListener)
 import pygame, sys
 
@@ -49,9 +50,6 @@ class MyContactListener(contactListener):
 
         objectA = bodyA.userData
         objectB = bodyB.userData
-
-        nameA = objectA.__class__.__name__
-        nameB = objectB.__class__.__name__
 
         self.checkAgentObstacleEndCollision(objectA, objectB)
         self.checkAgentWallEndCollision(objectA, objectB)
@@ -137,7 +135,6 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
             agent.startTimestepObstacleCollision = global_homing_simple.timestep  # Start counting
             return
 
@@ -147,7 +144,6 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
             agent.startTimestepObstacleCollision = global_homing_simple.timestep  # Start counting
             return
 
@@ -197,18 +193,14 @@ class MyContactListener(contactListener):
         """
         if isinstance(objectA, AgentHomingSimple) and isinstance(objectB, Wall):
             agent = objectA
-            obstacle = objectB
 
             agent.endCollisionColor()
-            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHomingSimple):
             agent = objectB
-            obstacle = objectA
 
             agent.endCollisionColor()
-            # debug_homing_simple.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
     # ------------------------------------------------------------------------------------------------------------------
 

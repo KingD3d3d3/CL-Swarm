@@ -1,4 +1,6 @@
-import random, sys
+from __future__ import division
+import random
+import sys
 
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
@@ -18,8 +20,11 @@ try:
     from Setup import *
     from Util import worldToPixels
     import Util
+    from res.print_colors import printColor
+    import Global
 except:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
@@ -27,12 +32,14 @@ except:
     from .Setup import *
     from .Util import worldToPixels
     import Util
-
+    import Global
+    from .res.print_colors import printColor
 
 moveTicker = 0
 prev_angle = 999
 go_print_Turn = False
 prev_turned_angle = 0
+
 
 class Agent(object):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, training=True):
@@ -55,8 +62,6 @@ class Agent(object):
         # Training flag
         self.training = training
 
-
-
     def getLateralVelocity(self):
         currentRightNormal = self.body.GetWorldVector(vec2(1, 0))
         return currentRightNormal.dot(self.body.linearVelocity) * currentRightNormal
@@ -74,7 +79,7 @@ class Agent(object):
         # Stop the forever roll
         currentForwardNormal = self.getForwardVelocity()
         currentForwardSpeed = currentForwardNormal.Normalize()
-        dragForceMagnitude = -50 * currentForwardSpeed #-10
+        dragForceMagnitude = -50 * currentForwardSpeed  # -10
         self.body.ApplyForce(dragForceMagnitude * currentForwardNormal, self.body.worldCenter, True)
 
     def remainStatic(self):
@@ -104,16 +109,16 @@ class Agent(object):
             print('bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
                                                                             prev_angle,
                                                                             turned_angle))
-            #if turned_angle != 0 and prev_angle != 999:
+            # if turned_angle != 0 and prev_angle != 999:
             go_print_Turn = False
 
         myAngle = Util.radToDeg(self.body.angle % (2 * pi))
         turned_angle = myAngle - prev_angle
-        if not (prev_turned_angle - 0.1 <= turned_angle <= prev_turned_angle \
-                or prev_turned_angle <= turned_angle <= prev_turned_angle + 0.1):
+        if not (prev_turned_angle - 0.1 <= turned_angle <= prev_turned_angle or
+                prev_turned_angle <= turned_angle <= prev_turned_angle + 0.1):
             print('### bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
-                                                                        prev_angle,
-                                                                        turned_angle))
+                                                                                prev_angle,
+                                                                                turned_angle))
         prev_turned_angle = turned_angle
 
         key = pygame.key.get_pressed()
@@ -178,21 +183,21 @@ class Agent(object):
         learning_score = self.brain.learning_score()
         return learning_score
 
-    def save_brain(self):
+    def save_brain(self, dir):
         """
             Save agent's brain (neural network model and memory) in file
             Call save_model() and save_memory()
         """
-        self.save_model()
-        self.save_memory()
+        self.save_model(dir)
+        self.save_memory(dir)
 
-    def save_model(self):
+    def save_model(self, dir):
         """
             Save agent's model (neural network, optimizer, loss, etc) in file
             Also create the /brain_files/ directory if it doesn't exist
         """
         timestr = time.strftime("%Y_%m_%d_%H%M%S")
-        directory = "./brain_files/"
+        directory = dir + "brain_files/"
         network_model = directory + timestr + "_model.h5"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
@@ -203,51 +208,18 @@ class Agent(object):
                     raise
 
         self.brain.save_model(network_model)
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Save Agent's model") +
+                       ", file: {}".format(network_model) +
+                       ", t: {}".format(Global.get_time()))
 
-    def load_model(self):
-        """
-            Load Agent's model config from file
-            Everything : NN architecture, optimizer, weights, ...
-        """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
-
-        self.brain.load_model(model_file)
-
-    def load_weights(self):
-        """
-            Load Agent's weights from file
-        """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
-
-        self.brain.load_weights(model_file)
-
-    def load_h1_weights(self):
-        """
-            Load Agent's 1st hidden layer weights from file
-        """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
-
-        self.brain.load_h1_weights(model_file)
-
-    def load_h1h2_weights(self):
-        """
-            Load Agent's 1st and 2nd hidden layer weights from file
-        """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
-
-        self.brain.load_h1h2_weights(model_file)
-
-    def save_memory(self):
+    def save_memory(self, dir):
         """
             Save Agent's memory (experiences) in csv file
             Also create the /brain_files/ directory if it doesn't exist
         """
         timestr = time.strftime("%Y_%m_%d_%H%M%S")
-        directory = "./brain_files/"
+        directory = dir + "brain_files/"
         memory_file = directory + timestr + "_memory.csv"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
@@ -258,6 +230,66 @@ class Agent(object):
                     raise
 
         self.brain.save_memory(memory_file)
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Save Agent's memory") +
+                       ", file: {}".format(memory_file) +
+                       ", t: {}".format(Global.get_time()))
+
+    def load_model(self):
+        """
+            Load Agent's model config from file
+            Everything : NN architecture, optimizer, weights, ...
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_model(model_file)
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load full model") +
+                       ", file: {}".format(model_file) +
+                       ", t: {}".format(Global.get_time()))
+
+    def load_weights(self):
+        """
+            Load Agent's weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_weights(model_file)
+
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load model full weights") +
+                       ", file: {}".format(model_file) +
+                       ", t: {}".format(Global.get_time()))
+
+    def load_h1_weights(self):
+        """
+            Load Agent's 1st hidden layer weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_h1_weights(model_file)
+
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load 1st hidden layer weights") +
+                       ", file: {}".format(model_file) +
+                       ", t: {}".format(Global.get_time()))
+
+    def load_h1h2_weights(self):
+        """
+            Load Agent's 1st and 2nd hidden layer weights from file
+        """
+        directory = "./brain_files/"
+        model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_h1h2_weights(model_file)
+
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load 1st and 2nd hidden layer weights") +
+                       ", file: {}".format(model_file) +
+                       ", t: {}".format(Global.get_time()))
 
     def load_memory(self):
         """
@@ -279,7 +311,10 @@ class Agent(object):
             exp = (row['state'], row['action'], row['reward'], row['next_state'])
             memory_list.append(exp)
 
-        return
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load full memory") +
+                       ", file: {}".format(memory_file) +
+                       ", t: {}".format(Global.get_time()))
 
     def stop_training(self):
         """

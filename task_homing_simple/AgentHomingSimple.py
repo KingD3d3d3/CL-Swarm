@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
@@ -203,10 +204,8 @@ class AgentHomingSimple(Agent):
         self.facingGoal = True  # default
         if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
             self.facingGoal = True
-            #debug_homing_simple.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-            #debug_homing_simple.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
 
     def draw(self):
 
@@ -354,7 +353,19 @@ class AgentHomingSimple(Agent):
         """
         super(AgentHomingSimple, self).update()
 
+        # Get orientation to the goal
+        orientation = self.orientationToGoal()
+        if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
+            if not self.facingGoal:
+                self.facingGoal = True
+
+        elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
+            if self.facingGoal:
+                self.facingGoal = False
+
+        # Agent's signal
         if self.collision_avoidance:
+
             # Read sensor's value
             self.readSensors()
 
@@ -368,20 +379,6 @@ class AgentHomingSimple(Agent):
             normSensor7 = self.normalizeSensorsValue(self.sensors[6])
             normSensor8 = self.normalizeSensorsValue(self.sensors[7])
 
-        # Get orientation to the goal
-        orientation = self.orientationToGoal()
-        if (0.0 <= orientation < 0.5) or (-0.5 <= orientation < 0.0):
-            if not self.facingGoal:
-                self.facingGoal = True
-                #debug_homing_simple.printEvent(self, "facing goal: {}".format(self.currentGoalIndex + 1))
-
-        elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
-            if self.facingGoal:
-                self.facingGoal = False
-                #debug_homing_simple.printEvent(self, "reverse facing goal: {}".format(self.currentGoalIndex + 1))
-
-        # Select action using AI
-        if self.collision_avoidance:
             last_signal = np.asarray([normSensor1, normSensor2, normSensor3,
                           normSensor4, normSensor5,
                           normSensor6, normSensor7, normSensor8,
@@ -390,6 +387,7 @@ class AgentHomingSimple(Agent):
             last_signal = np.asarray([orientation, -orientation]) # states when no collision avoidance
             #last_signal = np.asarray([orientation])
 
+        # Select action using AI
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
         #self.remainStatic()

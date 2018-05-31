@@ -1,3 +1,4 @@
+from __future__ import division
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import vec2
@@ -54,5 +55,4 @@ class StaticBox(object):
 
     def draw(self):
         vertices = [(self.body.transform * v) * PPM for v in self.body.fixtures[0].shape.vertices]
-        a = self.body.fixtures[0].shape.vertices
         pygame.draw.polygon(self.screen, self.color, vertices)
