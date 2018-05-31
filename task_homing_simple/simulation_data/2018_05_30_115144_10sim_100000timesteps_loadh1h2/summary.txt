@@ -1,2 +1,0 @@
-Number of simulations: 10
-Total simulations time: 0h 32m 40s
