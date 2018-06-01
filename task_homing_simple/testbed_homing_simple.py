@@ -49,7 +49,7 @@ except:
     from ..res.print_colors import printColor
     import global_homing_simple
     from ..res import print_colors as PrintColor
-    import Global
+    from .. import Global
 
 class TestbedParametersSharing(object):
     def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters,

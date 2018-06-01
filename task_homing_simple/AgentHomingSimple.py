@@ -47,7 +47,7 @@ except:
     from ..res import print_colors as PrintColor
     import debug_homing_simple
     import global_homing_simple
-    import Global
+    from .. import Global
 
 
 # ----------- Agent's brain Neural Network Config ----------------

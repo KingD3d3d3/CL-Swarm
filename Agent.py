@@ -198,7 +198,8 @@ class Agent(object):
         """
         timestr = time.strftime("%Y_%m_%d_%H%M%S")
         directory = dir
-        network_model = directory + timestr + "_model.h5"  # neural network model file
+        timestep = "_" + str(Global.timestep) + "tmstp"
+        network_model = directory + timestr + timestep + "_model.h5"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
             try:
@@ -221,7 +222,8 @@ class Agent(object):
         """
         timestr = time.strftime("%Y_%m_%d_%H%M%S")
         directory = dir
-        memory_file = directory + timestr + "_memory.csv"  # neural network model file
+        timestep = "_" + str(Global.timestep) + "tmstp"
+        memory_file = directory + timestr + timestep + "_memory.csv"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
             try:

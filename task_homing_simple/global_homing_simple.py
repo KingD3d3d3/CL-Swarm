@@ -2,7 +2,11 @@ from __future__ import division
 import os
 import errno
 import time
-import Global
+
+try:
+    import Global
+except:
+    from .. import Global
 
 #timestep = 1  # 0 # timesteps passed since beginning of simulation
 timer = 0.00  # times passed since beginning of simulation

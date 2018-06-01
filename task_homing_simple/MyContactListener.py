@@ -23,7 +23,7 @@ except:
     from ..Border import Wall
     import debug_homing_simple
     import global_homing_simple
-    import Global
+    from .. import Global
 
 EPSILON_TIMESTEP = 10  # 30
 

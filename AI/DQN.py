@@ -11,7 +11,7 @@ try:
     import Global
 except:
     from ..res.print_colors import *
-    import Global
+    from .. import Global
 
 
 # -------------------- MODEL -------------------------

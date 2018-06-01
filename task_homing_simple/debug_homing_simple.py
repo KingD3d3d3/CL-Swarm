@@ -17,7 +17,7 @@ except:
     import global_homing_simple
     from ..res.print_colors import printColor
     from .. import Util
-    import Global
+    from .. import Global
 
 #header_write = False
 header = ("agent",
