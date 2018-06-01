@@ -54,8 +54,9 @@ fabric.properties
 # Excel files
 *.xlsx
 
-# Png files
+# Images files
 *.png
+*.jpg
 
 # CSV files
 *.csv
@@ -75,3 +76,6 @@ homing_task/simulation_logs/
 # Jupyter notebooks
 *.ipynb_checkpoints
 *.ipynb
+
+# Data analysis
+*/data_analysis/
