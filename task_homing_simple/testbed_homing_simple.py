@@ -205,6 +205,9 @@ class TestbedParametersSharing(object):
         """
             Check and handle the event queue
         """
+        if not can_handle_events:
+            return
+
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                 # The user closed the window or pressed escape
@@ -420,9 +423,13 @@ if __name__ == '__main__':
     parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
+    parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
+
+    # Keyboard inputs
+    can_handle_events = args.handle_events == 'True'
 
     # Run simulation
     max_timesteps = int(args.max_timesteps)
