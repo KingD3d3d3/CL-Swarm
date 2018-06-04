@@ -61,9 +61,9 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------
 
     # Input directory
-    dir_name = "../simulation_data/2018_05_31_150133_2sim_10000timesteps/"
+    dir_name = "simulation_data/2018_05_31_150133_2sim_10000timesteps/"
     brain_dir = dir_name + "brain_files/"
-
+    #brain_dir = os.path.abspath(brain_dir) + '/'
     if not os.path.isdir(os.path.dirname(brain_dir)):
         sys.exit('Not a directory: {}'.format(brain_dir))
 
