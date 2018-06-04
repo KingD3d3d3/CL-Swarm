@@ -11,8 +11,8 @@ try:
     from Setup import *
     import res.print_colors as PrintColor
     import Global
-    from task_homing_simple.testbed_homing_simple import TestbedHomingSimple
-    import task_homing_simple.global_homing_simple as global_homing_simple
+    from testbed_homing_simple import TestbedHomingSimple
+    import global_homing_simple
 except:
     # Running in command line
     import logging
@@ -20,11 +20,11 @@ except:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from task_homing_simple.testbed_homing_simple import TestbedHomingSimple
-    from Setup import *
-    from res import print_colors as PrintColor
+    from .testbed_homing_simple import TestbedHomingSimple
+    from ..Setup import *
+    from ..res import print_colors as PrintColor
     from .. import Global
-    from task_homing_simple import global_homing_simple
+    import global_homing_simple
 
 if __name__ == '__main__':
 
