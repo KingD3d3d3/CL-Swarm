@@ -51,9 +51,10 @@ except:
     from ..res import print_colors as PrintColor
     from .. import Global
 
-class TestbedParametersSharing(object):
+class TestbedHomingSimple(object):
     def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters,
-                 simulation_id=0, simulation_dir="./simulation_data/", simulation_file_extension="_homing_simple.csv"):
+                 simulation_id=0, simulation_dir="./simulation_data/", simulation_file_extension="_homing_simple.csv",
+                 file_to_load="", sim_param=None):
 
         self.simulation_id = simulation_id
         debug_homing_simple.xprint(msg='simulation_id: {}, Starting Setup'.format(self.simulation_id))
@@ -66,20 +67,22 @@ class TestbedParametersSharing(object):
         self.vel_iters = vel_iters
         self.pos_iters = pos_iters
 
-        self.render = args.render == 'True'
-        self.print_fps = args.print_fps == 'True'
-        global_homing_simple.debug = args.debug == 'True'
-        global_homing_simple.record = args.record == 'True'
-        self.fixed_ur_timestep = args.fixed_ur_timestep == 'True'
-        self.training = args.training == 'True'
-        self.collision_avoidance = args.collision_avoidance == 'True'
-        self.save_brain = args.save_brain == 'True'
-        self.save_learning_score = args.save_learning_score == 'True'
-        self.load_full_weights = args.load_full_weights == 'True'
-        self.load_h1_weights = args.load_h1_weights == 'True'
-        self.load_h1h2_weights = args.load_h1h2_weights == 'True'
-        self.max_timesteps = int(args.max_timesteps)
-        self.save_network_freq = int(args.save_network_freq)
+        self.can_handle_events = sim_param.handle_events == 'True' # Keyboard inputs
+        self.render = sim_param.render == 'True'
+        self.print_fps = sim_param.print_fps == 'True'
+        global_homing_simple.debug = sim_param.debug == 'True'
+        global_homing_simple.record = sim_param.record == 'True'
+        self.fixed_ur_timestep = sim_param.fixed_ur_timestep == 'True'
+        self.training = sim_param.training == 'True'
+        self.collision_avoidance = sim_param.collision_avoidance == 'True'
+        self.save_brain = sim_param.save_brain == 'True'
+        self.save_learning_score = sim_param.save_learning_score == 'True'
+        self.load_full_weights = sim_param.load_full_weights == 'True'
+        self.load_h1_weights = sim_param.load_h1_weights == 'True'
+        self.load_h1h2_weights = sim_param.load_h1h2_weights == 'True'
+        self.max_timesteps = int(sim_param.max_timesteps)
+        self.save_network_freq = int(sim_param.save_network_freq)
+        self.wait_one_more_goal = sim_param.wait_one_more_goal == 'True'
 
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
@@ -146,18 +149,31 @@ class TestbedParametersSharing(object):
                                   collision_avoidance=self.collision_avoidance)
             self.agents.append(a)
 
+
+        self.file_to_load = file_to_load # can be default ""
+        # if file_to_load != "":
+        #     self.file_to_load = file_to_load
+        # else:
+        #     # Default file to load
+        #     directory = "./brain_files/"
+        #     model_file = directory + "brain" + "_model.h5"  # neural network model file
+        #     file_to_load = model_file
+
         # Load full weights to agent
         if self.load_full_weights:
-            self.agents[0].load_weights()
+            self.agents[0].load_weights(self.file_to_load)
             self.agents[0].stop_exploring()
 
         # Load full weights to agent
         if self.load_h1_weights:
-            self.agents[0].load_h1_weights()
+            self.agents[0].load_h1_weights(self.file_to_load)
 
         # Load full weights to agent
         if self.load_h1h2_weights:
-            self.agents[0].load_h1h2_weights()
+            self.agents[0].load_h1h2_weights(self.file_to_load)
+
+        # Total number of goal reached
+        self.goal_reached_count = 0
 
         debug_homing_simple.xprint(msg='simulation_id: {}, Setup complete, Start simulation'.format(self.simulation_id))
 
@@ -205,7 +221,7 @@ class TestbedParametersSharing(object):
         """
             Check and handle the event queue
         """
-        if not can_handle_events:
+        if not self.can_handle_events:
             return
 
         for event in pygame.event.get():
@@ -230,13 +246,13 @@ class TestbedParametersSharing(object):
             if event.type == KEYDOWN and event.key == K_s:
                 self.agents[0].save_brain(dir=self.brain_dir)
             if event.type == KEYDOWN and event.key == K_b:
-                self.agents[0].load_model()
+                self.agents[0].load_model(self.file_to_load)
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_l:
-                self.agents[0].load_weights()
+                self.agents[0].load_weights(self.file_to_load)
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
-                self.agents[0].load_h1_weights()
+                self.agents[0].load_h1_weights(self.file_to_load)
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_p:  # plot Agent's learning scores
                 #self.plot_learning_scores()
@@ -250,6 +266,12 @@ class TestbedParametersSharing(object):
         for j in xrange(self.numAgents):
             self.agents[j].update()
 
+        # Total number of goal reached
+        count = 0
+        for j in xrange(self.numAgents):
+            count += self.agents[j].goalReachedCount
+        self.goal_reached_count = count
+
         #ls = self.agents[0].learning_score()  # learning score of agent 0
         #self.learning_scores.append(ls)  # appending the learning score
 
@@ -261,6 +283,10 @@ class TestbedParametersSharing(object):
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
+
+            # End if no need to wait 1 last goal
+            if not self.wait_one_more_goal:
+                self.running = False
 
             if not self.prev_goalreached_stored:
                 self.prev_goalreached = self.agents[0].goalReachedCount
@@ -423,13 +449,11 @@ if __name__ == '__main__':
     parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
+    parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='True')
     parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
-
-    # Keyboard inputs
-    can_handle_events = args.handle_events == 'True'
 
     # Run simulation
     max_timesteps = int(args.max_timesteps)
@@ -442,9 +466,9 @@ if __name__ == '__main__':
         print("Instantiate simulation: {}".format(simID))
         sys.stdout.write(PrintColor.PRINT_RESET)
 
-        simulation = TestbedParametersSharing(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
-                                              PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
-                                              simulation_id=simID, simulation_dir=directory_name)
+        simulation = TestbedHomingSimple(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
+                                         PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
+                                         simulation_id=simID, simulation_dir=directory_name, sim_param=args)
         simulation.run()
         simulation.end()
         total_timesteps += Global.timestep

@@ -239,13 +239,17 @@ class Agent(object):
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
-    def load_model(self):
+    def load_model(self, file=""):
         """
             Load Agent's model config from file
             Everything : NN architecture, optimizer, weights, ...
         """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_model(model_file)
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
@@ -254,12 +258,16 @@ class Agent(object):
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
-    def load_weights(self):
+    def load_weights(self, file=""):
         """
             Load Agent's weights from file
         """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_weights(model_file)
 
@@ -269,12 +277,16 @@ class Agent(object):
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
-    def load_h1_weights(self):
+    def load_h1_weights(self, file=""):
         """
             Load Agent's 1st hidden layer weights from file
         """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_h1_weights(model_file)
 
@@ -284,12 +296,16 @@ class Agent(object):
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
-    def load_h1h2_weights(self):
+    def load_h1h2_weights(self, file):
         """
             Load Agent's 1st and 2nd hidden layer weights from file
         """
-        directory = "./brain_files/"
-        model_file = directory + "brain" + "_model.h5"  # neural network model file
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_h1h2_weights(model_file)
 
@@ -299,7 +315,7 @@ class Agent(object):
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
-    def load_memory(self):
+    def load_memory(self, file=""):
         """
             Load memory from file
         """
