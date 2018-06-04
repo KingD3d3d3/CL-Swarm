@@ -88,6 +88,7 @@ if __name__ == '__main__':
             # create csv file
             timestr = time.strftime("%Y_%m_%d_%H%M%S")
             filename = curr_dir + timestr + '_' + file_prefix + "_score.csv"
+            print('csv file: {}'.format(filename))
             fo = open(filename, 'a')
             writer = csv.writer(fo)
 
