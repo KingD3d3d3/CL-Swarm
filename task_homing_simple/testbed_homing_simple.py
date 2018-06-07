@@ -13,7 +13,7 @@ import errno
 import csv
 import numpy as np
 import sys
-
+import datetime
 try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
@@ -77,12 +77,14 @@ class TestbedHomingSimple(object):
         self.collision_avoidance = sim_param.collision_avoidance == 'True'
         self.save_brain = sim_param.save_brain == 'True'
         self.save_learning_score = sim_param.save_learning_score == 'True'
+        self.load_model = sim_param.load_model == 'True'
         self.load_full_weights = sim_param.load_full_weights == 'True'
         self.load_h1_weights = sim_param.load_h1_weights == 'True'
         self.load_h1h2_weights = sim_param.load_h1h2_weights == 'True'
         self.max_timesteps = int(sim_param.max_timesteps)
         self.save_network_freq = int(sim_param.save_network_freq)
         self.wait_one_more_goal = sim_param.wait_one_more_goal == 'True'
+        self.stop_exploring = sim_param.stop_exploring == 'True'
 
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
@@ -159,16 +161,24 @@ class TestbedHomingSimple(object):
         #     model_file = directory + "brain" + "_model.h5"  # neural network model file
         #     file_to_load = model_file
 
-        # Load full weights to agent
-        if self.load_full_weights:
-            self.agents[0].load_weights(self.file_to_load)
+        if self.stop_exploring:
             self.agents[0].stop_exploring()
 
+        # Load model to agent
+        if self.load_model:
+            self.agents[0].load_model(self.file_to_load)
+            #self.agents[0].stop_exploring()
+
         # Load full weights to agent
+        if self.load_full_weights:
+            self.agents[0].load_full_weights(self.file_to_load)
+            #self.agents[0].stop_exploring()
+
+        # Load 1st hidden layer weights to agent
         if self.load_h1_weights:
             self.agents[0].load_h1_weights(self.file_to_load)
 
-        # Load full weights to agent
+        # Load 1st and 2nd hidden layer weights to agent
         if self.load_h1h2_weights:
             self.agents[0].load_h1h2_weights(self.file_to_load)
 
@@ -226,13 +236,22 @@ class TestbedHomingSimple(object):
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                """
+                    ESCP: Quit game
+                """
                 # The user closed the window or pressed escape
                 self.running = False
             if event.type == KEYDOWN and event.key == K_p:
+                """
+                    P: Pause game
+                """
                 self.pause = not self.pause  # Pause the game
                 if self.pause:
                     debug_homing_simple.xprint(msg='simulation_id: {}, Paused simulation'.format(self.simulation_id))
             if event.type == KEYDOWN and event.key == K_r:
+                """
+                    R: Record/ Stop record
+                """
                 if not global_homing_simple.record:  # Record simulation
                     debug_homing_simple.xprint(msg="Start recording")
                     global_homing_simple.record = True
@@ -244,15 +263,33 @@ class TestbedHomingSimple(object):
                     global_homing_simple.record = False
                     global_homing_simple.fo.close()
             if event.type == KEYDOWN and event.key == K_s:
+                """
+                    S: Save model and memory
+                """
                 self.agents[0].save_brain(dir=self.brain_dir)
             if event.type == KEYDOWN and event.key == K_b:
+                """
+                    B: Load model
+                """
                 self.agents[0].load_model(self.file_to_load)
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_l:
-                self.agents[0].load_weights(self.file_to_load)
+                """
+                    L: Load full weights
+                """
+                self.agents[0].load_full_weights(self.file_to_load)
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
+                """
+                    W: Load h1 weights
+                """
                 self.agents[0].load_h1_weights(self.file_to_load)
+                self.agents[0].stop_training()
+            if event.type == KEYDOWN and event.key == K_z:
+                """
+                    Z: Load h1 h2 weights
+                """
+                self.agents[0].load_h1h2_weights(self.file_to_load)
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_p:  # plot Agent's learning scores
                 #self.plot_learning_scores()
@@ -437,6 +474,8 @@ if __name__ == '__main__':
     parser.add_argument('--training', help='train agent', default='True')
     parser.add_argument('--collision_avoidance', help='agent learns collision avoidance behavior', default='True')
     parser.add_argument('--save_brain', help='save neural networks model and memory', default='False')
+    parser.add_argument('--load_model',
+                        help='load model to agent', default='False')
     parser.add_argument('--load_full_weights',
                         help='load full weights of neural networks from master to learning agent', default='False')
     parser.add_argument('--load_h1_weights',
@@ -451,15 +490,31 @@ if __name__ == '__main__':
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
     parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='True')
     parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
+    parser.add_argument('--stop_exploring', help='stop exploring, only exploitation', default='False')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
+
+    # Prefix
+    suffix = "normal"
+    if args.load_full_weights == 'True':
+        suffix = "loadfull"
+    elif args.load_h1h2_weights == 'True':
+        suffix = "loadh1h2"
+    elif args.load_h1_weights == 'True':
+        suffix = "loadh1"
+    elif args.load_model == 'True':
+        suffix = "loadmodel"
+
+    if args.stop_exploring == 'True':
+        suffix += "_noexplore"
 
     # Run simulation
     max_timesteps = int(args.max_timesteps)
     total_timesteps = 0
     timestr = time.strftime("%Y_%m_%d_%H%M%S")
-    directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + str(max_timesteps) + "timesteps/"
+    directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + str(max_timesteps) + \
+                     "tmstp_" + suffix + "/"
     for i in xrange(multi_simulation):
         simID = i + 1
         sys.stdout.write(PrintColor.PRINT_GREEN)

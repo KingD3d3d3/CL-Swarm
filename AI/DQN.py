@@ -131,19 +131,16 @@ class DQN(object):
         # Agent's ID
         self.id = id
 
-        # Training flag
-        self.training = training
-        self.printTimeToLearn = False
-
         # Hyperparameters
         self.batch_size = BATCH_SIZE
         self.mem_capacity = MEMORY_CAPACITY
         self.gamma = GAMMA
         self.lr = LEARNING_RATE
-        if self.training:
-            self.epsilon = INITIAL_EPSILON
-        else:
-            self.epsilon = FINAL_EPSILON
+        # if self.training:
+        #     self.epsilon = INITIAL_EPSILON
+        # else:
+        #     self.epsilon = FINAL_EPSILON
+        self.epsilon = INITIAL_EPSILON
         self.epsilon_step = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
 
         # Input - Output
@@ -154,7 +151,7 @@ class DQN(object):
         self.model = Model(inputCnt, actionCnt)
 
         # Create Experience Replay
-        self.memory = Memory(self.mem_capacity)
+        self.memory = Memory(MEMORY_CAPACITY)
 
         # Save file of the model
         self.model_file = brain_file
@@ -163,15 +160,15 @@ class DQN(object):
         self.model.q_network = self.build_model()
         self.model.target_network = self.build_model()
 
-        self.last_state = self.preprocess(np.zeros(self.inputCnt))
+        self.last_state = self.preprocess(np.zeros(inputCnt))
         self.last_action = 0
         self.last_reward = 0.0
         self.reward_window = deque(maxlen=1000)
 
         # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
-        self.zeros_state = np.zeros([1, self.inputCnt])
-        self.zeros_x = np.zeros((1, self.inputCnt))
-        self.zeros_y = np.zeros((1, self.actionCnt))
+        self.zeros_state = np.zeros([1, inputCnt])
+        self.zeros_x = np.zeros((1, inputCnt))
+        self.zeros_y = np.zeros((1, actionCnt))
         self.model.predict(self.zeros_state)
         self.model.predict(self.zeros_state, target=True)
         self.model.train(self.zeros_x, self.zeros_y)
@@ -182,6 +179,12 @@ class DQN(object):
         # Number of iterations for learning update
         self.ratio_update = ratio_update  # Default 1 means the agent learns every timestep
         self.update_counter = 0
+
+        # Training flag
+        self.training = training
+        if not self.training:
+            self.stop_training()
+        self.printTimeToLearn = False
 
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
@@ -294,6 +297,10 @@ class DQN(object):
             Stop training the Neural Network
             Stop exploration -> only exploitation
         """
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Stop training") +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
         self.training = False
         self.epsilon = FINAL_EPSILON
 
@@ -301,6 +308,10 @@ class DQN(object):
         """
             Stop exploration -> only exploitation
         """
+        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Stop exploring") +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
         self.epsilon = FINAL_EPSILON
 
     def save_model(self, model_file):
@@ -317,7 +328,7 @@ class DQN(object):
         self.model.q_network = load_model(model_file)
         self.model.target_network_network = load_model(model_file)
 
-    def load_weights(self, model_file):
+    def load_full_weights(self, model_file):
         """
             Load weights from file and set Q-Network, Target-Network
             Default: Stop training

@@ -193,7 +193,7 @@ class TestbedParametersSharing(object):
                 self.agents[0].save_memory()
             if event.type == KEYDOWN and event.key == K_l:
                 homing_debug.xprint(msg="Load full model weights")
-                self.agents[0].load_weights()
+                self.agents[0].load_full_weights()
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
                 homing_debug.xprint(msg="Load lower layer weights")

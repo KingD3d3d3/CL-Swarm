@@ -4,6 +4,7 @@ from Box2D.b2 import (vec2)
 import math
 import time
 
+from datetime import datetime
 try:
     from Setup import *
 except:
@@ -88,3 +89,7 @@ def minMaxNormalizationScale(x, minX, maxX):
         return 0
     else:
         return 2 * (x - minX) / (maxX - minX) - 1
+
+def getTimeString():
+    now = datetime.now()
+    return now.strftime("%Y_%m_%d_%H%M%S_%f")

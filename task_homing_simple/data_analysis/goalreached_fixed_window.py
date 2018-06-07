@@ -122,7 +122,7 @@ if __name__ == '__main__':
     dir_loadh1h2 = "../simulation_data/2018_05_30_115144_10sim_100000timesteps_loadh1h2/"
     dir_loadh1 = "../simulation_data/2018_05_30_135529_10sim_100000timesteps_loadh1/"
 
-    dir_list = [dir_loadh1, dir_loadfull, dir_loadh1h2, dir_loadh1]
+    dir_list = [dir_normal, dir_loadfull, dir_loadh1h2, dir_loadh1]
     Y_list = []
     Ys = []
 

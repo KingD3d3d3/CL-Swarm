@@ -5,8 +5,10 @@ import time
 
 try:
     import Global
+    import Util
 except:
     from .. import Global
+    from .. import Util
 
 #timestep = 1  # 0 # timesteps passed since beginning of simulation
 timer = 0.00  # times passed since beginning of simulation
@@ -16,7 +18,7 @@ header_write = False # Write header of record file only once at the beginning of
 fo = None  # file object to open file for recording
 writer = None  # writer object to record events
 event_count = 0
-timestr = time.strftime("%Y_%m_%d_%H%M%S")
+timestr = Util.getTimeString()
 
 def fileCreate(dir, extension):
     """
@@ -25,7 +27,7 @@ def fileCreate(dir, extension):
     """
     global timestr
 
-    timestr = time.strftime("%Y_%m_%d_%H%M%S")
+    timestr = Util.getTimeString()
     filename = dir + timestr + extension
 
     if not os.path.exists(os.path.dirname(filename)):
@@ -56,5 +58,5 @@ def reset_simulation_global():
     fo = None  # file object to open file for recording
     writer = None  # writer object to record events
     event_count = 0
-    timestr = time.strftime("%Y_%m_%d_%H%M%S")
+    timestr = Util.getTimeString()
 

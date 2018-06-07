@@ -13,7 +13,6 @@ import errno
 import csv
 import pandas as pd
 import numpy as np
-
 try:
     # Running in PyCharm
     import res.colors as Color
@@ -196,7 +195,8 @@ class Agent(object):
             Save agent's model (neural network, optimizer, loss, etc) in file
             Also create the /brain_files/ directory if it doesn't exist
         """
-        timestr = time.strftime("%Y_%m_%d_%H%M%S")
+
+        timestr = Util.getTimeString()
         directory = dir
         timestep = "_" + str(Global.timestep) + "tmstp"
         network_model = directory + timestr + timestep + "_model.h5"  # neural network model file
@@ -220,7 +220,7 @@ class Agent(object):
             Save Agent's memory (experiences) in csv file
             Also create the /brain_files/ directory if it doesn't exist
         """
-        timestr = time.strftime("%Y_%m_%d_%H%M%S")
+        timestr = Util.getTimeString()
         directory = dir
         timestep = "_" + str(Global.timestep) + "tmstp"
         memory_file = directory + timestr + timestep + "_memory.csv"  # neural network model file
@@ -258,7 +258,7 @@ class Agent(object):
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 
-    def load_weights(self, file=""):
+    def load_full_weights(self, file=""):
         """
             Load Agent's weights from file
         """
@@ -269,7 +269,7 @@ class Agent(object):
             directory = "./brain_files/"
             model_file = directory + "brain" + "_model.h5"  # neural network model file
 
-        self.brain.load_weights(model_file)
+        self.brain.load_full_weights(model_file)
 
         printColor(msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load model full weights") +
