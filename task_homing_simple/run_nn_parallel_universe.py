@@ -62,6 +62,7 @@ if __name__ == '__main__':
     parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='True')
     parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
     parser.add_argument('--stop_exploring', help='stop exploring, only exploitation', default='False')
+    parser.add_argument('--dir_name', help='directory name', default="")
     args = parser.parse_args()
 
     # --render
@@ -80,7 +81,7 @@ if __name__ == '__main__':
     args.render = 'False'
     args.training = 'False'
     args.collision_avoidance = 'False'
-    args.max_timesteps = '100'
+    #args.max_timesteps = '10000'
     args.wait_one_more_goal = 'False'
     args.handle_events = 'False'
 
@@ -90,7 +91,7 @@ if __name__ == '__main__':
     total_timesteps = 0
 
     # Input directory
-    dir_name = "simulation_data/many_folder_nn_test/"
+    dir_name = args.dir_name  # "simulation_data/many_folder_nn_test/"
     #dir_name = dir_name + "brain_files/"
     dir_name = os.path.abspath(dir_name) + '/'
     if not os.path.isdir(os.path.dirname(dir_name)):
