@@ -69,26 +69,53 @@ def megaSlowFunction():
     for i in xrange(500000):
         a = math.sqrt(9123456)
 
+def minMaxNormalization(x, _min, _max, new_min, new_max):
+    """
+        Normalize input x to new range [new_min, new_max]
+        Using MinMax normalization
+    """
+    if _min == _max:
+        return (new_min + new_max) / 2
+    else:
+        return (((x - _min) / (_max - _min)) * (new_max - new_min)) + new_min
 
-def minMaxNormalization(x, minX, maxX):
+def minMaxNormalization_0_1(x, _min, _max):
     """
         Normalize input x to range [0,1]
         Using MinMax normalization
     """
-    if minX == maxX:
-        return 0.5
-    else:
-        return (x - minX) / (maxX - minX)
+    return minMaxNormalization(x, _min, _max, 0., 1.)
 
-def minMaxNormalizationScale(x, minX, maxX):
+def minMaxNormalization_m1_1(x, _min, _max):
     """
         Normalize input x to range [-1,1]
         Using MinMax normalization and scaling
     """
-    if minX == maxX:
-        return 0
-    else:
-        return 2 * (x - minX) / (maxX - minX) - 1
+    return minMaxNormalization(x, _min, _max, -1., 1.)
+
+
+
+
+#
+# def minMaxNormalization_0_1(x, minX, maxX):
+#     """
+#         Normalize input x to range [0,1]
+#         Using MinMax normalization
+#     """
+#     if minX == maxX:
+#         return 0.5
+#     else:
+#         return (x - minX) / (maxX - minX)
+#
+# def minMaxNormalization_m1_1(x, minX, maxX):
+#     """
+#         Normalize input x to range [-1,1]
+#         Using MinMax normalization and scaling
+#     """
+#     if minX == maxX:
+#         return 0
+#     else:
+#         return 2 * (x - minX) / (maxX - minX) - 1
 
 def getTimeString():
     now = datetime.now()

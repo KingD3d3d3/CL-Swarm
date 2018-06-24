@@ -5,8 +5,10 @@ import pygame
 from Box2D.b2 import (vec2)
 from enum import Enum
 from keras.layers import Dense
+from keras.layers import Activation
 from keras.models import Sequential
 from keras.optimizers import Adam
+from keras.layers.normalization import BatchNormalization
 from pygame.locals import *
 import sys
 from collections import deque
@@ -15,6 +17,7 @@ import os
 import errno
 import csv
 import pandas as pd
+import keras.optimizers
 
 try:
     # Running in PyCharm
@@ -57,19 +60,29 @@ class DQNHomingSimple(DQN):
         # Sequential() creates the foundation of the layers.
         model = Sequential()
 
-        # 'Dense' define fully connected layers
+        # Neural Network's Architecture
         # Without collision avoidance
-        model.add(Dense(6, activation='relu', input_dim=self.inputCnt))  # input -> hidden
-        model.add(Dense(6, activation='relu'))  # hidden -> hidden
+        h1 = 6 # 1st hidden layer's size
+        h2 = 6 # 2nd hidden layer's size
+
+        model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden  # activation='relu'
+        model.add(Activation('relu'))
+        model.add(Dense(h2))  # hidden -> hidden  # activation='relu'
+        model.add(Activation('relu'))
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
-        # Sensors input
+        # Using Sensors' input
         # model.add(Dense(24, activation='relu', input_dim=self.inputCnt))  # input -> hidden
         # model.add(Dense(24, activation='relu'))  # hidden -> hidden
         # model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
+        # Optimizer
+        #optimizer = keras.optimizers.SGD(lr=self.lr, momentum=0.0, decay=0.0, nesterov=False)
+        #optimizer = keras.optimizers.SGD(lr=self.lr, momentum=0.9, decay=0.0, nesterov=True)
+        optimizer = Adam(lr=self.lr)
+
         # Compile model
-        model.compile(loss='mse', optimizer=Adam(lr=self.lr))  # optimizer for stochastic gradient descent
+        model.compile(loss='mse', optimizer=optimizer)  # optimizer for stochastic gradient descent
 
         return model
 
@@ -90,8 +103,8 @@ class Action(Enum):
 class Reward:
     GETTING_CLOSER = 0.1
 
-    LIVING_PENALTY = -0.5
-    GOAL_REACHED = 1.0
+    LIVING_PENALTY = 0. #-0.01 # 0 #-0.5
+    GOAL_REACHED = 0. #1.0 # 10.0 # useless reward
 
     @classmethod
     def sensorReward(cls, x):
@@ -112,6 +125,16 @@ class Reward:
             y = 0.
         return y
 
+    @classmethod
+    def getting_closer(cls, angle):
+        """
+            Getting Closer (GC)
+            angle_travelled = 0 deg -> reward = GETTING_CLOSER = 0.1 (Maximum)
+            angle_travelled = 45 deg -> reward = 0.1 * sqrt(2) / 2 = 0.07
+            angle_travelled = 90 deg -> reward = 0
+        """
+        reward = Reward.GETTING_CLOSER * np.cos(angle)
+        return reward
 
 class AgentHomingSimple(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0, training=True,
@@ -158,7 +181,7 @@ class AgentHomingSimple(Agent):
         self.raycast_vectors = (top_left, forward_vec, top_right, right, bottom_right, backward, bottom_left, left)
 
         # Brain of the Agent
-        input_size = self.numSensors + 2
+        input_size = self.numSensors + 1 # 2
         self.brain = DQNHomingSimple(inputCnt=input_size, actionCnt=len(list(Action)), id=self.id,
                                      training=self.training, ratio_update=1)
 
@@ -196,7 +219,8 @@ class AgentHomingSimple(Agent):
         self.maxReward = Reward.GETTING_CLOSER
         self.last_reward = 0.0  # last agent's reward
         self.last_distance = 0.0  # last agent's distance to the goal
-        self.distance = 0.0  # current distance to the goal
+        self.distance = self.distanceToGoal() # 0.0  # current distance to the goal
+        self.last_position = vec2(self.body.position.x, self.body.position.y) # keep track of previous position
 
         # Keep track of the time it took for agent to reach goal
         self.timeToGoal_window = deque(maxlen=100)
@@ -208,6 +232,9 @@ class AgentHomingSimple(Agent):
             self.facingGoal = True
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
+
+        # Distance travelled by agent at each timestep
+        self.delta_dist = self.initialSpeed * (1. / TARGET_FPS)
 
     def draw(self):
 
@@ -260,13 +287,14 @@ class AgentHomingSimple(Agent):
                 self.sensors[i] = self.raycastLength # default value is raycastLength
 
     def normalizeSensorsValue(self, val):
-        return Util.minMaxNormalizationScale(val, minX=0.0, maxX=self.raycastLength)
+        return Util.minMaxNormalization_m1_1(val, 0.0, self.raycastLength)
 
     def updateDrive(self, action):
         """
             Perform agent's movement based on the input action
         """
         speed = self.initialSpeed
+        move = True
 
         if action == Action.TURN_LEFT:  # Turn Left
             self.body.angularVelocity = 10.5  # 5
@@ -275,16 +303,24 @@ class AgentHomingSimple(Agent):
         elif action == Action.KEEP_ORIENTATION:  # Don't turn
             pass
         elif action == Action.STOP:  # Stop moving
-            speed = 0
+            move = False
+            speed = 0.
         elif action == Action.STOP_TURN_LEFT:  # Stop and turn left
-            speed = 0
+            move = False
+            speed = 0.
             self.body.angularVelocity = 10.5
         elif action == Action.STOP_TURN_RIGHT:  # Stop and turn right
-            speed = 0
+            move = False
+            speed = 0.
             self.body.angularVelocity = -10.5
 
-        forward_vec = self.body.GetWorldVector((0, 1))
-        self.body.linearVelocity = forward_vec * speed
+        if move:
+            forward_vec = self.body.GetWorldVector((0, 1))
+            self.body.linearVelocity = forward_vec * speed
+        else:
+            # Kill velocity
+            impulse = -self.getForwardVelocity() * self.body.mass * (2. / 3.)
+            self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill forward
 
     def orientationToGoal(self):
         """
@@ -304,7 +340,7 @@ class AgentHomingSimple(Agent):
     def distanceToGoal(self):
         distance = np.sqrt((self.body.position.x - self.goals[self.currentGoalIndex].x) ** 2 +
                            (self.body.position.y - self.goals[self.currentGoalIndex].y) ** 2)
-        return round(distance, 2)
+        return round(distance, 2) #5) # 2
 
     def computeGoalReached(self):
         self.goalReachedCount += 1
@@ -312,6 +348,10 @@ class AgentHomingSimple(Agent):
         self.elapsedTimestep = Global.timestep - self.startTimestep
 
         self.timeToGoal_window.append(self.elapsedTimestep)
+
+        # if self.elapsedTimestep <= 500 and Global.timestep >= 100000 \
+        #         and round(self.learning_score(), 2) >= 0.10:
+        #     self.ready_to_save = True
 
         # Goal reached event
         sys.stdout.write(PrintColor.PRINT_RED)
@@ -327,10 +367,27 @@ class AgentHomingSimple(Agent):
         self.distance = self.distanceToGoal()
 
     def rewardFunction(self):
-        # Process agent's distance to goal
+        # Check Getting closer reward
         flagGC = False
+        getting_closer = 0.
         if self.distance < self.last_distance:  # getting closer
             flagGC = True
+
+            # Process getting_closer reward
+            goal_position = self.goals[self.currentGoalIndex]
+            v1 = (self.last_position - goal_position) # last position to goal
+            v2 = (self.body.position - goal_position) # current position to goal
+            max_angle = np.arctan(self.delta_dist / self.distance) # maximum angle to goal an agent can make at each timestep
+            angle_deg = Util.angle(v1, v2)
+            angle_rad = Util.degToRad(angle_deg)
+            angle = Util.minMaxNormalization(angle_rad, -max_angle, max_angle, -np.pi / 2, np.pi / 2)
+
+            # Easy reward, using directly agent's orientation_to_goal
+            # angle = self.orientationToGoal()
+            # angle_rescaled = Util.minMaxNormalization(angle, -1, 1, -180, 180)
+            # angle = Util.degToRad(angle_rescaled)
+
+            getting_closer = Reward.getting_closer(angle)
 
         # Check Goal Reached
         flagGR = False
@@ -345,7 +402,8 @@ class AgentHomingSimple(Agent):
             sensorReward = np.amin(r) # take the min value
 
         # Overall reward
-        reward = flagGC * Reward.GETTING_CLOSER + sensorReward + flagGR * Reward.GOAL_REACHED #+ Reward.LIVING_PENALTY
+        # old # reward = flagGC * Reward.GETTING_CLOSER + sensorReward + flagGR * Reward.GOAL_REACHED + Reward.LIVING_PENALTY
+        reward = flagGC * getting_closer + sensorReward + flagGR * Reward.GOAL_REACHED + Reward.LIVING_PENALTY
 
         return reward
 
@@ -386,15 +444,20 @@ class AgentHomingSimple(Agent):
                           normSensor6, normSensor7, normSensor8,
                           orientation, -orientation])
         else:
-            last_signal = np.asarray([orientation, -orientation]) # states when no collision avoidance
-            #last_signal = np.asarray([orientation])
+            # last_signal = np.asarray([orientation, -orientation]) # states when no collision avoidance
+            last_signal = np.asarray([orientation])
+
+            # Testing distance as input
+            # ('distance goal to goal', '59.93329625508679')
+            # dist = Util.minMaxNormalization_m1_1(self.distance, 0.0, 60.0)
+            # last_signal = np.asarray([orientation, dist])
 
         # Select action using AI
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
         #self.remainStatic()
         self.updateDrive(Action(action_num))
-        #self.updateManualDrive()
+  #     self.updateManualDrive()
         # self.updateManualDriveTestAngle(10.5)  # 10
 
         # Calculate agent's distance to the goal
@@ -410,6 +473,7 @@ class AgentHomingSimple(Agent):
         self.last_distance = self.distance
         self.elapsedTime = global_homing_simple.timer - self.startTime
         self.elapsedTimestep = Global.timestep - self.startTimestep
+        self.last_position = vec2(self.body.position.x, self.body.position.y)
 
         return
 

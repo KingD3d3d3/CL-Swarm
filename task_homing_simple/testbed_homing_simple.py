@@ -84,7 +84,10 @@ class TestbedHomingSimple(object):
         self.max_timesteps = int(sim_param.max_timesteps)
         self.save_network_freq = int(sim_param.save_network_freq)
         self.wait_one_more_goal = sim_param.wait_one_more_goal == 'True'
-        self.stop_exploring = sim_param.stop_exploring == 'True'
+        self.exploration = sim_param.exploration == 'True'
+        self.collect_experiences = sim_param.collect_experiences == 'True'
+        self.save_memory_freq = int(sim_param.save_memory_freq)
+        self.load_memory = int(sim_param.load_memory)
 
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
@@ -161,7 +164,7 @@ class TestbedHomingSimple(object):
         #     model_file = directory + "brain" + "_model.h5"  # neural network model file
         #     file_to_load = model_file
 
-        if self.stop_exploring:
+        if not self.exploration:
             self.agents[0].stop_exploring()
 
         # Load model to agent
@@ -182,8 +185,15 @@ class TestbedHomingSimple(object):
         if self.load_h1h2_weights:
             self.agents[0].load_h1h2_weights(self.file_to_load)
 
+        # Load memory to agent
+        if self.load_memory != -1:
+            self.agents[0].load_memory(self.file_to_load, self.load_memory)
+
         # Total number of goal reached
         self.goal_reached_count = 0
+
+        if not self.collect_experiences:
+            self.agents[0].stop_collect_experiences()
 
         debug_homing_simple.xprint(msg='simulation_id: {}, Setup complete, Start simulation'.format(self.simulation_id))
 
@@ -312,11 +322,22 @@ class TestbedHomingSimple(object):
         #ls = self.agents[0].learning_score()  # learning score of agent 0
         #self.learning_scores.append(ls)  # appending the learning score
 
+
+        # # Save agent when ready
+        # if self.agents[0].ready_to_save:
+        #     self.agents[0].save_model(dir=self.brain_dir)
+        #     self.running = False
+
         # Save neural networks model frequently
         if self.save_network_freq != -1:
             if Global.timestep % self.save_network_freq == 0:
                 #print('timestep', Global.timestep)
                 self.agents[0].save_model(dir=self.brain_dir)
+
+        # Save memory frequently
+        if self.save_memory_freq != -1:
+            if Global.timestep % self.save_memory_freq == 0:
+                self.agents[0].save_memory(dir=self.brain_dir)
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
@@ -490,7 +511,10 @@ if __name__ == '__main__':
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
     parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='True')
     parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
-    parser.add_argument('--stop_exploring', help='stop exploring, only exploitation', default='False')
+    parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)', default='True')
+    parser.add_argument('--collect_experiences', help='append a new experience to memory at each timestep', default='True')
+    parser.add_argument('--save_memory_freq', help='save memory every defined timesteps', default='-1')
+    parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
@@ -506,8 +530,11 @@ if __name__ == '__main__':
     elif args.load_model == 'True':
         suffix = "loadmodel"
 
-    if args.stop_exploring == 'True':
+    if args.exploration == 'False':
         suffix += "_noexplore"
+
+    if args.load_memory != '-1':
+        suffix += "_load" + args.load_memory + "exp"
 
     # Run simulation
     max_timesteps = int(args.max_timesteps)
@@ -530,9 +557,10 @@ if __name__ == '__main__':
         global_homing_simple.reset_simulation_global()
     print("All simulation finished")
 
-    # Save whole simulation summary in file (completion time, number of simulation, etc)
-    file = open(directory_name + "summary.txt", "w")
-    file.write("Number of simulations: {}\n"
-               "Total simulations time: {}\n"
-               "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
-    file.close()
+    if args.record:
+        # Save whole simulation summary in file (completion time, number of simulation, etc)
+        file = open(directory_name + "summary.txt", "w")
+        file.write("Number of simulations: {}\n"
+                   "Total simulations time: {}\n"
+                   "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
+        file.close()

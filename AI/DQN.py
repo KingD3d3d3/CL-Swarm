@@ -5,7 +5,8 @@ from collections import deque
 import sys
 from keras.models import load_model, clone_model
 import csv
-
+import pandas as pd
+import sklearn.utils
 try:
     from res.print_colors import *
     import Global
@@ -77,8 +78,8 @@ class Model(object):
 class Memory(object):  # sample stored as (s, a, r, s_, done)
 
     def __init__(self, capacity):
-        self.capacity = capacity
-        self.samples = deque(maxlen=capacity)
+        self.capacity = capacity # max capacity of container
+        self.samples = deque(maxlen=capacity) # container of experiences (queue)
 
     def push(self, sample):
         """
@@ -100,15 +101,16 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
         """
         for sp in samples:
             self.push(sp)
-            # self.samples.extend(sample)
-            #
-            # def save(self):
-            #     """
-            #         Get n samples randomly
-            #     """
-            #     n = min(n, len(self.samples))
-            #     return random.sample(self.samples, n)
 
+    def is_full(self):
+        """
+            Return True if the container is full
+            Else False
+        """
+        return len(self.samples) >= self.capacity
+
+    def size(self):
+        return len(self.samples)
 
 # -------------------- DQN AGENT -----------------------
 
@@ -117,12 +119,12 @@ BATCH_SIZE = 32
 # B is typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
 MEMORY_CAPACITY = 10000  # 2000
 GAMMA = 0.9  # Discount Factor
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.001 # 0.01
 TAU = 0.01  # 0.001 # update target network rate
-UPDATE_TARGET_TIMESTEP = 1 / TAU
+UPDATE_TARGET_TIMESTEP = 1 / TAU # every 100
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
-EXPLORATION_STEPS = 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value
+EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value
 
 
 class DQN(object):
@@ -185,6 +187,8 @@ class DQN(object):
         if not self.training:
             self.stop_training()
         self.printTimeToLearn = False
+        self.printStopExploration = False
+        self.collect_experiences = True # record new experience every timestep
 
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
@@ -196,13 +200,15 @@ class DQN(object):
         """
         new_state = self.preprocess(observation)
         experience = (self.last_state, self.last_action, self.last_reward, new_state)
-        self.record(experience)
+
+        if self.collect_experiences:
+            self.record(experience)
 
         # Select action
         action = self.select_action(self.last_state)
 
         # Training each update
-        if self.training and len(self.memory.samples) > 100 and self.update_counter % self.ratio_update == 0:
+        if self.training and len(self.memory.samples) >= 100 and self.update_counter % self.ratio_update == 0:
             self.replay()
 
         self.last_action = action
@@ -239,12 +245,16 @@ class DQN(object):
         if not self.training:
             return
 
+        # print("*****")
+        # print(self.model.q_network.optimizer.get_weights())
+
         # If not enough samples in memory
         if len(self.memory.samples) < self.batch_size:
             return
 
         if not self.printTimeToLearn:
-            printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+            printColor(color=PRINT_CYAN,
+                       msg="Agent: {:3.0f}, ".format(self.id) +
                            "{:>25s}".format("time to learn") +
                            ", tmstp: {:10.0f}".format(Global.timestep) +
                            ", t: {}".format(Global.get_time()))
@@ -281,6 +291,16 @@ class DQN(object):
         if self.epsilon > FINAL_EPSILON:
             self.epsilon -= self.epsilon_step
 
+            # Reached final epsilon
+            if self.epsilon <= FINAL_EPSILON:
+                if not self.printStopExploration:
+                    printColor(color=PRINT_CYAN,
+                               msg="Agent: {:3.0f}, ".format(self.id) +
+                                   "{:>25s}".format("finished exploration") +
+                                   ", tmstp: {:10.0f}".format(Global.timestep) +
+                                   ", t: {}".format(Global.get_time()))
+                    self.printStopExploration = True
+
     def preprocess(self, state):
         # Input shape in Keras : (batch_size, input_dim)
         return np.reshape(state, [1, self.inputCnt])  # need to add 1 dimension for batch
@@ -297,28 +317,70 @@ class DQN(object):
             Stop training the Neural Network
             Stop exploration -> only exploitation
         """
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+        self.training = False
+        self.epsilon = FINAL_EPSILON
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Stop training") +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
-        self.training = False
-        self.epsilon = FINAL_EPSILON
 
     def stop_exploring(self):
         """
             Stop exploration -> only exploitation
         """
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+        self.epsilon = FINAL_EPSILON
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Stop exploring") +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
-        self.epsilon = FINAL_EPSILON
+
+
+    def stop_collect_experiences(self):
+        """
+            Stop appending new experience to memory
+        """
+        self.collect_experiences = False
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Stop collecting experiences") +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
 
     def save_model(self, model_file):
         """
             Save model (neural network, optimizer, loss, etc ..) in file
         """
         self.model.q_network.save(model_file)
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Save Agent's model") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
+
+    def save_memory(self, memory_file):
+        """
+            Save agent's experiences in file
+        """
+        header = ("state", "action", "reward", "next_state")
+
+        with open(memory_file, 'w') as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(self.memory.samples)
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Save Agent's memory") +
+                       ", file: {}".format(memory_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
 
     def load_model(self, model_file):
         """
@@ -328,6 +390,13 @@ class DQN(object):
         self.model.q_network = load_model(model_file)
         self.model.target_network_network = load_model(model_file)
 
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load full model") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
+
     def load_full_weights(self, model_file):
         """
             Load weights from file and set Q-Network, Target-Network
@@ -335,6 +404,13 @@ class DQN(object):
         """
         self.model.q_network.load_weights(model_file)
         self.model.target_network.load_weights(model_file)
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load model full weights") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
 
     def load_h1_weights(self, model_file):
         """
@@ -350,6 +426,13 @@ class DQN(object):
 
         if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
             sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load 1st hidden layer weights") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
 
     def load_h1h2_weights(self, model_file):
         """
@@ -367,13 +450,48 @@ class DQN(object):
         # if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
         #     sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
 
-    def save_memory(self, memory_file):
-        """
-            Save agent's experiences in file
-        """
-        header = ("state", "action", "reward", "next_state")
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load 1st and 2nd hidden layer weights") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))
 
-        with open(memory_file, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerow(header)
-            writer.writerows(self.memory.samples)
+    def load_memory(self, memory_file, size=MEMORY_CAPACITY):
+        """
+            Load memory from file
+            Default size = -1 means load full memory from the file
+        """
+        experiences = []
+        data = pd.read_csv(memory_file)
+
+        remove_bracket = lambda x: x.replace('[', '').replace(']', '')
+        string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
+
+        data['state'] = data['state'].map(remove_bracket).map(string_to_array)
+        data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
+
+        if size == MEMORY_CAPACITY:
+            """
+                Load full memory
+            """
+            for i, row in data.iterrows():
+                exp = (row['state'], row['action'], row['reward'], row['next_state'])
+                experiences.append(exp)
+        else:
+            """
+                Load specified number of experiences
+            """
+            shuffled_data = sklearn.utils.shuffle(data)
+            #shuffled_data = shuffled_data[0:size]
+            for i, row in shuffled_data[0:size].iterrows():
+                exp = (row['state'], row['action'], row['reward'], row['next_state'])
+                experiences.append(exp)
+        self.memory.receive(experiences)
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load memory: {} exp".format(size)) +
+                       ", file: {}".format(memory_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", t: {}".format(Global.get_time()))

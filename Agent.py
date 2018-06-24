@@ -54,7 +54,7 @@ class Agent(object):
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
 
-        self.initialSpeed = 12
+        self.initialSpeed = 9.5 # 12
         self.updateCalls = 0
 
         self.brain = None
@@ -152,6 +152,7 @@ class Agent(object):
 
     def updateManualDrive(self):
         speed = self.initialSpeed
+        move = True
 
         key = pygame.key.get_pressed()
         if key[K_LEFT]:  # Turn Left
@@ -161,10 +162,17 @@ class Agent(object):
             self.body.angularVelocity = -5
             pass
         if key[K_SPACE]:  # Break
+            move = False
             speed = 0
             pass
         forward_vec = self.body.GetWorldVector((0, 1))
-        self.body.linearVelocity = forward_vec * speed
+
+        if move:
+            self.body.linearVelocity = forward_vec * speed
+        else:
+            impulse = -self.getForwardVelocity() * self.body.mass * (2. / 3.)
+            self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill forward
+
 
     def draw(self):
         position = self.body.transform * self.fixture.shape.pos * PPM
@@ -209,11 +217,6 @@ class Agent(object):
                     raise
 
         self.brain.save_model(network_model)
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Save Agent's model") +
-                       ", file: {}".format(network_model) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", t: {}".format(Global.get_time()))
 
     def save_memory(self, dir):
         """
@@ -233,11 +236,6 @@ class Agent(object):
                     raise
 
         self.brain.save_memory(memory_file)
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Save Agent's memory") +
-                       ", file: {}".format(memory_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", t: {}".format(Global.get_time()))
 
     def load_model(self, file=""):
         """
@@ -252,11 +250,6 @@ class Agent(object):
             model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_model(model_file)
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load full model") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", t: {}".format(Global.get_time()))
 
     def load_full_weights(self, file=""):
         """
@@ -271,12 +264,6 @@ class Agent(object):
 
         self.brain.load_full_weights(model_file)
 
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load model full weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", t: {}".format(Global.get_time()))
-
     def load_h1_weights(self, file=""):
         """
             Load Agent's 1st hidden layer weights from file
@@ -289,12 +276,6 @@ class Agent(object):
             model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_h1_weights(model_file)
-
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load 1st hidden layer weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", t: {}".format(Global.get_time()))
 
     def load_h1h2_weights(self, file):
         """
@@ -309,37 +290,37 @@ class Agent(object):
 
         self.brain.load_h1h2_weights(model_file)
 
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load 1st and 2nd hidden layer weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", t: {}".format(Global.get_time()))
-
-    def load_memory(self, file=""):
+    def load_memory(self, file="", size=-1):
         """
             Load memory from file
         """
-        directory = "./brain_files/"
-        memory_file = directory + "brain" + "_memory.csv"  # neural network model file
+        if file != "":
+            memory_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            memory_file = directory + "brain" + "_memory.csv"  # neural network model file
 
-        memory_list = []
-        data = pd.read_csv(memory_file)
+        self.brain.load_memory(memory_file, size)
 
-        remove_bracket = lambda x: x.replace('[', '').replace(']', '')
-        string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
-
-        data['state'] = data['state'].map(remove_bracket).map(string_to_array)
-        data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
-
-        for i, row in data.iterrows():
-            exp = (row['state'], row['action'], row['reward'], row['next_state'])
-            memory_list.append(exp)
-
-        printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load full memory") +
-                       ", file: {}".format(memory_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", t: {}".format(Global.get_time()))
+        # memory_list = []
+        # data = pd.read_csv(memory_file)
+        #
+        # remove_bracket = lambda x: x.replace('[', '').replace(']', '')
+        # string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
+        #
+        # data['state'] = data['state'].map(remove_bracket).map(string_to_array)
+        # data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
+        #
+        # for i, row in data.iterrows():
+        #     exp = (row['state'], row['action'], row['reward'], row['next_state'])
+        #     memory_list.append(exp)
+        #
+        # printColor(msg="Agent: {:3.0f}, ".format(self.id) +
+        #                "{:>25s}".format("Load full memory") +
+        #                ", file: {}".format(memory_file) +
+        #                ", tmstp: {:10.0f}".format(Global.timestep) +
+        #                ", t: {}".format(Global.get_time()))
 
     def stop_training(self):
         """
@@ -354,3 +335,9 @@ class Agent(object):
             Stop exploration -> only exploitation
         """
         self.brain.stop_exploring()
+
+    def stop_collect_experiences(self):
+        """
+            Agent doesn't append new experience to memory
+        """
+        self.brain.stop_collect_experiences()

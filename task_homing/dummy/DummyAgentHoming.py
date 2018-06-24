@@ -266,7 +266,7 @@ class AgentHoming(Agent):
             self.sensor3 = self.raycastLength
 
     def normalizeSensorsValue(self, val):
-        return Util.minMaxNormalizationScale(val, minX=0.0, maxX=self.raycastLength)
+        return Util.minMaxNormalization_m1_1(val, minX=0.0, maxX=self.raycastLength)
 
     def updateDrive(self, action):
         speed = 12  # m/s
