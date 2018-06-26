@@ -108,6 +108,8 @@ if __name__ == '__main__':
     if not os.path.isdir(os.path.dirname(dir_name)):
         sys.exit('Not a directory: {}'.format(dir_name))
 
+    print('Folders to visit', os.walk(dir_name))
+
     # Recursively go to each folder of directory
     for x in os.walk(dir_name):
 
