@@ -19,6 +19,7 @@ fo = None  # file object to open file for recording
 writer = None  # writer object to record events
 event_count = 0
 timestr = Util.getTimeString()
+simulation_id = 1
 
 def fileCreate(dir, extension):
     """
@@ -59,4 +60,4 @@ def reset_simulation_global():
     writer = None  # writer object to record events
     event_count = 0
     timestr = Util.getTimeString()
-
+    simulation_id = 1

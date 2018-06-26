@@ -19,7 +19,7 @@ except:
     from .. import Util
     from .. import Global
 
-#header_write = False
+# header_write = False
 header = ("agent",
           "event",
           "timestep",
@@ -47,10 +47,11 @@ def printEvent(agent=None, event_message=""):
         LS              : learning score of the agent (average of rewards in sliding window)
         t       : time passed (since beginning of simulation)
     """
-    global_homing_simple.event_count += 1 # increment the event counter
+    global_homing_simple.event_count += 1  # increment the event counter
 
-    msg = ("Agent: {:3.0f}, ".format(agent.id) +
-           "{:>25s}".format(event_message) + # 28
+    msg = ("SimID: {:3.0f}, ".format(global_homing_simple.simulation_id) +
+           "Agent: {:3.0f}, ".format(agent.id) +
+           "{:>25s}".format(event_message) +  # 28
            ", tmstp: {:10.0f}, "
            "GR: {:5.0f}, "
            "tmstp2G : {:8.0f}, "
@@ -100,6 +101,7 @@ def printEvent(agent=None, event_message=""):
         print(msg)
 
     return
+
 
 def xprint(msg=""):
     printColor(msg="{: <37s}".format(msg) +

@@ -45,23 +45,32 @@ if __name__ == '__main__':
     parser.add_argument('--collision_avoidance', help='agent learns collision avoidance behavior', default='True')
     parser.add_argument('--save_brain', help='save neural networks model and memory', default='False')
     parser.add_argument('--load_model',
-                        help='load model to agent', default='True')
+                        help='load model to agent', default='False')
     parser.add_argument('--load_full_weights',
                         help='load full weights of neural networks from master to learning agent', default='False')
-    parser.add_argument('--load_h1_weights',
-                        help='load hidden layer 1 weights of neural networks from master to learning agent',
-                        default='False')
     parser.add_argument('--load_h1h2_weights',
                         help='load hidden layer 1 and 2 weights of neural networks from master to learning agent',
+                        default='False')
+    parser.add_argument('--load_h1_weights',
+                        help='load hidden layer 1 weights of neural networks from master to learning agent',
                         default='False')
     parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
     parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
-    parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps',
-                        default='-1')
-    parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='True')
+    parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
+    parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='False')
+    parser.add_argument('--wait_learning_score_and_save_model',
+                        help='wait agent to reach specified learning score before to close application', default='-1')
     parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
-    parser.add_argument('--stop_exploring', help='stop exploring, only exploitation', default='False')
+    parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)',
+                        default='True')
+    parser.add_argument('--collect_experiences', help='append a new experience to memory at each timestep',
+                        default='True')
+    parser.add_argument('--save_memory_freq', help='save memory every defined timesteps', default='-1')
+    parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
+    parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
+    parser.add_argument('--suffix', help='custom suffix to add', default='')
+
     parser.add_argument('--dir_name', help='directory name', default="")
     args = parser.parse_args()
 

@@ -14,7 +14,7 @@ except:
     from ..res.print_colors import *
     from .. import Global
 
-
+import time
 # -------------------- MODEL -------------------------
 
 class Model(object):
@@ -245,9 +245,6 @@ class DQN(object):
         if not self.training:
             return
 
-        # print("*****")
-        # print(self.model.q_network.optimizer.get_weights())
-
         # If not enough samples in memory
         if len(self.memory.samples) < self.batch_size:
             return
@@ -270,23 +267,39 @@ class DQN(object):
         batch_next_state = np.array(batch_next_state).squeeze(axis=1)
         q_values_t = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
 
-        batch_action = np.array(batch_action)
+        # batch_action = np.array(batch_action)
         batch_reward = np.array(batch_reward)
 
-        x = np.zeros((self.batch_size, self.inputCnt))
-        y = np.zeros((self.batch_size, self.actionCnt))
+        # X = np.zeros((self.batch_size, self.inputCnt))
+        Y = np.zeros((self.batch_size, self.actionCnt))
+
+        # time_start = time.clock()
+        # for i in xrange(self.batch_size):
+        #     s = batch_state[i]
+        #     a = batch_action[i]
+        #     r = batch_reward[i]
+        #
+        #     target = r + self.gamma * np.amax(q_values_t[i])
+        #     labels[i][a] = target
+        #
+        #     X[i] = s
+        #     Y[i] = labels[i]
+        # time_elapsed = (time.clock() - time_start)
+        # print('time_elapsed', time_elapsed)
+
+        # Optimization code - Matrix form
+        # time_start = time.clock()
+        X = batch_state
+        target = batch_reward + self.gamma * np.amax(q_values_t, axis=1)
         for i in xrange(self.batch_size):
-            s = batch_state[i]
             a = batch_action[i]
-            r = batch_reward[i]
+            labels[i][a] = target[i]
+        Y = labels
 
-            target = r + self.gamma * np.amax(q_values_t[i])
-            labels[i][a] = target
+        # time_elapsed = (time.clock() - time_start)
+        # print('time_elapsed', time_elapsed)
 
-            x[i] = s
-            y[i] = labels[i]
-
-        self.model.train(x, y, batch_len=self.batch_size)
+        self.model.train(X, Y, batch_len=self.batch_size)
 
         if self.epsilon > FINAL_EPSILON:
             self.epsilon -= self.epsilon_step
@@ -322,7 +335,7 @@ class DQN(object):
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Stop training") +
+                       "{:>25s}".format("Stop training, Stop exploring") +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", t: {}".format(Global.get_time()))
 

@@ -62,8 +62,8 @@ class DQNHomingSimple(DQN):
 
         # Neural Network's Architecture
         # Without collision avoidance
-        h1 = 6 # 1st hidden layer's size
-        h2 = 6 # 2nd hidden layer's size
+        h1 = 6  # 1st hidden layer's size
+        h2 = 6  # 2nd hidden layer's size
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden  # activation='relu'
         model.add(Activation('relu'))
@@ -77,8 +77,8 @@ class DQNHomingSimple(DQN):
         # model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
         # Optimizer
-        #optimizer = keras.optimizers.SGD(lr=self.lr, momentum=0.0, decay=0.0, nesterov=False)
-        #optimizer = keras.optimizers.SGD(lr=self.lr, momentum=0.9, decay=0.0, nesterov=True)
+        # optimizer = keras.optimizers.SGD(lr=self.lr, momentum=0.0, decay=0.0, nesterov=False)
+        # optimizer = keras.optimizers.SGD(lr=self.lr, momentum=0.9, decay=0.0, nesterov=True)
         optimizer = Adam(lr=self.lr)
 
         # Compile model
@@ -103,8 +103,8 @@ class Action(Enum):
 class Reward:
     GETTING_CLOSER = 0.1
 
-    LIVING_PENALTY = 0. #-0.01 # 0 #-0.5
-    GOAL_REACHED = 0. #1.0 # 10.0 # useless reward
+    LIVING_PENALTY = 0.  # -0.01 # 0 #-0.5
+    GOAL_REACHED = 0.  # 1.0 # 10.0 # useless reward
 
     @classmethod
     def sensorReward(cls, x):
@@ -136,6 +136,7 @@ class Reward:
         reward = Reward.GETTING_CLOSER * np.cos(angle)
         return reward
 
+
 class AgentHomingSimple(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0, training=True,
                  collision_avoidance=True):
@@ -156,9 +157,9 @@ class AgentHomingSimple(Agent):
 
         # Proximity sensors
         if not collision_avoidance:
-            self.numSensors = 0 # no need proximity sensors when no collision avoidance behavior
+            self.numSensors = 0  # no need proximity sensors when no collision avoidance behavior
         else:
-            self.numSensors = 0 # total numbers of proximity sensors by agent
+            self.numSensors = 0  # total numbers of proximity sensors by agent
         self.raycastLength = 2.0
         self.sensors = np.ones(self.numSensors) * self.raycastLength
 
@@ -168,20 +169,20 @@ class AgentHomingSimple(Agent):
         self.initial_raycastStraightColor = Color.Red
         self.raycastStraightColor = Color.Red
 
-        top_left = vec2(-0.70, 0.70)        # Raycast Front Left
-        forward_vec = vec2(0, 1)            # Raycast Front Middle
-        top_right = vec2(0.70, 0.70)        # Raycast Front Right # sqr(2) / 2
-        left = vec2(-1, 0)                  # Raycast Left Side
-        right = vec2(1, 0)                  # Raycast Right Side
-        bottom_left = vec2(-0.70, -0.70)    # Raycast Left Back
-        backward = vec2(0, -1)              # Raycast Middle Back
-        bottom_right = vec2(0.70, -0.70)    # Raycast Right Back
+        top_left = vec2(-0.70, 0.70)  # Raycast Front Left
+        forward_vec = vec2(0, 1)  # Raycast Front Middle
+        top_right = vec2(0.70, 0.70)  # Raycast Front Right # sqr(2) / 2
+        left = vec2(-1, 0)  # Raycast Left Side
+        right = vec2(1, 0)  # Raycast Right Side
+        bottom_left = vec2(-0.70, -0.70)  # Raycast Left Back
+        backward = vec2(0, -1)  # Raycast Middle Back
+        bottom_right = vec2(0.70, -0.70)  # Raycast Right Back
 
         # Store raycast direction vector for each raycast
         self.raycast_vectors = (top_left, forward_vec, top_right, right, bottom_right, backward, bottom_left, left)
 
         # Brain of the Agent
-        input_size = self.numSensors + 1 # 2
+        input_size = self.numSensors + 1  # 2
         self.brain = DQNHomingSimple(inputCnt=input_size, actionCnt=len(list(Action)), id=self.id,
                                      training=self.training, ratio_update=1)
 
@@ -208,6 +209,7 @@ class AgentHomingSimple(Agent):
         self.currentGoalIndex = 0
         self.goals = [goal1, goal2]
         self.goalReachedThreshold = 2.5  # If agent-to-goal distance is less than this value then agent reached the goal
+        self.num_goals = len(self.goals) # number of goals
 
         # Event features
         self.goalReachedCount = 0
@@ -219,11 +221,11 @@ class AgentHomingSimple(Agent):
         self.maxReward = Reward.GETTING_CLOSER
         self.last_reward = 0.0  # last agent's reward
         self.last_distance = 0.0  # last agent's distance to the goal
-        self.distance = self.distanceToGoal() # 0.0  # current distance to the goal
-        self.last_position = vec2(self.body.position.x, self.body.position.y) # keep track of previous position
+        self.distance = self.distanceToGoal()  # 0.0  # current distance to the goal
+        self.last_position = vec2(self.body.position.x, self.body.position.y)  # keep track of previous position
 
         # Keep track of the time it took for agent to reach goal
-        self.timeToGoal_window = deque(maxlen=100)
+        # self.timeToGoal_window = deque(maxlen=100)
 
         # Get initial orientation to the goal
         orientation = self.orientationToGoal()
@@ -258,15 +260,16 @@ class AgentHomingSimple(Agent):
         self.screen.blit(idText, idPos)
 
         # Draw raycasts
-        for i in xrange(self.numSensors):
-            v = self.body.GetWorldVector(self.raycast_vectors[i])
-            p1 = self.body.worldCenter + v * self.radius
-            p2 = p1 + v * self.raycastLength
-            if i % 2 == 0:
-                ray_color = self.raycastDiagonalColor
-            else:
-                ray_color = self.raycastStraightColor
-            pygame.draw.line(self.screen, ray_color, worldToPixels(p1), worldToPixels(p2))
+        if self.numSensors != 0:
+            for i in xrange(self.numSensors):
+                v = self.body.GetWorldVector(self.raycast_vectors[i])
+                p1 = self.body.worldCenter + v * self.radius
+                p2 = p1 + v * self.raycastLength
+                if i % 2 == 0:
+                    ray_color = self.raycastDiagonalColor
+                else:
+                    ray_color = self.raycastStraightColor
+                pygame.draw.line(self.screen, ray_color, worldToPixels(p1), worldToPixels(p2))
 
     def readSensors(self):
 
@@ -284,7 +287,7 @@ class AgentHomingSimple(Agent):
                 dist = (p1 - raycast.point).length  # distance to the hit point
                 self.sensors[i] = round(dist, 2)
             else:
-                self.sensors[i] = self.raycastLength # default value is raycastLength
+                self.sensors[i] = self.raycastLength  # default value is raycastLength
 
     def normalizeSensorsValue(self, val):
         return Util.minMaxNormalization_m1_1(val, 0.0, self.raycastLength)
@@ -340,14 +343,14 @@ class AgentHomingSimple(Agent):
     def distanceToGoal(self):
         distance = np.sqrt((self.body.position.x - self.goals[self.currentGoalIndex].x) ** 2 +
                            (self.body.position.y - self.goals[self.currentGoalIndex].y) ** 2)
-        return round(distance, 2) #5) # 2
+        return round(distance, 2)  # 5) # 2
 
     def computeGoalReached(self):
         self.goalReachedCount += 1
         self.elapsedTime = global_homing_simple.timer - self.startTime
         self.elapsedTimestep = Global.timestep - self.startTimestep
 
-        self.timeToGoal_window.append(self.elapsedTimestep)
+        # self.timeToGoal_window.append(self.elapsedTimestep)
 
         # if self.elapsedTimestep <= 500 and Global.timestep >= 100000 \
         #         and round(self.learning_score(), 2) >= 0.10:
@@ -361,7 +364,7 @@ class AgentHomingSimple(Agent):
         # Reset, Update
         self.startTime = global_homing_simple.timer
         self.startTimestep = Global.timestep
-        self.currentGoalIndex = (self.currentGoalIndex + 1) % len(self.goals)  # change goal
+        self.currentGoalIndex = (self.currentGoalIndex + 1) % self.num_goals  # change goal
         self.t2GCollisionCount = 0
         self.t2GAgentCollisionCount = 0
         self.distance = self.distanceToGoal()
@@ -375,9 +378,10 @@ class AgentHomingSimple(Agent):
 
             # Process getting_closer reward
             goal_position = self.goals[self.currentGoalIndex]
-            v1 = (self.last_position - goal_position) # last position to goal
-            v2 = (self.body.position - goal_position) # current position to goal
-            max_angle = np.arctan(self.delta_dist / self.distance) # maximum angle to goal an agent can make at each timestep
+            v1 = (self.last_position - goal_position)  # last position to goal
+            v2 = (self.body.position - goal_position)  # current position to goal
+            max_angle = np.arctan(
+                self.delta_dist / self.distance)  # maximum angle to goal an agent can make at each timestep
             angle_deg = Util.angle(v1, v2)
             angle_rad = Util.degToRad(angle_deg)
             angle = Util.minMaxNormalization(angle_rad, -max_angle, max_angle, -np.pi / 2, np.pi / 2)
@@ -396,10 +400,10 @@ class AgentHomingSimple(Agent):
 
         # Process sensor's value
         sensorReward = 0.
-        if not self.sensors.shape[0] == 0: # Check array length
+        if not self.sensors.shape[0] == 0:  # Check array length
             # Apply sensor reward function to all sensors value
             r = np.fromiter((Reward.sensorReward(s) for s in self.sensors), self.sensors.dtype, count=len(self.sensors))
-            sensorReward = np.amin(r) # take the min value
+            sensorReward = np.amin(r)  # take the min value
 
         # Overall reward
         # old # reward = flagGC * Reward.GETTING_CLOSER + sensorReward + flagGR * Reward.GOAL_REACHED + Reward.LIVING_PENALTY
@@ -440,9 +444,9 @@ class AgentHomingSimple(Agent):
             normSensor8 = self.normalizeSensorsValue(self.sensors[7])
 
             last_signal = np.asarray([normSensor1, normSensor2, normSensor3,
-                          normSensor4, normSensor5,
-                          normSensor6, normSensor7, normSensor8,
-                          orientation, -orientation])
+                                      normSensor4, normSensor5,
+                                      normSensor6, normSensor7, normSensor8,
+                                      orientation, -orientation])
         else:
             # last_signal = np.asarray([orientation, -orientation]) # states when no collision avoidance
             last_signal = np.asarray([orientation])
@@ -455,9 +459,9 @@ class AgentHomingSimple(Agent):
         # Select action using AI
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
-        #self.remainStatic()
+        # self.remainStatic()
         self.updateDrive(Action(action_num))
-  #     self.updateManualDrive()
+        # self.updateManualDrive()
         # self.updateManualDriveTestAngle(10.5)  # 10
 
         # Calculate agent's distance to the goal

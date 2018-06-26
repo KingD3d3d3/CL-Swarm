@@ -53,10 +53,11 @@ except:
 
 class TestbedHomingSimple(object):
     def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters,
-                 simulation_id=0, simulation_dir="./simulation_data/", simulation_file_extension="_homing_simple.csv",
+                 simulation_id=1, simulation_dir="./simulation_data/", simulation_file_extension="_homing_simple.csv",
                  file_to_load="", sim_param=None):
 
         self.simulation_id = simulation_id
+        global_homing_simple.simulation_id = simulation_id
         debug_homing_simple.xprint(msg='simulation_id: {}, Starting Setup'.format(self.simulation_id))
 
         self.screen_width = screen_width
@@ -84,6 +85,7 @@ class TestbedHomingSimple(object):
         self.max_timesteps = int(sim_param.max_timesteps)
         self.save_network_freq = int(sim_param.save_network_freq)
         self.wait_one_more_goal = sim_param.wait_one_more_goal == 'True'
+        self.wait_learning_score_and_save_model = float(sim_param.wait_learning_score_and_save_model)
         self.exploration = sim_param.exploration == 'True'
         self.collect_experiences = sim_param.collect_experiences == 'True'
         self.save_memory_freq = int(sim_param.save_memory_freq)
@@ -343,17 +345,33 @@ class TestbedHomingSimple(object):
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
 
             # End if no need to wait 1 last goal
-            if not self.wait_one_more_goal:
+            # End if no need to reach specified learning score
+            if not self.wait_one_more_goal and self.wait_learning_score_and_save_model == -1:
                 self.running = False
+            else:
+                self.running = True
 
-            if not self.prev_goalreached_stored:
-                self.prev_goalreached = self.agents[0].goalReachedCount
-                self.prev_goalreached_stored = True
+            # Wait 1 last goal
+            if self.wait_one_more_goal:
+                if not self.prev_goalreached_stored:
+                    self.prev_goalreached = self.agents[0].goalReachedCount
+                    self.prev_goalreached_stored = True
 
-            # wait 1 more last Reached-goal
-            current = self.agents[0].goalReachedCount
-            if current - self.prev_goalreached == 1:
-                self.running = False
+                # wait 1 more last Reached-goal
+                current = self.agents[0].goalReachedCount
+                if current - self.prev_goalreached == 1:
+                    self.running = False
+                else:
+                    self.running = True
+
+            # Wait to reach specified learning score
+            if self.wait_learning_score_and_save_model != -1:
+                if self.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
+                    self.running = False
+                    self.agents[0].save_model(dir=self.brain_dir)
+                else:
+                    self.running = True
+
 
     def fps_physic_step(self):
         """
@@ -499,28 +517,31 @@ if __name__ == '__main__':
                         help='load model to agent', default='False')
     parser.add_argument('--load_full_weights',
                         help='load full weights of neural networks from master to learning agent', default='False')
-    parser.add_argument('--load_h1_weights',
-                        help='load hidden layer 1 weights of neural networks from master to learning agent',
-                        default='False')
     parser.add_argument('--load_h1h2_weights',
                         help='load hidden layer 1 and 2 weights of neural networks from master to learning agent',
+                        default='False')
+    parser.add_argument('--load_h1_weights',
+                        help='load hidden layer 1 weights of neural networks from master to learning agent',
                         default='False')
     parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
     parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
-    parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='True')
+    parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='False')
+    parser.add_argument('--wait_learning_score_and_save_model', help='wait agent to reach specified learning score before to close application', default='-1')
     parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
     parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)', default='True')
     parser.add_argument('--collect_experiences', help='append a new experience to memory at each timestep', default='True')
     parser.add_argument('--save_memory_freq', help='save memory every defined timesteps', default='-1')
     parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
+    parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
+    parser.add_argument('--suffix', help='custom suffix to add', default='')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
 
     # Prefix
-    suffix = "normal"
+    suffix = ""
     if args.load_full_weights == 'True':
         suffix = "loadfull"
     elif args.load_h1h2_weights == 'True':
@@ -530,11 +551,19 @@ if __name__ == '__main__':
     elif args.load_model == 'True':
         suffix = "loadmodel"
 
+    if args.load_memory != '-1':
+        suffix += "_loadmem" + args.load_memory + "exp"
+
+    # Normal case
+    if suffix == "":
+        suffix = "normal"
+
     if args.exploration == 'False':
         suffix += "_noexplore"
 
-    if args.load_memory != '-1':
-        suffix += "_load" + args.load_memory + "exp"
+    # General purpose suffix
+    if args.suffix != '':
+        suffix += '_' + args.suffix
 
     # Run simulation
     max_timesteps = int(args.max_timesteps)
@@ -550,14 +579,15 @@ if __name__ == '__main__':
 
         simulation = TestbedHomingSimple(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
                                          PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
-                                         simulation_id=simID, simulation_dir=directory_name, sim_param=args)
+                                         simulation_id=simID, simulation_dir=directory_name, sim_param=args,
+                                         file_to_load=args.file_to_load)
         simulation.run()
         simulation.end()
         total_timesteps += Global.timestep
         global_homing_simple.reset_simulation_global()
     print("All simulation finished")
 
-    if args.record:
+    if args.record == 'True':
         # Save whole simulation summary in file (completion time, number of simulation, etc)
         file = open(directory_name + "summary.txt", "w")
         file.write("Number of simulations: {}\n"
