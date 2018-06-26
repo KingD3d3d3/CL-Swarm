@@ -93,6 +93,7 @@ if __name__ == '__main__':
     #args.max_timesteps = '10000'
     args.wait_one_more_goal = 'False'
     args.handle_events = 'False'
+    args.load_model = 'True'
 
     # ----------------------------------------------------------------------
 
