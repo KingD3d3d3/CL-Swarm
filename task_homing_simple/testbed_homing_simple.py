@@ -509,7 +509,7 @@ if __name__ == '__main__':
     parser.add_argument('--print_fps', help='print fps', default='False')
     parser.add_argument('--debug', help='print simulation log', default='True')
     parser.add_argument('--record', help='record simulation log in file', default='False')
-    parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='True')
+    parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='False')
     parser.add_argument('--training', help='train agent', default='True')
     parser.add_argument('--collision_avoidance', help='agent learns collision avoidance behavior', default='True')
     parser.add_argument('--save_brain', help='save neural networks model and memory', default='False')
