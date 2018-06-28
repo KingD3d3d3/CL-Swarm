@@ -14,6 +14,7 @@ import csv
 import numpy as np
 import sys
 import datetime
+import gc
 try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
@@ -127,6 +128,8 @@ class TestbedHomingSimple(object):
 
         # -------------------- Environment and PyBox2d World Setup ----------------------
 
+        debug_homing_simple.xprint(msg='simulation_id: {}, Physics Setup'.format(self.simulation_id))
+
         # Goal positions
         self.goal1 = (100, 100)
         self.goal2 = (self.screen_width - self.goal1[0], self.screen_height - self.goal1[1])
@@ -165,6 +168,9 @@ class TestbedHomingSimple(object):
         #     directory = "./brain_files/"
         #     model_file = directory + "brain" + "_model.h5"  # neural network model file
         #     file_to_load = model_file
+
+        if file_to_load != "":
+            debug_homing_simple.xprint(msg='simulation_id: {}, Loadind File Setup'.format(self.simulation_id))
 
         if not self.exploration:
             self.agents[0].stop_exploring()
@@ -461,6 +467,12 @@ class TestbedHomingSimple(object):
             global_homing_simple.fo.close()
             debug_homing_simple.xprint(msg="Stop recording")
 
+        # Manually deleting some objects and free memory
+        del self.world
+        #gc.collect()
+
+        #debug_homing_simple.xprint(msg='simulation_id: {}, Deleted and Freed memory'.format(self.simulation_id))
+
         #self.plot_learning_scores()
 
     # def plot_learning_scores(self, save=False):
@@ -562,7 +574,7 @@ if __name__ == '__main__':
         suffix += "_noexplore"
 
     # General purpose suffix
-    if args.suffix != '':
+    if args.suffix != '' and args.suffix != "":
         suffix += '_' + args.suffix
 
     # Run simulation

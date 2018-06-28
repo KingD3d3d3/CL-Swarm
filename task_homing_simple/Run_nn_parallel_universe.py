@@ -90,11 +90,10 @@ if __name__ == '__main__':
     args.render = 'False'
     args.training = 'False'
     args.collision_avoidance = 'False'
-    #args.max_timesteps = '10000'
-    args.wait_one_more_goal = 'False'
+    args.max_timesteps = '10000'
     args.handle_events = 'False'
-    args.load_model = 'True'
-    args.fixed_ur_timestep = 'False'
+    # args.load_model = 'True'
+    args.load_full_weights = 'True' # we only need to load weights to NN, since we're not training anymore
 
     # ----------------------------------------------------------------------
 
@@ -108,7 +107,9 @@ if __name__ == '__main__':
     if not os.path.isdir(os.path.dirname(dir_name)):
         sys.exit('Not a directory: {}'.format(dir_name))
 
-    # print('Folders to visit', os.walk(dir_name))
+
+    print('Folders to visit')
+    print([x[0] for x in os.walk(dir_name)])
 
     # Recursively go to each folder of directory
     for x in os.walk(dir_name):
