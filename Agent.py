@@ -198,7 +198,7 @@ class Agent(object):
         self.save_model(dir)
         self.save_memory(dir)
 
-    def save_model(self, dir):
+    def save_model(self, dir, suffix=""):
         """
             Save agent's model (neural network, optimizer, loss, etc) in file
             Also create the /brain_files/ directory if it doesn't exist
@@ -207,7 +207,8 @@ class Agent(object):
         timestr = Util.getTimeString()
         directory = dir
         timestep = "_" + str(Global.timestep) + "tmstp"
-        network_model = directory + timestr + timestep + "_model.h5"  # neural network model file
+        suffix = "_" + suffix
+        network_model = directory + timestr + timestep + suffix + "_model.h5"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
             try:
@@ -218,7 +219,7 @@ class Agent(object):
 
         self.brain.save_model(network_model)
 
-    def save_memory(self, dir):
+    def save_memory(self, dir, suffix=""):
         """
             Save Agent's memory (experiences) in csv file
             Also create the /brain_files/ directory if it doesn't exist
@@ -226,6 +227,7 @@ class Agent(object):
         timestr = Util.getTimeString()
         directory = dir
         timestep = "_" + str(Global.timestep) + "tmstp"
+        suffix = "_" + suffix
         memory_file = directory + timestr + timestep + "_memory.csv"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
@@ -341,3 +343,6 @@ class Agent(object):
             Agent doesn't append new experience to memory
         """
         self.brain.stop_collect_experiences()
+
+    def training_iterations(self):
+        return self.brain.training_iteration

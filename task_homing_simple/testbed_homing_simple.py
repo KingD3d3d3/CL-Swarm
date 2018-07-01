@@ -84,7 +84,9 @@ class TestbedHomingSimple(object):
         self.load_h1_weights = sim_param.load_h1_weights == 'True'
         self.load_h1h2_weights = sim_param.load_h1h2_weights == 'True'
         self.max_timesteps = int(sim_param.max_timesteps)
+        self.max_training_it = int(sim_param.max_training_it)
         self.save_network_freq = int(sim_param.save_network_freq)
+        self.save_network_freq_training_it = int(sim_param.save_network_freq_training_it)
         self.wait_one_more_goal = sim_param.wait_one_more_goal == 'True'
         self.wait_learning_score_and_save_model = float(sim_param.wait_learning_score_and_save_model)
         self.exploration = sim_param.exploration == 'True'
@@ -99,7 +101,7 @@ class TestbedHomingSimple(object):
         self.simulation_file_extension = simulation_file_extension
         if global_homing_simple.record:
             debug_homing_simple.xprint(msg="Start recording")
-            filename = global_homing_simple.fileCreate(dir=self.simulation_dir, extension=self.simulation_file_extension)
+            filename = global_homing_simple.fileCreate(dir=self.simulation_dir, extension='_sim' + str(simulation_id) + self.simulation_file_extension)
             global_homing_simple.fo = open(filename, 'a')
             global_homing_simple.writer = csv.writer(global_homing_simple.fo)
 
@@ -330,12 +332,6 @@ class TestbedHomingSimple(object):
         #ls = self.agents[0].learning_score()  # learning score of agent 0
         #self.learning_scores.append(ls)  # appending the learning score
 
-
-        # # Save agent when ready
-        # if self.agents[0].ready_to_save:
-        #     self.agents[0].save_model(dir=self.brain_dir)
-        #     self.running = False
-
         # Save neural networks model frequently
         if self.save_network_freq != -1:
             if Global.timestep % self.save_network_freq == 0:
@@ -346,6 +342,22 @@ class TestbedHomingSimple(object):
         if self.save_memory_freq != -1:
             if Global.timestep % self.save_memory_freq == 0:
                 self.agents[0].save_memory(dir=self.brain_dir)
+
+        # Save neural networks model frequently based on training iterations
+        if self.save_network_freq_training_it != -1:
+            training_it = self.agents[0].training_iterations()
+            if training_it != 0 and training_it % self.save_network_freq_training_it == 0:
+                suff = str(training_it) + "it"
+                self.agents[0].save_model(dir=self.brain_dir, suffix=suff)
+
+        # Reached max number of training timesteps
+        if self.max_training_it != -1 and self.agents[0].training_iterations() >= self.max_training_it:
+            printColor(msg="Agent: {:3.0f}, ".format(self.agents[0].id) +
+                           "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
+                           ", tmstp: {:10.0f}".format(Global.timestep) +
+                           ", t: {}".format(Global.get_time()))
+            self.running = False
+            return
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
@@ -548,6 +560,8 @@ if __name__ == '__main__':
     parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
     parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
     parser.add_argument('--suffix', help='custom suffix to add', default='')
+    parser.add_argument('--max_training_it', help='maximum number of training iterations for 1 simulation', default='-1')
+    parser.add_argument('--save_network_freq_training_it', help='save neural networks model every defined training iterations', default='-1')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
@@ -564,7 +578,7 @@ if __name__ == '__main__':
         suffix = "loadmodel"
 
     if args.load_memory != '-1':
-        suffix += "_loadmem" + args.load_memory + "exp"
+        suffix += "load" + args.load_memory + "xp"
 
     # Normal case
     if suffix == "":
@@ -579,10 +593,20 @@ if __name__ == '__main__':
 
     # Run simulation
     max_timesteps = int(args.max_timesteps)
+    max_training_it = int(args.max_training_it)
     total_timesteps = 0
     timestr = time.strftime("%Y_%m_%d_%H%M%S")
-    directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + str(max_timesteps) + \
-                     "tmstp_" + suffix + "/"
+
+    if max_training_it != -1:
+        string_counter = str(max_training_it) + "it_"
+    elif max_timesteps != -1:
+        string_counter = str(max_timesteps) + "tmstp_"
+    else:
+        string_counter = ""
+
+    directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + \
+                     string_counter + suffix + "/"
+
     for i in xrange(multi_simulation):
         simID = i + 1
         sys.stdout.write(PrintColor.PRINT_GREEN)

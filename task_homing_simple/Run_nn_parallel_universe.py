@@ -70,7 +70,13 @@ if __name__ == '__main__':
     parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
     parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
     parser.add_argument('--suffix', help='custom suffix to add', default='')
+    parser.add_argument('--max_training_it', help='maximum number of training iterations for 1 simulation',
+                        default='-1')
+    parser.add_argument('--save_network_freq_training_it',
+                        help='save neural networks model every defined training iterations', default='-1')
 
+
+    # -------------------- Run NN special Parameters ----------------------
     parser.add_argument('--dir_name', help='directory name', default="")
     args = parser.parse_args()
 
@@ -92,7 +98,6 @@ if __name__ == '__main__':
     args.collision_avoidance = 'False'
     args.max_timesteps = '10000'
     args.handle_events = 'False'
-    # args.load_model = 'True'
     args.load_full_weights = 'True' # we only need to load weights to NN, since we're not training anymore
 
     # ----------------------------------------------------------------------
@@ -146,7 +151,8 @@ if __name__ == '__main__':
 
             # f gives the whole path, let's save only the filename
             nn_file = os.path.basename(f)
-            nn_file = re.sub(r'.*_(?P<time>\d+)tmstp_.*', r'\g<time>', nn_file)
+            # nn_file = re.sub(r'.*_(?P<time>\d+)tmstp_.*', r'\g<time>', nn_file)
+            nn_file = re.sub(r'.*_(?P<time>\d+)it_.*', r'\g<time>', nn_file)
             msg_csv = (nn_file, str(simulation.goal_reached_count))
 
             # Append score to csv file

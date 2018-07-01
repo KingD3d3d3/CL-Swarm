@@ -190,6 +190,8 @@ class DQN(object):
         self.printStopExploration = False
         self.collect_experiences = True # record new experience every timestep
 
+        self.training_iteration = 0
+
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
 
@@ -313,6 +315,8 @@ class DQN(object):
                                    ", tmstp: {:10.0f}".format(Global.timestep) +
                                    ", t: {}".format(Global.get_time()))
                     self.printStopExploration = True
+
+        self.training_iteration += 1
 
     def preprocess(self, state):
         # Input shape in Keras : (batch_size, input_dim)
