@@ -105,4 +105,5 @@ def printEvent(agent=None, event_message=""):
 
 def xprint(msg=""):
     printColor(msg="{: <37s}".format(msg) +
-                   ", tmstp: {:10.0f}, t: {}".format(Global.timestep, Global.get_time()))
+                   ", tmstp: {:10.0f}, t: {}".format(Global.timestep, Global.get_time()) +
+                   ", world_t: {}".format(Util.getTimeString2()))

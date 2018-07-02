@@ -120,3 +120,10 @@ def minMaxNormalization_m1_1(x, _min, _max):
 def getTimeString():
     now = datetime.now()
     return now.strftime("%Y_%m_%d_%H%M%S_%f")
+
+def getTimeString2():
+    """
+        Human readable format
+    """
+    now = datetime.now()
+    return now.strftime("%Hh%Mm%Ss %Y/%m/%d")
