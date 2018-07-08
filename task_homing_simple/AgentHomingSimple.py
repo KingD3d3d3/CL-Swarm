@@ -150,7 +150,8 @@ class AgentHomingSimple(Agent):
         self.training = training
 
         # Default speed of the agent
-        self.initialSpeed = 9.5  # 12 m/s
+        self.speed = 10 # 9.5 m/s
+        self.rotation_speed = 10 # # 10.5 rad/s
 
         # Collision avoidance
         self.collision_avoidance = collision_avoidance
@@ -204,8 +205,11 @@ class AgentHomingSimple(Agent):
         self.currentCollisionCount = 0  # number of objects the agent is colliding at the current timestep
 
         # Goal
-        goal1 = pixelsToWorld((100, 100))
-        goal2 = vec2(SCREEN_WIDTH / PPM - goal1.x, SCREEN_HEIGHT / PPM - goal1.y)
+        goal1 = pixelsToWorld((100, 100)) # b2Vec2(5,31)
+        goal2 = vec2(SCREEN_WIDTH / PPM - goal1.x, SCREEN_HEIGHT / PPM - goal1.y) # b2Vec2(59,5)
+
+        distance = Util.distance(goal1, goal2)
+
         self.currentGoalIndex = 0
         self.goals = [goal1, goal2]
         self.goalReachedThreshold = 2.5  # If agent-to-goal distance is less than this value then agent reached the goal
@@ -223,6 +227,7 @@ class AgentHomingSimple(Agent):
         self.last_distance = 0.0  # last agent's distance to the goal
         self.distance = self.distanceToGoal()  # 0.0  # current distance to the goal
         self.last_position = vec2(self.body.position.x, self.body.position.y)  # keep track of previous position
+        self.last_orientation = self.orientationToGoal()
 
         # Keep track of the time it took for agent to reach goal
         # self.timeToGoal_window = deque(maxlen=100)
@@ -236,7 +241,7 @@ class AgentHomingSimple(Agent):
             self.facingGoal = False
 
         # Distance travelled by agent at each timestep
-        self.delta_dist = self.initialSpeed * (1. / TARGET_FPS)
+        self.delta_dist = self.speed * (1. / TARGET_FPS)
 
     def draw(self):
 
@@ -296,13 +301,13 @@ class AgentHomingSimple(Agent):
         """
             Perform agent's movement based on the input action
         """
-        speed = self.initialSpeed
+        speed = self.speed
         move = True
 
         if action == Action.TURN_LEFT:  # Turn Left
-            self.body.angularVelocity = 10.5  # 5
+            self.body.angularVelocity = self.rotation_speed
         elif action == Action.TURN_RIGHT:  # Turn Right
-            self.body.angularVelocity = -10.5  # -5
+            self.body.angularVelocity = -self.rotation_speed
         elif action == Action.KEEP_ORIENTATION:  # Don't turn
             pass
         elif action == Action.STOP:  # Stop moving
@@ -311,11 +316,11 @@ class AgentHomingSimple(Agent):
         elif action == Action.STOP_TURN_LEFT:  # Stop and turn left
             move = False
             speed = 0.
-            self.body.angularVelocity = 10.5
+            self.body.angularVelocity = self.rotation_speed
         elif action == Action.STOP_TURN_RIGHT:  # Stop and turn right
             move = False
             speed = 0.
-            self.body.angularVelocity = -10.5
+            self.body.angularVelocity = -self.rotation_speed
 
         if move:
             forward_vec = self.body.GetWorldVector((0, 1))
@@ -324,6 +329,7 @@ class AgentHomingSimple(Agent):
             # Kill velocity
             impulse = -self.getForwardVelocity() * self.body.mass * (2. / 3.)
             self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill forward
+
 
     def orientationToGoal(self):
         """
@@ -377,14 +383,23 @@ class AgentHomingSimple(Agent):
             flagGC = True
 
             # Process getting_closer reward
+
+            # Calculate alpha
+            # goal_position = self.goals[self.currentGoalIndex]
+            # v1 = (self.last_position - goal_position)  # last position to goal
+            # v2 = (self.body.position - goal_position)  # current position to goal
+            # max_angle = np.arctan(
+            #     self.delta_dist / self.distance)  # maximum angle to goal an agent can make at each timestep
+            # angle_deg = Util.angle(v1, v2)
+            # angle_rad = Util.degToRad(angle_deg)
+            # angle = Util.minMaxNormalization(angle_rad, -max_angle, max_angle, -np.pi / 2, np.pi / 2)
+
+            # Calculate beta
             goal_position = self.goals[self.currentGoalIndex]
-            v1 = (self.last_position - goal_position)  # last position to goal
-            v2 = (self.body.position - goal_position)  # current position to goal
-            max_angle = np.arctan(
-                self.delta_dist / self.distance)  # maximum angle to goal an agent can make at each timestep
+            v1 = (goal_position - self.last_position)  # goal to last position vector
+            v2 = (self.body.position - self.last_position) # current position to last position vector
             angle_deg = Util.angle(v1, v2)
-            angle_rad = Util.degToRad(angle_deg)
-            angle = Util.minMaxNormalization(angle_rad, -max_angle, max_angle, -np.pi / 2, np.pi / 2)
+            angle = Util.degToRad(angle_deg)
 
             # Easy reward, using directly agent's orientation_to_goal
             # angle = self.orientationToGoal()
@@ -393,6 +408,7 @@ class AgentHomingSimple(Agent):
 
             getting_closer = Reward.getting_closer(angle)
 
+            #print('getting_closer', getting_closer)
         # Check Goal Reached
         flagGR = False
         if self.distance < self.goalReachedThreshold:
@@ -460,8 +476,8 @@ class AgentHomingSimple(Agent):
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
         # self.remainStatic()
-        self.updateDrive(Action(action_num))
-        # self.updateManualDrive()
+        # self.updateDrive(Action(action_num))
+        self.updateManualDrive()
         # self.updateManualDriveTestAngle(10.5)  # 10
 
         # Calculate agent's distance to the goal
@@ -478,6 +494,7 @@ class AgentHomingSimple(Agent):
         self.elapsedTime = global_homing_simple.timer - self.startTime
         self.elapsedTimestep = Global.timestep - self.startTimestep
         self.last_position = vec2(self.body.position.x, self.body.position.y)
+        self.last_orientation = self.body.angle
 
         return
 

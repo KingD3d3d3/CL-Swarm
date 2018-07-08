@@ -21,7 +21,7 @@ event_count = 0
 timestr = Util.getTimeString()
 simulation_id = 1
 
-def fileCreate(dir, extension):
+def fileCreate(dir, suffix):
     """
         Create record csv file
         Also create the directory if it doesn't exist
@@ -29,7 +29,7 @@ def fileCreate(dir, extension):
     global timestr
 
     timestr = Util.getTimeString()
-    filename = dir + timestr + extension
+    filename = dir + suffix + timestr + ".csv"
 
     if not os.path.exists(os.path.dirname(filename)):
         try:

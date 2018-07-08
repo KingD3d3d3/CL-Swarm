@@ -128,7 +128,7 @@ if __name__ == '__main__':
             # create csv file
             #timestr = time.strftime("%Y_%m_%d_%H%M%S")
             #filename = curr_dir + timestr + '_' + args.max_timesteps + "tmstp" + "_score.csv"
-            filename = curr_dir + Util.getTimeString() + '_' + args.max_timesteps + "tmstp" + "_score.csv"
+            filename = curr_dir + args.max_timesteps + "tmstp" + "_score_" + Util.getTimeString() + ".csv"
             print('csv file: {}'.format(filename))
             fo = open(filename, 'a')
             writer = csv.writer(fo)
@@ -164,7 +164,8 @@ if __name__ == '__main__':
             fo.close()
 
     # Save whole simulation summary in file (completion time, number of simulation, etc)
-    file = open(dir_name + "parallel_universe_summary.txt", "w")
+    timestr = time.strftime("%Y%m%d_%H%M%S")
+    file = open(dir_name + "parallel_universe_summary_" + timestr + ".txt", "w")
     file.write("Number of simulations: {}\n"
                "Total simulations time: {}\n"
                "Total timesteps: {}".format(simulation_count, Global.get_time(), total_timesteps))

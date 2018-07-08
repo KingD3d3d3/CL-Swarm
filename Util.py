@@ -2,6 +2,7 @@ from __future__ import division
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (vec2)
 import math
+import numpy as np
 import time
 
 from datetime import datetime
@@ -119,7 +120,7 @@ def minMaxNormalization_m1_1(x, _min, _max):
 
 def getTimeString():
     now = datetime.now()
-    return now.strftime("%Y_%m_%d_%H%M%S_%f")
+    return now.strftime("%Y%m%d_%H%M%S_%f")
 
 def getTimeString2():
     """
@@ -127,3 +128,8 @@ def getTimeString2():
     """
     now = datetime.now()
     return now.strftime("%Hh%Mm%Ss %Y/%m/%d")
+
+def distance(v1, v2):
+    distance = np.sqrt((v1.x - v2.x) ** 2 +
+                       (v1.y - v2.y) ** 2)
+    return distance

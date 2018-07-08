@@ -54,7 +54,9 @@ class Agent(object):
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
 
-        self.initialSpeed = 9.5 # 12
+        self.speed = 9.5 # 12
+        self.rotation_speed = 10  # # 10.5 rad/s
+
         self.updateCalls = 0
 
         self.brain = None
@@ -93,7 +95,7 @@ class Agent(object):
         self.updateCalls += 1
 
     def updateManualDriveTestAngle(self, angle):
-        speed = self.initialSpeed
+        speed = self.speed
         global moveTicker
         global prev_angle
         global go_print_Turn
@@ -151,15 +153,15 @@ class Agent(object):
         self.body.linearVelocity = forward_vec * speed
 
     def updateManualDrive(self):
-        speed = self.initialSpeed
+        speed = self.speed
         move = True
 
         key = pygame.key.get_pressed()
         if key[K_LEFT]:  # Turn Left
-            self.body.angularVelocity = 5
+            self.body.angularVelocity = self.rotation_speed #10.5 #5
             pass
         if key[K_RIGHT]:  # Turn Right
-            self.body.angularVelocity = -5
+            self.body.angularVelocity = -self.rotation_speed #10.5 #-5
             pass
         if key[K_SPACE]:  # Break
             move = False
@@ -190,13 +192,13 @@ class Agent(object):
         learning_score = self.brain.learning_score()
         return learning_score
 
-    def save_brain(self, dir):
+    def save_brain(self, dir, suffix=""):
         """
             Save agent's brain (neural network model and memory) in file
             Call save_model() and save_memory()
         """
-        self.save_model(dir)
-        self.save_memory(dir)
+        self.save_model(dir, suffix)
+        self.save_memory(dir, suffix)
 
     def save_model(self, dir, suffix=""):
         """
@@ -228,7 +230,7 @@ class Agent(object):
         directory = dir
         timestep = "_" + str(Global.timestep) + "tmstp"
         suffix = "_" + suffix
-        memory_file = directory + timestr + timestep + "_memory.csv"  # neural network model file
+        memory_file = directory + timestr + timestep + suffix + "_memory.csv"  # neural network model file
 
         if not os.path.exists(os.path.dirname(directory)):
             try:

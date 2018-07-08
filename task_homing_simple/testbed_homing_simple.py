@@ -6,7 +6,7 @@ import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (world, vec2)
 from pygame.locals import *
-#import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import time
 import os
 import errno
@@ -15,6 +15,7 @@ import numpy as np
 import sys
 import datetime
 import gc
+
 try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
@@ -52,14 +53,17 @@ except:
     from ..res import print_colors as PrintColor
     from .. import Global
 
+
 class TestbedHomingSimple(object):
     def __init__(self, screen_width, screen_height, target_fps, ppm, physics_timestep, vel_iters, pos_iters,
-                 simulation_id=1, simulation_dir="./simulation_data/", simulation_file_extension="_homing_simple.csv",
-                 file_to_load="", sim_param=None):
+                 simulation_id=1, simulation_dir="./simulation_data/", simulation_file_suffix="_homing_simple",
+                 file_to_load="", sim_param=None, suffix=""):
 
         self.simulation_id = simulation_id
         global_homing_simple.simulation_id = simulation_id
         debug_homing_simple.xprint(msg='simulation_id: {}, Starting Setup'.format(self.simulation_id))
+
+        self.suffix = suffix
 
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -69,7 +73,7 @@ class TestbedHomingSimple(object):
         self.vel_iters = vel_iters
         self.pos_iters = pos_iters
 
-        self.can_handle_events = sim_param.handle_events == 'True' # Keyboard inputs
+        self.can_handle_events = sim_param.handle_events == 'True'  # Keyboard inputs
         self.render = sim_param.render == 'True'
         self.print_fps = sim_param.print_fps == 'True'
         global_homing_simple.debug = sim_param.debug == 'True'
@@ -97,11 +101,12 @@ class TestbedHomingSimple(object):
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
         # Record simulation
-        self.simulation_dir = simulation_dir
-        self.simulation_file_extension = simulation_file_extension
+        self.simulation_dir = simulation_dir + "sim_logs/"
+        self.simulation_file_suffix = suffix + simulation_file_suffix
         if global_homing_simple.record:
             debug_homing_simple.xprint(msg="Start recording")
-            filename = global_homing_simple.fileCreate(dir=self.simulation_dir, extension='_sim' + str(simulation_id) + self.simulation_file_extension)
+            filename = global_homing_simple.fileCreate(dir=self.simulation_dir,
+                   suffix=self.simulation_file_suffix + '_sim' + str(simulation_id) + '_')
             global_homing_simple.fo = open(filename, 'a')
             global_homing_simple.writer = csv.writer(global_homing_simple.fo)
 
@@ -134,7 +139,7 @@ class TestbedHomingSimple(object):
 
         # Goal positions
         self.goal1 = (100, 100)
-        self.goal2 = (self.screen_width - self.goal1[0], self.screen_height - self.goal1[1])
+        self.goal2 = (self.screen_width - self.goal1[0], self.screen_height - self.goal1[1]) # 1180, 620
 
         # Create the world
         self.world = world(gravity=(0, 0), doSleep=True, contactListener=MyContactListener())  # gravity = (0, -10)
@@ -148,21 +153,20 @@ class TestbedHomingSimple(object):
         for j in xrange(self.numAgents):
             # randX = random.randint(2, self.screen_width / self.ppm - 2)
             # randY = random.randint(2, self.screen_height / self.ppm - 2)
-            #randAngle = degToRad(random.randint(0, 360))
-            start_pos = pixelsToWorld(self.goal2) # start from goal 2
+            # randAngle = degToRad(random.randint(0, 360))
+            start_pos = pixelsToWorld(self.goal2)  # start from goal 2
 
             toGoal = Util.normalize(pixelsToWorld(self.goal1) - start_pos)
             forward = vec2(0, 1)
             angleDeg = Util.angle(forward, toGoal)
             angle = Util.degToRad(angleDeg)
-            angle = -angle # start by looking at goal1
+            angle = -angle  # start by looking at goal1
             a = AgentHomingSimple(screen=self.screen, world=self.world, x=start_pos.x, y=start_pos.y, angle=angle,
                                   radius=1.5, id=j, numAgents=self.numAgents, training=self.training,
                                   collision_avoidance=self.collision_avoidance)
             self.agents.append(a)
 
-
-        self.file_to_load = file_to_load # can be default ""
+        self.file_to_load = file_to_load  # can be default ""
         # if file_to_load != "":
         #     self.file_to_load = file_to_load
         # else:
@@ -180,12 +184,12 @@ class TestbedHomingSimple(object):
         # Load model to agent
         if self.load_model:
             self.agents[0].load_model(self.file_to_load)
-            #self.agents[0].stop_exploring()
+            # self.agents[0].stop_exploring()
 
         # Load full weights to agent
         if self.load_full_weights:
             self.agents[0].load_full_weights(self.file_to_load)
-            #self.agents[0].stop_exploring()
+            # self.agents[0].stop_exploring()
 
         # Load 1st hidden layer weights to agent
         if self.load_h1_weights:
@@ -275,7 +279,8 @@ class TestbedHomingSimple(object):
                 if not global_homing_simple.record:  # Record simulation
                     debug_homing_simple.xprint(msg="Start recording")
                     global_homing_simple.record = True
-                    filename = global_homing_simple.fileCreate(dir=self.simulation_dir, extension=self.simulation_file_extension)
+                    filename = global_homing_simple.fileCreate(dir=self.simulation_dir,
+                                   suffix=self.simulation_file_suffix + '_sim' + str(self.simulation_id) + '_')
                     global_homing_simple.fo = open(filename, 'a')
                     global_homing_simple.writer = csv.writer(global_homing_simple.fo)
                 else:  # Stop recording
@@ -286,7 +291,7 @@ class TestbedHomingSimple(object):
                 """
                     S: Save model and memory
                 """
-                self.agents[0].save_brain(dir=self.brain_dir)
+                self.agents[0].save_brain(dir=self.brain_dir, suffix=self.suffix)
             if event.type == KEYDOWN and event.key == K_b:
                 """
                     B: Load model
@@ -312,7 +317,7 @@ class TestbedHomingSimple(object):
                 self.agents[0].load_h1h2_weights(self.file_to_load)
                 self.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_p:  # plot Agent's learning scores
-                #self.plot_learning_scores()
+                # self.plot_learning_scores()
                 pass
 
     def update(self):
@@ -329,26 +334,26 @@ class TestbedHomingSimple(object):
             count += self.agents[j].goalReachedCount
         self.goal_reached_count = count
 
-        #ls = self.agents[0].learning_score()  # learning score of agent 0
-        #self.learning_scores.append(ls)  # appending the learning score
+        # ls = self.agents[0].learning_score()  # learning score of agent 0
+        # self.learning_scores.append(ls)  # appending the learning score
 
         # Save neural networks model frequently
         if self.save_network_freq != -1:
             if Global.timestep % self.save_network_freq == 0:
-                #print('timestep', Global.timestep)
-                self.agents[0].save_model(dir=self.brain_dir)
+                # print('timestep', Global.timestep)
+                self.agents[0].save_model(dir=self.brain_dir, suffix=self.suffix)
 
         # Save memory frequently
         if self.save_memory_freq != -1:
             if Global.timestep % self.save_memory_freq == 0:
-                self.agents[0].save_memory(dir=self.brain_dir)
+                self.agents[0].save_memory(dir=self.brain_dir, suffix=self.suffix)
 
         # Save neural networks model frequently based on training iterations
         if self.save_network_freq_training_it != -1:
             training_it = self.agents[0].training_iterations()
             if training_it != 0 and training_it % self.save_network_freq_training_it == 0:
-                suff = str(training_it) + "it"
-                self.agents[0].save_model(dir=self.brain_dir, suffix=suff)
+                suff = '_' + str(training_it) + "it"
+                self.agents[0].save_model(dir=self.brain_dir, suffix=self.suffix + suff)
 
         # Reached max number of training timesteps
         if self.max_training_it != -1 and self.agents[0].training_iterations() >= self.max_training_it:
@@ -390,7 +395,6 @@ class TestbedHomingSimple(object):
                 else:
                     self.running = True
 
-
     def fps_physic_step(self):
         """
             FPS and Physic's Step Part
@@ -423,7 +427,7 @@ class TestbedHomingSimple(object):
             if self.deltaTime <= self.target_fps:  # Frame is faster than target (60fps) -> simulation run faster
 
                 # Physic step
-                #self.world.Step(self.physics_timestep, self.vel_iters, self.pos_iters)
+                # self.world.Step(self.physics_timestep, self.vel_iters, self.pos_iters)
                 self.world.Step(self.physics_timestep, self.vel_iters, self.pos_iters)
                 self.world.ClearForces()
             else:
@@ -481,45 +485,45 @@ class TestbedHomingSimple(object):
 
         # Manually deleting some objects and free memory
         del self.world
-        #gc.collect()
+        # gc.collect()
 
-        #debug_homing_simple.xprint(msg='simulation_id: {}, Deleted and Freed memory'.format(self.simulation_id))
+        # debug_homing_simple.xprint(msg='simulation_id: {}, Deleted and Freed memory'.format(self.simulation_id))
 
-        #self.plot_learning_scores()
+        # self.plot_learning_scores()
 
-    # def plot_learning_scores(self, save=False):
-    #     plt.plot(self.learning_scores)
-    #     plt.xlabel('Timestep')
-    #     plt.ylabel('Learning Score')
-    #     plt.title('Agent\'s Learning Score over Timestep')
-    #     plt.grid(True)
-    #     plt.show(block=False)
-    #
-    #     if save:
-    #         timestr = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
-    #         directory = "./learning_scores/"
-    #         ls_file = directory + timestr + "_ls.csv"  # learning scores file
-    #         ls_fig = directory + timestr + "_ls.png"  # learning scores figure image
-    #
-    #         if not os.path.exists(os.path.dirname(directory)):
-    #             try:
-    #                 os.makedirs(os.path.dirname(directory))
-    #             except OSError as exc:  # Guard against race condition
-    #                 if exc.errno != errno.EEXIST:
-    #                     raise
-    #
-    #         plt.savefig(ls_fig)
-    #
-    #         header = ("timestep", "learning_scores")
-    #
-    #         timesteps = np.arange(1, len(self.learning_scores) + 1)
-    #         ls_over_tmstp = zip(timesteps, self.learning_scores)
-    #
-    #         with open(ls_file, 'w') as f:
-    #             writer = csv.writer(f)
-    #             writer.writerow(header)
-    #             writer.writerows(ls_over_tmstp)
-    #         pass
+        # def plot_learning_scores(self, save=False):
+        #     plt.plot(self.learning_scores)
+        #     plt.xlabel('Timestep')
+        #     plt.ylabel('Learning Score')
+        #     plt.title('Agent\'s Learning Score over Timestep')
+        #     plt.grid(True)
+        #     plt.show(block=False)
+        #
+        #     if save:
+        #         timestr = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
+        #         directory = "./learning_scores/"
+        #         ls_file = directory + timestr + "_ls.csv"  # learning scores file
+        #         ls_fig = directory + timestr + "_ls.png"  # learning scores figure image
+        #
+        #         if not os.path.exists(os.path.dirname(directory)):
+        #             try:
+        #                 os.makedirs(os.path.dirname(directory))
+        #             except OSError as exc:  # Guard against race condition
+        #                 if exc.errno != errno.EEXIST:
+        #                     raise
+        #
+        #         plt.savefig(ls_fig)
+        #
+        #         header = ("timestep", "learning_scores")
+        #
+        #         timesteps = np.arange(1, len(self.learning_scores) + 1)
+        #         ls_over_tmstp = zip(timesteps, self.learning_scores)
+        #
+        #         with open(ls_file, 'w') as f:
+        #             writer = csv.writer(f)
+        #             writer.writerow(header)
+        #             writer.writerows(ls_over_tmstp)
+        #         pass
 
 
 if __name__ == '__main__':
@@ -552,16 +556,21 @@ if __name__ == '__main__':
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
     parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='False')
-    parser.add_argument('--wait_learning_score_and_save_model', help='wait agent to reach specified learning score before to close application', default='-1')
+    parser.add_argument('--wait_learning_score_and_save_model',
+                        help='wait agent to reach specified learning score before to close application', default='-1')
     parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
-    parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)', default='True')
-    parser.add_argument('--collect_experiences', help='append a new experience to memory at each timestep', default='True')
+    parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)',
+                        default='True')
+    parser.add_argument('--collect_experiences', help='append a new experience to memory at each timestep',
+                        default='True')
     parser.add_argument('--save_memory_freq', help='save memory every defined timesteps', default='-1')
     parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
     parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
     parser.add_argument('--suffix', help='custom suffix to add', default='')
-    parser.add_argument('--max_training_it', help='maximum number of training iterations for 1 simulation', default='-1')
-    parser.add_argument('--save_network_freq_training_it', help='save neural networks model every defined training iterations', default='-1')
+    parser.add_argument('--max_training_it', help='maximum number of training iterations for 1 simulation',
+                        default='-1')
+    parser.add_argument('--save_network_freq_training_it',
+                        help='save neural networks model every defined training iterations', default='-1')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
@@ -595,7 +604,7 @@ if __name__ == '__main__':
     max_timesteps = int(args.max_timesteps)
     max_training_it = int(args.max_training_it)
     total_timesteps = 0
-    timestr = time.strftime("%Y_%m_%d_%H%M%S")
+    timestr = time.strftime("%Y%m%d_%H%M%S")
 
     if max_training_it != -1:
         string_counter = str(max_training_it) + "it_"
@@ -604,8 +613,9 @@ if __name__ == '__main__':
     else:
         string_counter = ""
 
-    directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + \
-                     string_counter + suffix + "/"
+    # directory_name = "./simulation_data/" + timestr + "_" + str(multi_simulation) + "sim_" + \
+    #                  string_counter + suffix + "/"
+    directory_name = "./simulation_data/" + suffix + "_" + string_counter + str(multi_simulation) + "sim_" + timestr + "/"
 
     for i in xrange(multi_simulation):
         simID = i + 1
@@ -616,7 +626,7 @@ if __name__ == '__main__':
         simulation = TestbedHomingSimple(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
                                          PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
                                          simulation_id=simID, simulation_dir=directory_name, sim_param=args,
-                                         file_to_load=args.file_to_load)
+                                         file_to_load=args.file_to_load, suffix=suffix)
         simulation.run()
         simulation.end()
         total_timesteps += Global.timestep
@@ -625,7 +635,8 @@ if __name__ == '__main__':
 
     if args.record == 'True':
         # Save whole simulation summary in file (completion time, number of simulation, etc)
-        file = open(directory_name + "summary.txt", "w")
+        timestr = time.strftime("%Y%m%d_%H%M%S")
+        file = open(directory_name + "summary_" + timestr + ".txt", "w")
         file.write("Number of simulations: {}\n"
                    "Total simulations time: {}\n"
                    "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
