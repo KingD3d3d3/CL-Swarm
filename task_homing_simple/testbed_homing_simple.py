@@ -15,7 +15,7 @@ import numpy as np
 import sys
 import datetime
 import gc
-
+import matplotlib.pyplot as plt
 try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
@@ -97,7 +97,7 @@ class TestbedHomingSimple(object):
         self.collect_experiences = sim_param.collect_experiences == 'True'
         self.save_memory_freq = int(sim_param.save_memory_freq)
         self.load_memory = int(sim_param.load_memory)
-
+        self.record_ls = sim_param.record_ls == 'True'
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
 
         # Record simulation
@@ -334,8 +334,9 @@ class TestbedHomingSimple(object):
             count += self.agents[j].goalReachedCount
         self.goal_reached_count = count
 
-        # ls = self.agents[0].learning_score()  # learning score of agent 0
-        # self.learning_scores.append(ls)  # appending the learning score
+        if self.record_ls:
+            ls = self.agents[0].learning_score()  # learning score of agent 0
+            self.learning_scores.append(ls)  # appending the learning score
 
         # Save neural networks model frequently
         if self.save_network_freq != -1:
@@ -488,42 +489,42 @@ class TestbedHomingSimple(object):
         # gc.collect()
 
         # debug_homing_simple.xprint(msg='simulation_id: {}, Deleted and Freed memory'.format(self.simulation_id))
+        # if self.record_ls:
+        #     self.plot_learning_scores(save=False)
 
-        # self.plot_learning_scores()
+    def plot_learning_scores(self, save=False):
+        plt.plot(self.learning_scores)
+        plt.xlabel('Training Iterations')
+        plt.ylabel('Learning Score')
+        plt.title('Agent\'s Learning Score over Training Iterations')
+        plt.grid(True)
+        plt.show(block=False)
 
-        # def plot_learning_scores(self, save=False):
-        #     plt.plot(self.learning_scores)
-        #     plt.xlabel('Timestep')
-        #     plt.ylabel('Learning Score')
-        #     plt.title('Agent\'s Learning Score over Timestep')
-        #     plt.grid(True)
-        #     plt.show(block=False)
-        #
-        #     if save:
-        #         timestr = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
-        #         directory = "./learning_scores/"
-        #         ls_file = directory + timestr + "_ls.csv"  # learning scores file
-        #         ls_fig = directory + timestr + "_ls.png"  # learning scores figure image
-        #
-        #         if not os.path.exists(os.path.dirname(directory)):
-        #             try:
-        #                 os.makedirs(os.path.dirname(directory))
-        #             except OSError as exc:  # Guard against race condition
-        #                 if exc.errno != errno.EEXIST:
-        #                     raise
-        #
-        #         plt.savefig(ls_fig)
-        #
-        #         header = ("timestep", "learning_scores")
-        #
-        #         timesteps = np.arange(1, len(self.learning_scores) + 1)
-        #         ls_over_tmstp = zip(timesteps, self.learning_scores)
-        #
-        #         with open(ls_file, 'w') as f:
-        #             writer = csv.writer(f)
-        #             writer.writerow(header)
-        #             writer.writerows(ls_over_tmstp)
-        #         pass
+        if save:
+            # timestring = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
+            directory = "./learning_scores/"
+            # ls_file = directory + timestring + "_ls.csv"  # learning scores file
+            ls_fig = directory + "fig_ls.png"  # learning scores figure image
+
+            if not os.path.exists(os.path.dirname(directory)):
+                try:
+                    os.makedirs(os.path.dirname(directory))
+                except OSError as exc:  # Guard against race condition
+                    if exc.errno != errno.EEXIST:
+                        raise
+
+            plt.savefig(ls_fig)
+
+            # header = ("timestep", "learning_scores")
+            #
+            # timesteps = np.arange(1, len(self.learning_scores) + 1)
+            # ls_over_tmstp = zip(timesteps, self.learning_scores)
+            #
+            # with open(ls_file, 'w') as f:
+            #     writer = csv.writer(f)
+            #     writer.writerow(header)
+            #     writer.writerows(ls_over_tmstp)
+            # pass
 
 
 if __name__ == '__main__':
@@ -571,6 +572,7 @@ if __name__ == '__main__':
                         default='-1')
     parser.add_argument('--save_network_freq_training_it',
                         help='save neural networks model every defined training iterations', default='-1')
+    parser.add_argument('--record_ls', help='record learning score of agent', default='False')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)

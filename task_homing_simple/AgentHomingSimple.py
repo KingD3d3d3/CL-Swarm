@@ -62,13 +62,21 @@ class DQNHomingSimple(DQN):
 
         # Neural Network's Architecture
         # Without collision avoidance
-        h1 = 6  # 1st hidden layer's size
+        h1 = 3  # 1st hidden layer's size
         h2 = 6  # 2nd hidden layer's size
+
+        # if h1 == 0:
+        #     model.add(Dense(self.actionCnt, input_dim=self.inputCnt, activation='linear'))
+        #     pass
+        # else:
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden  # activation='relu'
         model.add(Activation('relu'))
-        model.add(Dense(h2))  # hidden -> hidden  # activation='relu'
-        model.add(Activation('relu'))
+
+        if h2 != 0:
+            model.add(Dense(h2))  # hidden -> hidden  # activation='relu'
+            model.add(Activation('relu'))
+
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
         # Using Sensors' input
@@ -94,9 +102,9 @@ class Action(Enum):
     TURN_LEFT = 0
     TURN_RIGHT = 1
     KEEP_ORIENTATION = 2
-    STOP = 3
-    STOP_TURN_LEFT = 4
-    STOP_TURN_RIGHT = 5
+    # STOP = 3
+    # STOP_TURN_LEFT = 4
+    # STOP_TURN_RIGHT = 5
 
 
 # Rewards Mechanism
@@ -476,8 +484,8 @@ class AgentHomingSimple(Agent):
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
         # self.remainStatic()
-        # self.updateDrive(Action(action_num))
-        self.updateManualDrive()
+        self.updateDrive(Action(action_num))
+        # self.updateManualDrive()
         # self.updateManualDriveTestAngle(10.5)  # 10
 
         # Calculate agent's distance to the goal

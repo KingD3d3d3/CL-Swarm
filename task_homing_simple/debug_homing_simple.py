@@ -57,7 +57,7 @@ def printEvent(agent=None, event_message=""):
            "tmstp2G : {:8.0f}, "
            "Col2G: {:5.0f}, Col: {:5.0f}, "
            "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}, "
-           "LS: {:3.2f}, "
+           "LS: {:3.4f}, "
            "event_count: {:5.0f}, "
            "t: {}"
            .format(

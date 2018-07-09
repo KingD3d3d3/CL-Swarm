@@ -212,11 +212,11 @@ class DQN(object):
         # Training each update
         if self.training and len(self.memory.samples) >= 100 and self.update_counter % self.ratio_update == 0:
             self.replay()
+            self.reward_window.append(reward)
 
         self.last_action = action
         self.last_state = new_state
         self.last_reward = reward
-        self.reward_window.append(reward)
 
         self.steps += 1
 

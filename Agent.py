@@ -60,6 +60,7 @@ class Agent(object):
         self.updateCalls = 0
 
         self.brain = None
+
         # Training flag
         self.training = training
 
@@ -347,4 +348,14 @@ class Agent(object):
         self.brain.stop_collect_experiences()
 
     def training_iterations(self):
+        """
+            Return the agent's number of training iterations
+        """
         return self.brain.training_iteration
+
+    #
+    # def is_training(self):
+    #     """
+    #         Retur True if agent is currently training, else False
+    #     """
+    #     return self.brain.is_training

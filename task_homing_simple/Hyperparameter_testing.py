@@ -7,6 +7,10 @@ import pygame
 import argparse
 import time
 import re
+import matplotlib.pyplot as plt
+import os
+import errno
+import numpy as np
 try:
     # Running in PyCharm
     from Setup import *
@@ -28,6 +32,42 @@ except:
     from .. import Global
     import global_homing_simple
     from .. import Util
+
+def plot_learning_scores(y, save=False):
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.plot(y)
+    max = len(y)
+    ax.set_xlim(0, max)
+    ax.set_ylim(0, 0.1)
+    ax.set_xlabel('Timesteps')
+    ax.set_ylabel('Average Learning Score')
+    ax.set_title('Agent\'s Learning Score over Training Iterations')
+    ax.legend()
+    ax.grid()
+
+    # Compute the area using the composite trapezoidal rule.
+    area = np.trapz(y)
+    text = "Area Under the Curve : {:3.2f}".format(area)
+    ax.text(0.988, 0.02, text, fontsize=12, verticalalignment='bottom', horizontalalignment='right',
+            transform=ax.transAxes, bbox=dict(facecolor='red', alpha=0.7))
+
+    plt.show(block=False)
+
+    if save:
+        directory = "./learning_scores/"
+
+        timestring = global_homing_simple.timestr
+        ls_fig = directory + timestring + "_ls.png"  # learning scores figure image
+
+        if not os.path.exists(os.path.dirname(directory)):
+            try:
+                os.makedirs(os.path.dirname(directory))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        plt.savefig(ls_fig)
+
 
 if __name__ == '__main__':
 
@@ -80,98 +120,38 @@ if __name__ == '__main__':
     parser.add_argument('--dir_name', help='directory name', default="")
     args = parser.parse_args()
 
-    # --render
-    # False
-    # --training
-    # False
-    # --collision_avoidance
-    # False
-    # --max_timesteps
-    # 5000
-    # --wait_one_more_goal
-    # False
-    # --handle_events
-    # False
-
     args.render = 'False'
-    args.training = 'False'
     args.collision_avoidance = 'False'
-    args.max_timesteps = '10000'
     args.handle_events = 'False'
-    args.load_full_weights = 'True' # we only need to load weights to NN, since we're not training anymore
+    args.record_ls = 'True'
 
     # ----------------------------------------------------------------------
 
-    simulation_count = 0 # counter of number of simulations
-    total_timesteps = 0
+    ls_list = []
 
-    # Input directory
-    dir_name = args.dir_name  # "simulation_data/many_folder_nn_test/"
-    #dir_name = dir_name + "brain_files/"
-    dir_name = os.path.abspath(dir_name) + '/'
-    if not os.path.isdir(os.path.dirname(dir_name)):
-        sys.exit('Not a directory: {}'.format(dir_name))
+    multi_simulation = int(args.multi_simulation)
 
+    for i in xrange(multi_simulation):
+        simID = i + 1
+        sys.stdout.write(PrintColor.PRINT_GREEN)
+        print("Instantiate simulation: {}".format(simID))
+        sys.stdout.write(PrintColor.PRINT_RESET)
 
-    print('Folders to visit')
-    print([x[0] for x in os.walk(dir_name)])
-
-    # Recursively go to each folder of directory
-    for x in os.walk(dir_name):
-
-        curr_dir = x[0] + '/'
-
-        fo = None  # file object to open file for recording
-        writer = None  # writer object to record events
-
-        if glob.glob(curr_dir + "*.h5"):
-            # create csv file
-            #timestr = time.strftime("%Y_%m_%d_%H%M%S")
-            #filename = curr_dir + timestr + '_' + args.max_timesteps + "tmstp" + "_score.csv"
-            filename = curr_dir + args.max_timesteps + "tmstp" + "_score_" + Util.getTimeString() + ".csv"
-            print('csv file: {}'.format(filename))
-            fo = open(filename, 'a')
-            writer = csv.writer(fo)
-
-        # For each saved Neural Networks model
-        for f in sorted(glob.glob(curr_dir + "*.h5")):
-
-            # Run simulation
-            sys.stdout.write(PrintColor.PRINT_GREEN)
-            print("Reading NN file: {}".format(f))
-            sys.stdout.write(PrintColor.PRINT_RESET)
-
-            simulation = TestbedHomingSimple(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
-                                             PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
-                                             simulation_id=1, simulation_dir="", file_to_load=f, sim_param=args)
-            simulation.run()
-            simulation.end()
-            total_timesteps += Global.timestep
-            global_homing_simple.reset_simulation_global()
-
-            # f gives the whole path, let's save only the filename
-            nn_file = os.path.basename(f)
-            # nn_file = re.sub(r'.*_(?P<time>\d+)tmstp_.*', r'\g<time>', nn_file)
-            nn_file = re.sub(r'.*_(?P<time>\d+)it_.*', r'\g<time>', nn_file)
-            msg_csv = (nn_file, str(simulation.goal_reached_count))
-
-            # Append score to csv file
-            writer.writerow(msg_csv)
-            simulation_count += 1
-
-        # Close file properly
-        if fo:
-            fo.close()
-
-    # Save whole simulation summary in file (completion time, number of simulation, etc)
-    timestr = time.strftime("%Y%m%d_%H%M%S")
-    file = open(dir_name + "parallel_universe_summary_" + timestr + ".txt", "w")
-    file.write("Number of simulations: {}\n"
-               "Total simulations time: {}\n"
-               "Total timesteps: {}".format(simulation_count, Global.get_time(), total_timesteps))
-    file.close()
+        simulation = TestbedHomingSimple(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
+                                         PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
+                                         simulation_id=simID, simulation_dir="", sim_param=args,
+                                         file_to_load=args.file_to_load, suffix="")
+        simulation.run()
+        simulation.end()
+        ls_list.append(simulation.learning_scores)
+        global_homing_simple.reset_simulation_global()
 
     print("All simulation finished, Total simulations time: {}".format(Global.get_time()))
+
+    Y_avg = [sum(e) / len(e) for e in zip(*ls_list)]
+    plot_learning_scores(Y_avg, save=True)
+
+
     pygame.quit()
     exit()
     sys.exit()
