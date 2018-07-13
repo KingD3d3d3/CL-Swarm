@@ -128,7 +128,7 @@ EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial 
 
 
 class DQN(object):
-    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, training=True, ratio_update=1):
+    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, training=True, ratio_update=1, random_agent=False):
 
         # Agent's ID
         self.id = id
@@ -192,6 +192,16 @@ class DQN(object):
 
         self.training_iteration = 0
 
+        # Random action
+        self.random_agent = random_agent
+        if random_agent:
+            printColor(color=PRINT_CYAN,
+                       msg="Agent: {:3.0f}, ".format(self.id) +
+                           "{:>25s}".format("Random agent") +
+                           ", tmstp: {:10.0f}".format(Global.timestep) +
+                           ", t: {}".format(Global.get_time()))
+            self.stop_training()
+
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
 
@@ -230,6 +240,13 @@ class DQN(object):
 
     # Epsilon greedy action-selection policy
     def select_action(self, state):
+
+        # Random agent
+        if self.random_agent:
+            random = np.random.randint(0, self.actionCnt)
+            return random
+
+        # Epsilon greedy
         if np.random.rand() < self.epsilon:
             return np.random.randint(0, self.actionCnt)
 

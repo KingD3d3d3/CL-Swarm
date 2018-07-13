@@ -62,13 +62,9 @@ class DQNHomingSimple(DQN):
 
         # Neural Network's Architecture
         # Without collision avoidance
-        h1 = 3  # 1st hidden layer's size
-        h2 = 6  # 2nd hidden layer's size
-
-        # if h1 == 0:
-        #     model.add(Dense(self.actionCnt, input_dim=self.inputCnt, activation='linear'))
-        #     pass
-        # else:
+        h1 = 8  # 1st hidden layer's size
+        h2 = 5  # 2nd hidden layer's size
+        #h3 = 0
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden  # activation='relu'
         model.add(Activation('relu'))
@@ -76,6 +72,10 @@ class DQNHomingSimple(DQN):
         if h2 != 0:
             model.add(Dense(h2))  # hidden -> hidden  # activation='relu'
             model.add(Activation('relu'))
+
+        # if h3 != 0:
+        #     model.add(Dense(h3))  # hidden -> hidden  # activation='relu'
+        #     model.add(Activation('relu'))
 
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
 
@@ -147,9 +147,9 @@ class Reward:
 
 class AgentHomingSimple(Agent):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, numAgents=0, training=True,
-                 collision_avoidance=True):
+                 collision_avoidance=True, random_agent=False):
         # numAgents : the total number of agents in the simulation -> create a vector of collision's time for each agent
-        super(AgentHomingSimple, self).__init__(screen, world, x, y, angle, radius, training)
+        super(AgentHomingSimple, self).__init__(screen, world, x, y, angle, radius, training, random_agent)
 
         # Agent's ID
         self.id = id
@@ -157,7 +157,7 @@ class AgentHomingSimple(Agent):
         # Training flag
         self.training = training
 
-        # Default speed of the agent
+        # Default spec of the agent
         self.speed = 10 # 9.5 m/s
         self.rotation_speed = 10 # # 10.5 rad/s
 
@@ -193,7 +193,7 @@ class AgentHomingSimple(Agent):
         # Brain of the Agent
         input_size = self.numSensors + 1  # 2
         self.brain = DQNHomingSimple(inputCnt=input_size, actionCnt=len(list(Action)), id=self.id,
-                                     training=self.training, ratio_update=1)
+                                     training=self.training, ratio_update=1, random_agent=random_agent)
 
         # Collision with obstacles (walls, obstacles in path)
         self.t2GCollisionCount = 0
@@ -247,9 +247,6 @@ class AgentHomingSimple(Agent):
             self.facingGoal = True
         elif (0.5 <= orientation < 1.0) or (-1.0 <= orientation < -0.5):
             self.facingGoal = False
-
-        # Distance travelled by agent at each timestep
-        self.delta_dist = self.speed * (1. / TARGET_FPS)
 
     def draw(self):
 
@@ -318,17 +315,18 @@ class AgentHomingSimple(Agent):
             self.body.angularVelocity = -self.rotation_speed
         elif action == Action.KEEP_ORIENTATION:  # Don't turn
             pass
-        elif action == Action.STOP:  # Stop moving
-            move = False
-            speed = 0.
-        elif action == Action.STOP_TURN_LEFT:  # Stop and turn left
-            move = False
-            speed = 0.
-            self.body.angularVelocity = self.rotation_speed
-        elif action == Action.STOP_TURN_RIGHT:  # Stop and turn right
-            move = False
-            speed = 0.
-            self.body.angularVelocity = -self.rotation_speed
+
+        # elif action == Action.STOP:  # Stop moving
+        #     move = False
+        #     speed = 0.
+        # elif action == Action.STOP_TURN_LEFT:  # Stop and turn left
+        #     move = False
+        #     speed = 0.
+        #     self.body.angularVelocity = self.rotation_speed
+        # elif action == Action.STOP_TURN_RIGHT:  # Stop and turn right
+        #     move = False
+        #     speed = 0.
+        #     self.body.angularVelocity = -self.rotation_speed
 
         if move:
             forward_vec = self.body.GetWorldVector((0, 1))

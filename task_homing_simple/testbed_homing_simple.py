@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
+    from AgentHomingPerfect import AgentHomingPerfect
     import res.colors as Color
     from Border import Border
     from Circle import StaticCircle
@@ -40,6 +41,7 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     from .AgentHomingSimple import AgentHomingSimple
+    from .AgentHomingPerfect import AgentHomingPerfect
     from ..Border import Border
     from ..Circle import StaticCircle
     from ..res import colors as Color
@@ -82,7 +84,6 @@ class TestbedHomingSimple(object):
         self.training = sim_param.training == 'True'
         self.collision_avoidance = sim_param.collision_avoidance == 'True'
         self.save_brain = sim_param.save_brain == 'True'
-        self.save_learning_score = sim_param.save_learning_score == 'True'
         self.load_model = sim_param.load_model == 'True'
         self.load_full_weights = sim_param.load_full_weights == 'True'
         self.load_h1_weights = sim_param.load_h1_weights == 'True'
@@ -99,6 +100,7 @@ class TestbedHomingSimple(object):
         self.load_memory = int(sim_param.load_memory)
         self.record_ls = sim_param.record_ls == 'True'
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
+        self.random_agent = sim_param.random_agent == 'True'
 
         # Record simulation
         self.simulation_dir = simulation_dir + "sim_logs/"
@@ -115,6 +117,9 @@ class TestbedHomingSimple(object):
 
         # Brain directory
         self.brain_dir = simulation_dir + "brain_files/" + str(simulation_id) + "/"
+
+        # Learning score directory
+        self.ls_dir = simulation_dir + "ls_files/" + str(simulation_id) + "/"
 
         # -------------------- Pygame Setup ----------------------
 
@@ -163,7 +168,9 @@ class TestbedHomingSimple(object):
             angle = -angle  # start by looking at goal1
             a = AgentHomingSimple(screen=self.screen, world=self.world, x=start_pos.x, y=start_pos.y, angle=angle,
                                   radius=1.5, id=j, numAgents=self.numAgents, training=self.training,
-                                  collision_avoidance=self.collision_avoidance)
+                                  collision_avoidance=self.collision_avoidance, random_agent=self.random_agent)
+            # a = AgentHomingPerfect(screen=self.screen, world=self.world, x=start_pos.x, y=start_pos.y, angle=angle,
+            #                       radius=1.5, id=j, numAgents=self.numAgents)
             self.agents.append(a)
 
         self.file_to_load = file_to_load  # can be default ""
@@ -210,6 +217,8 @@ class TestbedHomingSimple(object):
             self.agents[0].stop_collect_experiences()
 
         debug_homing_simple.xprint(msg='simulation_id: {}, Setup complete, Start simulation'.format(self.simulation_id))
+
+        # self.best_ls = -1
 
     def draw(self):
         """
@@ -365,6 +374,11 @@ class TestbedHomingSimple(object):
             self.running = False
             return
 
+        # # Find the highest learning score
+        # ls = self.agents[0].learning_score()
+        # if self.best_ls < ls:
+        #     self.best_ls = ls
+
         # Reached max number of timesteps
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
 
@@ -391,8 +405,12 @@ class TestbedHomingSimple(object):
             # Wait to reach specified learning score
             if self.wait_learning_score_and_save_model != -1:
                 if self.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
+                    printColor(msg="Agent: {:3.0f}, ".format(self.agents[0].id) +
+                                   "{:>25s}".format("Reached {} learning score".format(self.agents[0].learning_score())) +
+                                   ", tmstp: {:10.0f}".format(Global.timestep) +
+                                   ", t: {}".format(Global.get_time()))
                     self.running = False
-                    self.agents[0].save_model(dir=self.brain_dir)
+                    self.agents[0].save_brain(dir=self.brain_dir)
                 else:
                     self.running = True
 
@@ -488,9 +506,10 @@ class TestbedHomingSimple(object):
         del self.world
         # gc.collect()
 
-        # debug_homing_simple.xprint(msg='simulation_id: {}, Deleted and Freed memory'.format(self.simulation_id))
-        # if self.record_ls:
-        #     self.plot_learning_scores(save=False)
+        if self.record_ls:
+            self.plot_learning_scores(save=True)
+
+        # print("highest ls", self.best_ls)
 
     def plot_learning_scores(self, save=False):
         plt.plot(self.learning_scores)
@@ -501,30 +520,30 @@ class TestbedHomingSimple(object):
         plt.show(block=False)
 
         if save:
-            # timestring = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
-            directory = "./learning_scores/"
-            # ls_file = directory + timestring + "_ls.csv"  # learning scores file
-            ls_fig = directory + "fig_ls.png"  # learning scores figure image
+            timestring = global_homing_simple.timestr #time.strftime("%Y_%m_%d_%H%M%S")
+            #directory = "./learning_scores/"
+            ls_file = self.ls_dir + timestring + "_ls.csv"  # learning scores file
+            ls_fig = self.ls_dir + timestring + "_ls.png"  # learning scores figure image
 
-            if not os.path.exists(os.path.dirname(directory)):
+            if not os.path.exists(os.path.dirname(self.ls_dir)):
                 try:
-                    os.makedirs(os.path.dirname(directory))
+                    os.makedirs(os.path.dirname(self.ls_dir))
                 except OSError as exc:  # Guard against race condition
                     if exc.errno != errno.EEXIST:
                         raise
 
             plt.savefig(ls_fig)
 
-            # header = ("timestep", "learning_scores")
-            #
-            # timesteps = np.arange(1, len(self.learning_scores) + 1)
-            # ls_over_tmstp = zip(timesteps, self.learning_scores)
-            #
-            # with open(ls_file, 'w') as f:
-            #     writer = csv.writer(f)
-            #     writer.writerow(header)
-            #     writer.writerows(ls_over_tmstp)
-            # pass
+            header = ("timestep", "learning_scores")
+
+            timesteps = np.arange(1, len(self.learning_scores) + 1)
+            ls_over_tmstp = zip(timesteps, self.learning_scores)
+
+            with open(ls_file, 'w') as f:
+                writer = csv.writer(f)
+                writer.writerow(header)
+                writer.writerows(ls_over_tmstp)
+            pass
 
 
 if __name__ == '__main__':
@@ -552,7 +571,6 @@ if __name__ == '__main__':
     parser.add_argument('--load_h1_weights',
                         help='load hidden layer 1 weights of neural networks from master to learning agent',
                         default='False')
-    parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
     parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
@@ -573,6 +591,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_network_freq_training_it',
                         help='save neural networks model every defined training iterations', default='-1')
     parser.add_argument('--record_ls', help='record learning score of agent', default='False')
+    parser.add_argument('--random_agent', help='agent is taking random action', default='False')
     args = parser.parse_args()
 
     multi_simulation = int(args.multi_simulation)
@@ -597,6 +616,9 @@ if __name__ == '__main__':
 
     if args.exploration == 'False':
         suffix += "_noexplore"
+
+    if args.random_agent == 'True':
+        suffix += "_random"
 
     # General purpose suffix
     if args.suffix != '' and args.suffix != "":

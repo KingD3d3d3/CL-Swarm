@@ -35,10 +35,26 @@ except:
 
 def plot_learning_scores(y, save=False):
     fig, ax = plt.subplots(figsize=(8, 6))
+
+
+    n = len(y)
+
+    # # Normalize y
+    # max_reward = 0.1
+    # y_normed = [e / max_reward for e in y]
+    # # Normalize x
+    # step=1
+    # x = range(1, n + step, step)
+    # x_normed = [e / n for e in x]
+    # ax.plot(x_normed, y_normed)
+    # ax.set_xlim(0, 1)
+    # ax.set_ylim(0, 1)
+    # area = np.trapz(y_normed, x_normed)
+
     ax.plot(y)
-    max = len(y)
-    ax.set_xlim(0, max)
+    ax.set_xlim(0, n)
     ax.set_ylim(0, 0.1)
+
     ax.set_xlabel('Timesteps')
     ax.set_ylabel('Average Learning Score')
     ax.set_title('Agent\'s Learning Score over Training Iterations')

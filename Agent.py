@@ -41,7 +41,7 @@ prev_turned_angle = 0
 
 
 class Agent(object):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, training=True):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, training=True, random_agent=False):
         self.screen = screen
         self.world = world
 
@@ -54,7 +54,7 @@ class Agent(object):
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
 
-        self.speed = 9.5 # 12
+        self.speed = 10 # 12
         self.rotation_speed = 10  # # 10.5 rad/s
 
         self.updateCalls = 0
@@ -63,6 +63,10 @@ class Agent(object):
 
         # Training flag
         self.training = training
+
+        # Distance travelled by agent at each timestep
+        self.delta_dist = self.speed * (1. / TARGET_FPS)
+
 
     def getLateralVelocity(self):
         currentRightNormal = self.body.GetWorldVector(vec2(1, 0))
@@ -92,7 +96,6 @@ class Agent(object):
         self.body.linearVelocity = forward_vec * speed
 
     def update(self):
-        # raise NotImplementedError("Update method not implemented")
         self.updateCalls += 1
 
     def updateManualDriveTestAngle(self, angle):
@@ -105,13 +108,9 @@ class Agent(object):
         if go_print_Turn:
             myAngle = Util.radToDeg(self.body.angle % (2 * pi))
             turned_angle = myAngle - prev_angle
-            # print('bodyAngle rad: {}, prev_angle rad: {}, angle turned : {}'.format(self.body.angle,
-            #                                                                 prev_angle,
-            #                                                                 Util.radToDeg(turned_angle % (2 * pi))))
             print('bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
                                                                             prev_angle,
                                                                             turned_angle))
-            # if turned_angle != 0 and prev_angle != 999:
             go_print_Turn = False
 
         myAngle = Util.radToDeg(self.body.angle % (2 * pi))
@@ -308,25 +307,6 @@ class Agent(object):
 
         self.brain.load_memory(memory_file, size)
 
-        # memory_list = []
-        # data = pd.read_csv(memory_file)
-        #
-        # remove_bracket = lambda x: x.replace('[', '').replace(']', '')
-        # string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
-        #
-        # data['state'] = data['state'].map(remove_bracket).map(string_to_array)
-        # data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
-        #
-        # for i, row in data.iterrows():
-        #     exp = (row['state'], row['action'], row['reward'], row['next_state'])
-        #     memory_list.append(exp)
-        #
-        # printColor(msg="Agent: {:3.0f}, ".format(self.id) +
-        #                "{:>25s}".format("Load full memory") +
-        #                ", file: {}".format(memory_file) +
-        #                ", tmstp: {:10.0f}".format(Global.timestep) +
-        #                ", t: {}".format(Global.get_time()))
-
     def stop_training(self):
         """
             Stop training the brain (Neural Network)
@@ -352,10 +332,3 @@ class Agent(object):
             Return the agent's number of training iterations
         """
         return self.brain.training_iteration
-
-    #
-    # def is_training(self):
-    #     """
-    #         Retur True if agent is currently training, else False
-    #     """
-    #     return self.brain.is_training
