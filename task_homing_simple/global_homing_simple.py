@@ -4,32 +4,50 @@ import errno
 import time
 
 try:
-    import Global
     import Util
+    import Global
 except:
-    from .. import Global
     from .. import Util
+    from .. import Global
 
-#timestep = 1  # 0 # timesteps passed since beginning of simulation
-timer = 0.00  # times passed since beginning of simulation
-debug = True  # debug mode flag, if debug mode then print event's message in console
+# Global fixed
 record = False  # record flag, if yes record simulation's events in file
-header_write = False # Write header of record file only once at the beginning of each simulation
-fo = None  # file object to open file for recording
-writer = None  # writer object to record events
-event_count = 0
-timestr = Util.getTimeString()
+debug = True  # debug mode flag, if debug mode then print event's message in console
+
+# Changed directly
 simulation_id = 1
 
-def fileCreate(dir, suffix):
+# Variables that will be reset
+timer = 0.00  # times passed since beginning of simulation
+simlogs_fo = None  # file object to open file for recording
+header_write = False # Write header of record file only once at the beginning of each simulation
+simlogs_writer = None  # writer object to record events
+event_count = 0
+timestr = Util.getTimeString()
+
+def reset_simulation_global():
+    global timer
+    global header_write
+    global simlogs_fo
+    global simlogs_writer
+    global event_count
+    global timestr
+
+    Global.timestep = 0  # timesteps passed since beginning of simulation
+    timer = 0.00  # times passed since beginning of simulation
+    header_write = False # Write header of record file only once at the beginning of each simulation
+    simlogs_fo = None  # file object to open file for recording
+    simlogs_writer = None  # writer object to record events
+    event_count = 0
+    timestr = Util.getTimeString()
+
+def fileCreate(dir, suffix="", extension=".csv"):
     """
         Create record csv file
         Also create the directory if it doesn't exist
     """
-    global timestr
-
     timestr = Util.getTimeString()
-    filename = dir + suffix + timestr + ".csv"
+    filename = dir + suffix + '_' + timestr + extension
 
     if not os.path.exists(os.path.dirname(filename)):
         try:
@@ -39,25 +57,3 @@ def fileCreate(dir, suffix):
                 raise
 
     return filename
-
-def reset_simulation_global():
-    #global timestep
-    global timer
-    global debug
-    global record
-    global header_write
-    global fo
-    global writer
-    global event_count
-    global timestr
-
-    Global.timestep = 1  # 0 # timesteps passed since beginning of simulation
-    timer = 0.00  # times passed since beginning of simulation
-    debug = True  # debug mode flag, if debug mode then print event's message in console
-    record = False  # record flag, if yes record simulation's events in file
-    header_write = False # Write header of record file only once at the beginning of each simulation
-    fo = None  # file object to open file for recording
-    writer = None  # writer object to record events
-    event_count = 0
-    timestr = Util.getTimeString()
-    simulation_id = 1

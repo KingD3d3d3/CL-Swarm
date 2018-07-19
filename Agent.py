@@ -41,7 +41,7 @@ prev_turned_angle = 0
 
 
 class Agent(object):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2, training=True, random_agent=False):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2):
         self.screen = screen
         self.world = world
 
@@ -54,19 +54,17 @@ class Agent(object):
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
 
-        self.speed = 10 # 12
-        self.rotation_speed = 10  # # 10.5 rad/s
-
-        self.updateCalls = 0
+        self.speed = 10 # m/s
+        self.rotation_speed = 2.0 * np.pi # rad/s
 
         self.brain = None
-
-        # Training flag
-        self.training = training
 
         # Distance travelled by agent at each timestep
         self.delta_dist = self.speed * (1. / TARGET_FPS)
 
+        # Initial training and random_agent flag
+        self.training = True
+        self.random_agent = False
 
     def getLateralVelocity(self):
         currentRightNormal = self.body.GetWorldVector(vec2(1, 0))
@@ -96,7 +94,14 @@ class Agent(object):
         self.body.linearVelocity = forward_vec * speed
 
     def update(self):
-        self.updateCalls += 1
+
+        # Consistency: Both agent's and brain should have the same flag value
+        if self.random_agent != self.brain.random_agent:
+            print('random_agent FLAG wasnt the same')
+            self.go_random_agent()
+        if self.training != self.brain.training:
+            print('training FLAG wasnt the same')
+            self.stop_training()
 
     def updateManualDriveTestAngle(self, angle):
         speed = self.speed
@@ -331,4 +336,11 @@ class Agent(object):
         """
             Return the agent's number of training iterations
         """
-        return self.brain.training_iteration
+        return self.brain.training_iterations
+
+    def go_random_agent(self):
+        """
+            Agent takes random action
+        """
+        self.random_agent = True
+        self.brain.go_random_agent()

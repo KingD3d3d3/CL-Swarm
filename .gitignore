@@ -72,6 +72,8 @@ homing_task/simulation_logs/
 
 # Learning scores
 */learning_scores/
+*/learning_scores_*/
+*/ls_files/
 
 # Jupyter notebooks
 *.ipynb_checkpoints

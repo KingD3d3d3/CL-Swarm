@@ -70,7 +70,7 @@ def plot_learning_scores(y, save=False):
     plt.show(block=False)
 
     if save:
-        directory = "./learning_scores/"
+        directory = "./learning_scores_hyperparam/"
 
         timestring = global_homing_simple.timestr
         ls_fig = directory + timestring + "_ls.png"  # learning scores figure image
@@ -110,14 +110,12 @@ if __name__ == '__main__':
     parser.add_argument('--load_h1_weights',
                         help='load hidden layer 1 weights of neural networks from master to learning agent',
                         default='False')
-    parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
     parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
     parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
     parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
     parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='False')
     parser.add_argument('--wait_learning_score_and_save_model',
                         help='wait agent to reach specified learning score before to close application', default='-1')
-    parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
     parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)',
                         default='True')
     parser.add_argument('--collect_experiences', help='append a new experience to memory at each timestep',
@@ -131,15 +129,16 @@ if __name__ == '__main__':
     parser.add_argument('--save_network_freq_training_it',
                         help='save neural networks model every defined training iterations', default='-1')
     parser.add_argument('--record_ls', help='record learning score of agent', default='False')
+    parser.add_argument('--random_agent', help='agent is taking random action', default='False')
 
-    # -------------------- Run NN special Parameters ----------------------
+    # -------------------- Others Parameters ----------------------
     parser.add_argument('--dir_name', help='directory name', default="")
     args = parser.parse_args()
 
     args.render = 'False'
     args.collision_avoidance = 'False'
-    args.handle_events = 'False'
-    args.record_ls = 'True'
+    args.record_ls = 'True' # need true to get ls of agent at each tmstp
+    args.max_timesteps = '20000'
 
     # ----------------------------------------------------------------------
 

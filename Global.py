@@ -11,4 +11,4 @@ def get_time():
     formated = "%dh %02dm %02ds" % (h, m, s)
     return formated
 
-timestep = 1  # 0 # timesteps passed since beginning of simulation
+timestep = 0  # timesteps passed since beginning of simulation

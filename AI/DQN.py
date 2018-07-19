@@ -7,6 +7,7 @@ from keras.models import load_model, clone_model
 import csv
 import pandas as pd
 import sklearn.utils
+from keras.optimizers import Adam
 try:
     from res.print_colors import *
     import Global
@@ -14,7 +15,6 @@ except:
     from ..res.print_colors import *
     from .. import Global
 
-import time
 # -------------------- MODEL -------------------------
 
 class Model(object):
@@ -72,6 +72,25 @@ class Model(object):
         self.target_network.layers[0].set_weights(weights_h1)
         self.target_network.layers[1].set_weights(weights_h2)
 
+    def shuffle_weights(self):
+        """
+            Randomly permute the weights in `model`, or the given `weights`.
+            This is a fast approximation of re-initializing the weights of a model.
+            Assumes weights are distributed independently of the dimensions of the weight tensors
+            (i.e., the weights have the same distribution along each dimension).
+            Credit: https://gist.github.com/jkleint/eb6dc49c861a1c21b612b568dd188668
+        """
+        # Get weights
+        q_weights = self.q_network.get_weights()
+        t_weights = self.target_network.get_weights()
+
+        # Randomize
+        q_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in q_weights]
+        t_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in t_weights]
+
+        # Apply to networks
+        self.q_network.set_weights(q_weights)
+        self.target_network.set_weights(t_weights)
 
 # -------------------- MEMORY --------------------------
 
@@ -126,9 +145,10 @@ INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
 EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value
 
+EPSILON_STEPS = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
 
 class DQN(object):
-    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, training=True, ratio_update=1, random_agent=False):
+    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, ratio_update=1, training=True, random_agent=False):
 
         # Agent's ID
         self.id = id
@@ -138,12 +158,8 @@ class DQN(object):
         self.mem_capacity = MEMORY_CAPACITY
         self.gamma = GAMMA
         self.lr = LEARNING_RATE
-        # if self.training:
-        #     self.epsilon = INITIAL_EPSILON
-        # else:
-        #     self.epsilon = FINAL_EPSILON
+
         self.epsilon = INITIAL_EPSILON
-        self.epsilon_step = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
 
         # Input - Output
         self.inputCnt = inputCnt
@@ -175,32 +191,26 @@ class DQN(object):
         self.model.predict(self.zeros_state, target=True)
         self.model.train(self.zeros_x, self.zeros_y)
 
-        # Count the number of iterations
-        self.steps = 0
+        # Count the number of training iterations
+        self.training_iterations = 0
 
         # Number of iterations for learning update
         self.ratio_update = ratio_update  # Default 1 means the agent learns every timestep
         self.update_counter = 0
 
-        # Training flag
-        self.training = training
-        if not self.training:
-            self.stop_training()
         self.printTimeToLearn = False
         self.printStopExploration = False
-        self.collect_experiences = True # record new experience every timestep
 
-        self.training_iteration = 0
+        # Record new experience every timestep
+        self.collect_experiences = True
 
-        # Random action
-        self.random_agent = random_agent
-        if random_agent:
-            printColor(color=PRINT_CYAN,
-                       msg="Agent: {:3.0f}, ".format(self.id) +
-                           "{:>25s}".format("Random agent") +
-                           ", tmstp: {:10.0f}".format(Global.timestep) +
-                           ", t: {}".format(Global.get_time()))
+        self.training = True # init flag
+        if not training:
             self.stop_training()
+
+        self.random_agent = False  # init flag
+        if random_agent:
+            self.go_random_agent()
 
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
@@ -222,18 +232,17 @@ class DQN(object):
         # Training each update
         if self.training and len(self.memory.samples) >= 100 and self.update_counter % self.ratio_update == 0:
             self.replay()
+            self.update_epsilon()
             self.reward_window.append(reward)
 
         self.last_action = action
         self.last_state = new_state
         self.last_reward = reward
 
-        self.steps += 1
-
         self.update_counter += 1
 
         # Update target network
-        if self.steps % UPDATE_TARGET_TIMESTEP == 0:
+        if self.training and self.training_iterations != 0 and self.training_iterations % UPDATE_TARGET_TIMESTEP == 0:
             self.model.updateTargetNetwork()
 
         return action
@@ -243,8 +252,8 @@ class DQN(object):
 
         # Random agent
         if self.random_agent:
-            random = np.random.randint(0, self.actionCnt)
-            return random
+            random_action = np.random.randint(0, self.actionCnt)
+            return random_action
 
         # Epsilon greedy
         if np.random.rand() < self.epsilon:
@@ -273,6 +282,7 @@ class DQN(object):
                        msg="Agent: {:3.0f}, ".format(self.id) +
                            "{:>25s}".format("time to learn") +
                            ", tmstp: {:10.0f}".format(Global.timestep) +
+                           ", training_it: {:10.0f}".format(self.training_iterations) +
                            ", t: {}".format(Global.get_time()))
             self.printTimeToLearn = True
 
@@ -286,28 +296,9 @@ class DQN(object):
         batch_next_state = np.array(batch_next_state).squeeze(axis=1)
         q_values_t = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
 
-        # batch_action = np.array(batch_action)
         batch_reward = np.array(batch_reward)
 
-        # X = np.zeros((self.batch_size, self.inputCnt))
-        Y = np.zeros((self.batch_size, self.actionCnt))
-
-        # time_start = time.clock()
-        # for i in xrange(self.batch_size):
-        #     s = batch_state[i]
-        #     a = batch_action[i]
-        #     r = batch_reward[i]
-        #
-        #     target = r + self.gamma * np.amax(q_values_t[i])
-        #     labels[i][a] = target
-        #
-        #     X[i] = s
-        #     Y[i] = labels[i]
-        # time_elapsed = (time.clock() - time_start)
-        # print('time_elapsed', time_elapsed)
-
         # Optimization code - Matrix form
-        # time_start = time.clock()
         X = batch_state
         target = batch_reward + self.gamma * np.amax(q_values_t, axis=1)
         for i in xrange(self.batch_size):
@@ -315,13 +306,19 @@ class DQN(object):
             labels[i][a] = target[i]
         Y = labels
 
-        # time_elapsed = (time.clock() - time_start)
-        # print('time_elapsed', time_elapsed)
-
         self.model.train(X, Y, batch_len=self.batch_size)
 
+        # Increment training iterations counter
+        self.training_iterations += 1
+
+    def update_epsilon(self):
+
+        # If not training then return
+        if not self.training:
+            return
+
         if self.epsilon > FINAL_EPSILON:
-            self.epsilon -= self.epsilon_step
+            self.epsilon -= EPSILON_STEPS
 
             # Reached final epsilon
             if self.epsilon <= FINAL_EPSILON:
@@ -330,10 +327,10 @@ class DQN(object):
                                msg="Agent: {:3.0f}, ".format(self.id) +
                                    "{:>25s}".format("finished exploration") +
                                    ", tmstp: {:10.0f}".format(Global.timestep) +
+                                   ", training_it: {:10.0f}".format(self.training_iterations) +
                                    ", t: {}".format(Global.get_time()))
                     self.printStopExploration = True
 
-        self.training_iteration += 1
 
     def preprocess(self, state):
         # Input shape in Keras : (batch_size, input_dim)
@@ -358,6 +355,7 @@ class DQN(object):
                    msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Stop training, Stop exploring") +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def stop_exploring(self):
@@ -370,8 +368,21 @@ class DQN(object):
                    msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Stop exploring") +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
+    def go_random_agent(self):
+        # Random action
+        self.random_agent = True
+        if self.random_agent:
+            printColor(color=PRINT_CYAN,
+                       msg="Agent: {:3.0f}, ".format(self.id) +
+                           "{:>25s}".format("Random agent") +
+                           ", tmstp: {:10.0f}".format(Global.timestep) +
+                           ", training_it: {:10.0f}".format(self.training_iterations) +
+                           ", t: {}".format(Global.get_time()))
+            if self.training:
+                self.stop_training()
 
     def stop_collect_experiences(self):
         """
@@ -383,6 +394,7 @@ class DQN(object):
                    msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Stop collecting experiences") +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def save_model(self, model_file):
@@ -396,6 +408,7 @@ class DQN(object):
                        "{:>25s}".format("Save Agent's model") +
                        ", file: {}".format(model_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def save_memory(self, memory_file):
@@ -414,6 +427,7 @@ class DQN(object):
                        "{:>25s}".format("Save Agent's memory") +
                        ", file: {}".format(memory_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def load_model(self, model_file):
@@ -429,6 +443,7 @@ class DQN(object):
                        "{:>25s}".format("Load full model") +
                        ", file: {}".format(model_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def load_full_weights(self, model_file):
@@ -444,6 +459,7 @@ class DQN(object):
                        "{:>25s}".format("Load model full weights") +
                        ", file: {}".format(model_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def load_h1_weights(self, model_file):
@@ -466,6 +482,7 @@ class DQN(object):
                        "{:>25s}".format("Load 1st hidden layer weights") +
                        ", file: {}".format(model_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def load_h1h2_weights(self, model_file):
@@ -489,6 +506,7 @@ class DQN(object):
                        "{:>25s}".format("Load 1st and 2nd hidden layer weights") +
                        ", file: {}".format(model_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
     def load_memory(self, memory_file, size=MEMORY_CAPACITY):
@@ -528,4 +546,5 @@ class DQN(object):
                        "{:>25s}".format("Load memory: {} exp".format(size)) +
                        ", file: {}".format(memory_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))

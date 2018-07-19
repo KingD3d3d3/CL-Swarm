@@ -4,7 +4,7 @@ import sys
 try:
     # Running in PyCharm
     import global_homing_simple
-    from res.print_colors import printColor
+    from res.print_colors import *
     import Util
     import Global
 except:
@@ -15,20 +15,15 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     import global_homing_simple
-    from ..res.print_colors import printColor
+    from ..res.print_colors import *
     from .. import Util
     from .. import Global
 
-# header_write = False
 header = ("agent",
           "event",
           "timestep",
           "goal_reached",
           "timestep_to_goal",
-          "collisions_to_goal",
-          "collisions",
-          "agent_collisions_to_goal",
-          "agent_collisions",
           "learning_score"
           )
 
@@ -40,10 +35,6 @@ def printEvent(agent=None, event_message=""):
         tmstp           : timestep passed (since beginning of simulation)
         GR              : goal reached count
         tmstp2G         : timestep to goal
-        Col2G           : collision count between 1 goal to another
-        Col             : total collision count
-        AgentCol2G      : agent collision count between 1 goal to another
-        AgentCol        : total agent collision count
         LS              : learning score of the agent (average of rewards in sliding window)
         t       : time passed (since beginning of simulation)
     """
@@ -55,8 +46,6 @@ def printEvent(agent=None, event_message=""):
            ", tmstp: {:10.0f}, "
            "GR: {:5.0f}, "
            "tmstp2G : {:8.0f}, "
-           "Col2G: {:5.0f}, Col: {:5.0f}, "
-           "AgentCol2G: {:5.0f}, AgentCol: {:5.0f}, "
            "LS: {:3.4f}, "
            "event_count: {:5.0f}, "
            "t: {}"
@@ -64,8 +53,6 @@ def printEvent(agent=None, event_message=""):
                Global.timestep,
                agent.goalReachedCount,
                agent.elapsedTimestep,
-               agent.t2GCollisionCount, agent.collisionCount,
-               agent.t2GAgentCollisionCount, agent.agentCollisionCount,
                agent.learning_score(),
                global_homing_simple.event_count,
                Global.get_time()
@@ -77,10 +64,6 @@ def printEvent(agent=None, event_message=""):
                Global.timestep,
                agent.goalReachedCount,
                agent.elapsedTimestep,
-               agent.t2GCollisionCount,
-               agent.collisionCount,
-               agent.t2GAgentCollisionCount,
-               agent.agentCollisionCount,
                agent.learning_score()
                )
 
@@ -91,10 +74,10 @@ def printEvent(agent=None, event_message=""):
         if not global_homing_simple.header_write:
             if len(header) != len(msg_csv):
                 sys.exit("Header doesn't match csv data")
-            global_homing_simple.writer.writerow(header)
+            global_homing_simple.simlogs_writer.writerow(header)
             global_homing_simple.header_write = True
 
-        global_homing_simple.writer.writerow(msg_csv)
+        global_homing_simple.simlogs_writer.writerow(msg_csv)
 
     # Don't print in non-debug mode
     if global_homing_simple.debug:
@@ -103,7 +86,7 @@ def printEvent(agent=None, event_message=""):
     return
 
 
-def xprint(msg=""):
-    printColor(msg="{: <37s}".format(msg) +
-                   ", tmstp: {:10.0f}, t: {}".format(Global.timestep, Global.get_time()) +
-                   ", world_t: {}".format(Util.getTimeString2()))
+def xprint(color=PRINT_BLUE, msg=""):
+    printColor(color=color, msg="{: <37s}".format(msg) +
+                                ", tmstp: {:10.0f}, t: {}".format(Global.timestep, Global.get_time()) +
+                                ", world_t: {}".format(Util.getTimeString2()))
