@@ -1,11 +1,9 @@
 from __future__ import division
 import glob
 import os
-import sys
+import pandas as pd
 import csv
 import pygame
-import argparse
-import time
 import re
 try:
     # Running in PyCharm
@@ -15,6 +13,7 @@ try:
     from testbed_homing_simple import TestbedHomingSimple
     import global_homing_simple
     import Util
+    from simulation_parameters import *
 except:
     # Running in command line
     import logging
@@ -27,78 +26,19 @@ except:
     from ..res import print_colors as PrintColor
     from .. import Global
     import global_homing_simple
+    from .simulation_parameters import *
     from .. import Util
 
 if __name__ == '__main__':
 
-    pygame.init()
+    # Import simulation parameters
+    sim_param = args
 
-    # -------------------- Simulation Parameters ----------------------
-
-    parser = argparse.ArgumentParser(description='Testbed Parameters Sharing')
-    parser.add_argument('--render', help='render the simulation', default='True')
-    parser.add_argument('--print_fps', help='print fps', default='False')
-    parser.add_argument('--debug', help='print simulation log', default='True')
-    parser.add_argument('--record', help='record simulation log in file', default='False')
-    parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='False')
-    parser.add_argument('--training', help='train agent', default='True')
-    parser.add_argument('--collision_avoidance', help='agent learns collision avoidance behavior', default='True')
-    parser.add_argument('--save_brain', help='save neural networks model and memory', default='False')
-    parser.add_argument('--load_model',
-                        help='load model to agent', default='False')
-    parser.add_argument('--load_full_weights',
-                        help='load full weights of neural networks from master to learning agent', default='False')
-    parser.add_argument('--load_h1h2_weights',
-                        help='load hidden layer 1 and 2 weights of neural networks from master to learning agent',
-                        default='False')
-    parser.add_argument('--load_h1_weights',
-                        help='load hidden layer 1 weights of neural networks from master to learning agent',
-                        default='False')
-    parser.add_argument('--save_learning_score', help='save learning scores and plot of agent', default='False')
-    parser.add_argument('--max_timesteps', help='maximum number of timesteps for 1 simulation', default='-1')
-    parser.add_argument('--multi_simulation', help='multiple simulation at the same time', default='1')
-    parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
-    parser.add_argument('--wait_one_more_goal', help='wait one last goal before to close application', default='False')
-    parser.add_argument('--wait_learning_score_and_save_model',
-                        help='wait agent to reach specified learning score before to close application', default='-1')
-    parser.add_argument('--handle_events', help='listen to keyboard events', default='True')
-    parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)',
-                        default='True')
-    parser.add_argument('--collect_experiences', help='append a new experience to memory at each timestep',
-                        default='True')
-    parser.add_argument('--save_memory_freq', help='save memory every defined timesteps', default='-1')
-    parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
-    parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
-    parser.add_argument('--suffix', help='custom suffix to add', default='')
-    parser.add_argument('--max_training_it', help='maximum number of training iterations for 1 simulation',
-                        default='-1')
-    parser.add_argument('--save_network_freq_training_it',
-                        help='save neural networks model every defined training iterations', default='-1')
-    parser.add_argument('--record_ls', help='record learning score of agent', default='False')
-
-    # -------------------- Run NN special Parameters ----------------------
-    parser.add_argument('--dir_name', help='directory name', default="")
-    args = parser.parse_args()
-
-    # --render
-    # False
-    # --training
-    # False
-    # --collision_avoidance
-    # False
-    # --max_timesteps
-    # 5000
-    # --wait_one_more_goal
-    # False
-    # --handle_events
-    # False
-
-    args.render = 'False'
-    args.training = 'False'
-    args.collision_avoidance = 'False'
-    args.max_timesteps = '10000'
-    args.handle_events = 'False'
-    args.load_full_weights = 'True' # we only need to load weights to NN, since we're not training anymore
+    sim_param.debug = 'False'
+    sim_param.render = 'False'
+    sim_param.training = 'False'
+    sim_param.max_timesteps = '10000'
+    sim_param.load_full_weights = 'True' # we only need to load weights to NN, since we're not training anymore
 
     # ----------------------------------------------------------------------
 
@@ -106,15 +46,16 @@ if __name__ == '__main__':
     total_timesteps = 0
 
     # Input directory
-    dir_name = args.dir_name  # "simulation_data/many_folder_nn_test/"
-    #dir_name = dir_name + "brain_files/"
+    dir_name = sim_param.dir_name
     dir_name = os.path.abspath(dir_name) + '/'
     if not os.path.isdir(os.path.dirname(dir_name)):
         sys.exit('Not a directory: {}'.format(dir_name))
 
-
     print('Folders to visit')
     print([x[0] for x in os.walk(dir_name)])
+
+    # Create Testbed
+    testbed = TestbedHomingSimple(sim_param=sim_param)
 
     # Recursively go to each folder of directory
     for x in os.walk(dir_name):
@@ -123,12 +64,11 @@ if __name__ == '__main__':
 
         fo = None  # file object to open file for recording
         writer = None  # writer object to record events
+        filename = ''
 
         if glob.glob(curr_dir + "*.h5"):
             # create csv file
-            #timestr = time.strftime("%Y_%m_%d_%H%M%S")
-            #filename = curr_dir + timestr + '_' + args.max_timesteps + "tmstp" + "_score.csv"
-            filename = curr_dir + args.max_timesteps + "tmstp" + "_score_" + Util.getTimeString() + ".csv"
+            filename = curr_dir + Util.getTimeString() + "_" + args.max_timesteps + "tmstp" + "_score.csv"
             print('csv file: {}'.format(filename))
             fo = open(filename, 'a')
             writer = csv.writer(fo)
@@ -141,19 +81,18 @@ if __name__ == '__main__':
             print("Reading NN file: {}".format(f))
             sys.stdout.write(PrintColor.PRINT_RESET)
 
-            simulation = TestbedHomingSimple(SCREEN_WIDTH, SCREEN_HEIGHT, TARGET_FPS, PPM,
-                                             PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS,
-                                             simulation_id=1, simulation_dir="", file_to_load=f, sim_param=args)
-            simulation.run()
-            simulation.end()
-            total_timesteps += Global.timestep
-            global_homing_simple.reset_simulation_global()
+            testbed.setup_simulation(file_to_load=f)
+            testbed.run_simulation()
+            testbed.end_simulation()
+
+            total_timesteps += Global.timestep # Increment total timesteps
+            global_homing_simple.reset_simulation_global() # Reset global variables
 
             # f gives the whole path, let's save only the filename
             nn_file = os.path.basename(f)
             # nn_file = re.sub(r'.*_(?P<time>\d+)tmstp_.*', r'\g<time>', nn_file)
             nn_file = re.sub(r'.*_(?P<time>\d+)it_.*', r'\g<time>', nn_file)
-            msg_csv = (nn_file, str(simulation.goal_reached_count))
+            msg_csv = (nn_file, str(testbed.goal_reached_count))
 
             # Append score to csv file
             writer.writerow(msg_csv)
@@ -162,6 +101,13 @@ if __name__ == '__main__':
         # Close file properly
         if fo:
             fo.close()
+
+        # Order the file
+        if filename:
+            data = pd.read_csv(filename, header=None)
+            data_sorted = data.sort_values(by=0, axis=0) # sort by first column of the Dataframe
+            data_sorted.to_csv(filename, index=False, header=False) # write sorted data to the same result csv file
+
 
     # Save whole simulation summary in file (completion time, number of simulation, etc)
     timestr = time.strftime("%Y%m%d_%H%M%S")

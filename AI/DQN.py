@@ -215,6 +215,26 @@ class DQN(object):
     def build_model(self):
         raise NotImplementedError("Build model method not implemented")
 
+    def reset_brain(self):
+
+        # Reinstantiate Memory
+        self.memory = Memory(MEMORY_CAPACITY)
+
+        # Shuffle NN
+        self.model.shuffle_weights()
+
+        # Recompile model
+        optimizer = Adam(lr=self.lr)
+        self.model.q_network.compile(loss='mse', optimizer=optimizer)
+        self.model.target_network.compile(loss='mse', optimizer=optimizer)
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("reset brain") +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
+                       ", t: {}".format(Global.get_time()))
+
     def update(self, reward, observation):
         """
             Main function of the agent's brain

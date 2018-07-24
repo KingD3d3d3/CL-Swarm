@@ -1,32 +1,15 @@
 from __future__ import division
 
-import random
-import argparse
 import pygame
-# Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
-from Box2D.b2 import (world, vec2)
 from pygame.locals import *
-# import matplotlib.pyplot as plt
-import time
 import os
 import errno
 import csv
 import numpy as np
-import sys
-import datetime
-import gc
 import matplotlib.pyplot as plt
 try:
     # Running in PyCharm
-    from AgentHomingSimple import AgentHomingSimple
-    from AgentHomingPerfect import AgentHomingPerfect
-    import res.colors as Color
-    from Border import Border
-    from Circle import StaticCircle
-    from Box import StaticBox
-    from MyContactListener import MyContactListener
     from Setup import *
-    from Util import worldToPixels, pixelsToWorld
     import Util
     import debug_homing_simple
     from res.print_colors import *
@@ -42,14 +25,7 @@ except:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from .AgentHomingSimple import AgentHomingSimple
-    from .AgentHomingPerfect import AgentHomingPerfect
-    from ..Border import Border
-    from ..Circle import StaticCircle
-    from ..res import colors as Color
-    from .MyContactListener import MyContactListener
     from ..Setup import *
-    from ..Util import worldToPixels, pixelsToWorld
     from .. import Util
     import debug_homing_simple
     from ..res.print_colors import *
@@ -59,7 +35,7 @@ except:
     from .simulation_parameters import *
     from .. import Global
 
-class Testbed(object):
+class TestbedHomingSimple(object):
 
     def __init__(self, sim_param=None, sim_dir="./simulation_data/default/", sim_suffix=""):
 
@@ -69,6 +45,8 @@ class Testbed(object):
         self.can_handle_events = sim_param.render == 'True'  # Can handle events only when render is True
         global_homing_simple.debug = sim_param.debug == 'True'
         global_homing_simple.record = sim_param.record == 'True'
+        if global_homing_simple.record:
+            debug_homing_simple.xprint(color=PRINT_GREEN, msg="Recording to directory: {}".format(sim_dir))
         self.fixed_ur_timestep = sim_param.fixed_ur_timestep == 'True'
 
         self.training = sim_param.training == 'True'
@@ -105,8 +83,14 @@ class Testbed(object):
         self.brain_dir = ""
         self.ls_dir = ""
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
+        self.goal_reached_count = 0
 
-    def setup_simulation(self, sim_id):
+        self.best_ls = 0
+
+    def setup_simulation(self, sim_id=1, file_to_load=""):
+
+        if file_to_load != "":
+            self.file_to_load = file_to_load
 
         # Set ID of simulation
         global_homing_simple.simulation_id = sim_id
@@ -116,11 +100,12 @@ class Testbed(object):
         self.running = True
         self.pause = False
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
+        self.goal_reached_count = 0
 
         # Record simulation
         self.simlogs_dir = self.simulation_dir + "sim_logs/"
         if global_homing_simple.record:
-            debug_homing_simple.xprint(msg="Start recording")
+            debug_homing_simple.xprint(msg="sim_id: {}, Start recording".format(sim_id))
             filename = global_homing_simple.fileCreate(dir=self.simlogs_dir,
                                        suffix=self.simfile_suffix + '_sim' + str(global_homing_simple.simulation_id) + '_' + self.suffix,
                                        extension=".csv")
@@ -288,23 +273,38 @@ class Testbed(object):
         """
             Simulation logic
         """
+        # Total number of goal reached
+        count = 0
+        for j in xrange(self.environment.numAgents):
+            count += self.environment.agents[j].goalReachedCount
+        self.goal_reached_count = count
+
+
+        # Find the highest learning score
+        ls = self.environment.agents[0].learning_score()
+        if self.best_ls < ls:
+            self.best_ls = ls
+
         # Keep track of learning scores over time
         if self.record_ls:
             ls = self.environment.agents[0].learning_score()  # learning score of agent 0
             self.learning_scores.append(ls)  # appending the learning score
 
         # Save neural networks model frequently
-        if self.save_network_freq != -1:
+        if global_homing_simple.record and self.save_network_freq != -1:
             if Global.timestep != 0 and Global.timestep % self.save_network_freq == 0:
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=self.suffix)
 
         # Save memory frequently
-        if self.save_memory_freq != -1:
+        if global_homing_simple.record and self.save_memory_freq != -1:
             if Global.timestep != 0 and Global.timestep % self.save_memory_freq == 0:
                 self.environment.agents[0].save_memory(dir=self.brain_dir, suffix=self.suffix)
 
+                if self.wait_learning_score_and_save_model != -1:
+                    print("highest ls", testbed.best_ls)
+
         # Save neural networks model frequently based on training iterations
-        if self.save_network_freq_training_it != -1:
+        if global_homing_simple.record and self.save_network_freq_training_it != -1:
             training_it = self.environment.agents[0].training_iterations()
             if training_it != 0 and training_it % self.save_network_freq_training_it == 0:
                 it = str(training_it) + 'it_'
@@ -312,30 +312,37 @@ class Testbed(object):
 
         # Reached max number of training timesteps
         if self.max_training_it != -1 and self.environment.agents[0].training_iterations() >= self.max_training_it:
+
             printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                            "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
                            ", tmstp: {:10.0f}".format(Global.timestep) +
                            ", t: {}".format(Global.get_time()))
             self.running = False
-            return
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
 
             self.running = False
 
-            # Wait to reach specified learning score
-            if self.wait_learning_score_and_save_model != -1:
-                if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
-                    printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
-                                   "{:>25s}".format("Reached {} learning score".format(self.environment.agents[0].learning_score())) +
-                                   ", tmstp: {:10.0f}".format(Global.timestep) +
-                                   ", t: {}".format(Global.get_time()))
-                    self.running = False
-                    self.environment.agents[0].save_brain(dir=self.brain_dir)
-                else:
-                    self.running = True
+            self.wait_reach_ls_and_save()
 
+    def wait_reach_ls_and_save(self):
+        # Wait to reach specified learning score
+        if self.wait_learning_score_and_save_model != -1:
+            if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
+                printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+                               "{:>25s}".format(
+                                   "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
+                               ", tmstp: {:10.0f}".format(Global.timestep) +
+                               ", t: {}".format(Global.get_time()))
+                self.running = False
+                self.environment.agents[0].save_brain(dir=self.brain_dir)
+
+            else:
+                self.running = True
+
+                if Global.timestep != 0 and Global.timestep % 150000 == 0:
+                    self.environment.agents[0].reset_brain()
 
     def end_simulation(self):
         """
@@ -400,7 +407,7 @@ if __name__ == '__main__':
     # -------------------- Simulation ----------------------
 
     # Create Testbed
-    testbed = Testbed(sim_param=simulation_parameters, sim_dir=simulation_directory, sim_suffix=simulation_suffix)
+    testbed = TestbedHomingSimple(sim_param=simulation_parameters, sim_dir=simulation_directory, sim_suffix=simulation_suffix)
 
     multi_simulation = int(simulation_parameters.multi_simulation)
     for i in xrange(multi_simulation):
@@ -411,15 +418,19 @@ if __name__ == '__main__':
         testbed.run_simulation()
         testbed.end_simulation()
 
-        # Increment total timesteps
-        total_timesteps += Global.timestep
+        # print("At simID: {}, highest ls: {}".format(simID, testbed.best_ls))
 
-        # Reset global variables
-        global_homing_simple.reset_simulation_global()
+        total_timesteps += Global.timestep # Increment total timesteps
+        global_homing_simple.reset_simulation_global() # Reset global variables
 
-    print("All simulation finished")
+    print("All simulation finished\n" 
+          "Number of simulations: {}\n"
+          "Total simulations time: {}\n"
+          "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
 
-    if args.record == 'True':
+    # print("highest ls", testbed.best_ls)
+
+    if simulation_parameters.record == 'True':
         # Save whole simulation summary in file (completion time, number of simulation, etc)
         timestr = time.strftime("%Y%m%d_%H%M%S")
         file = open(simulation_directory + "summary_" + timestr + ".txt", "w")

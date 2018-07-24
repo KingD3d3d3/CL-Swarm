@@ -46,8 +46,8 @@ def fileCreate(dir, suffix="", extension=".csv"):
         Create record csv file
         Also create the directory if it doesn't exist
     """
-    timestr = Util.getTimeString()
-    filename = dir + suffix + '_' + timestr + extension
+    time_str = Util.getTimeString()
+    filename = dir + suffix + '_' + time_str + extension
 
     if not os.path.exists(os.path.dirname(filename)):
         try:

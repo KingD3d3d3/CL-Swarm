@@ -19,12 +19,10 @@ import matplotlib.pyplot as plt
 try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
-    from AgentHomingPerfect import AgentHomingPerfect
     import res.colors as Color
     from Border import Border
     from Circle import StaticCircle
     from Box import StaticBox
-    from MyContactListener import MyContactListener
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
@@ -41,11 +39,9 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     from .AgentHomingSimple import AgentHomingSimple
-    from .AgentHomingPerfect import AgentHomingPerfect
     from ..Border import Border
     from ..Circle import StaticCircle
     from ..res import colors as Color
-    from .MyContactListener import MyContactListener
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld
     from .. import Util

@@ -25,9 +25,6 @@ except:
     import global_homing_simple
     from .. import Global
 
-EPSILON_TIMESTEP = 10  # 30
-
-
 # Event when there is a collision
 class MyContactListener(contactListener):
 
@@ -35,14 +32,10 @@ class MyContactListener(contactListener):
         contactListener.__init__(self)
 
     def BeginContact(self, contact):
-
-        bodyA = contact.fixtureA.body
-        bodyB = contact.fixtureB.body
+        pass
 
     def EndContact(self, contact):
-        bodyA = contact.fixtureA.body
-        bodyB = contact.fixtureB.body
-
+        pass
 
     def PreSolve(self, contact, oldManifold):
         pass

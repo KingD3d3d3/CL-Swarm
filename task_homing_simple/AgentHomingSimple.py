@@ -28,7 +28,6 @@ try:
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
-    from task_homing_simple.RayCastCallback import RayCastCallback
     import res.print_colors as PrintColor
     import debug_homing_simple
     import global_homing_simple
@@ -46,7 +45,6 @@ except:
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld
     from .. import Util
-    from .RayCastCallback import RayCastCallback
     from ..res import print_colors as PrintColor
     import debug_homing_simple
     import global_homing_simple
@@ -120,7 +118,7 @@ class AgentHomingSimple(Agent):
         # Goal
         self.currentGoalIndex = 0
         self.goals = goals
-        self.goalReachedThreshold = 2.5  # If agent-to-goal distance is less than this value then agent reached the goal
+        self.goalReachedThreshold = 2.4  # If agent-to-goal distance is less than this value then agent reached the goal
         self.num_goals = len(self.goals) # number of goals
 
         # Event features

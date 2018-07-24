@@ -44,6 +44,7 @@ def printEvent(agent=None, event_message=""):
            "Agent: {:3.0f}, ".format(agent.id) +
            "{:>25s}".format(event_message) +  # 28
            ", tmstp: {:10.0f}, "
+           "training_it: {:10.0f}, "
            "GR: {:5.0f}, "
            "tmstp2G : {:8.0f}, "
            "LS: {:3.4f}, "
@@ -51,6 +52,7 @@ def printEvent(agent=None, event_message=""):
            "t: {}"
            .format(
                Global.timestep,
+               agent.training_iterations(),
                agent.goalReachedCount,
                agent.elapsedTimestep,
                agent.learning_score(),

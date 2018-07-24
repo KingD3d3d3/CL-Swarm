@@ -45,6 +45,8 @@ parser.add_argument('--suffix', help='custom suffix to add', default='')
 
 parser.add_argument('--record_ls', help='record learning score of agent', default='False')
 
+parser.add_argument('--dir_name', help='directory name to load NN files (to run in parallel universe)', default="")
+
 # Parameter object
 args = parser.parse_args()
 

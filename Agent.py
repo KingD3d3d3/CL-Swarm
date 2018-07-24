@@ -344,3 +344,6 @@ class Agent(object):
         """
         self.random_agent = True
         self.brain.go_random_agent()
+
+    def reset_brain(self):
+        self.brain.reset_brain()
