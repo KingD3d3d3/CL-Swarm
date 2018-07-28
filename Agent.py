@@ -251,6 +251,7 @@ class Agent(object):
             Load Agent's model config from file
             Everything : NN architecture, optimizer, weights, ...
         """
+        self.random_agent = False
         if file != "":
             model_file = file
         else:
@@ -264,6 +265,7 @@ class Agent(object):
         """
             Load Agent's weights from file
         """
+        self.random_agent = False
         if file != "":
             model_file = file
         else:
@@ -277,6 +279,7 @@ class Agent(object):
         """
             Load Agent's 1st hidden layer weights from file
         """
+        self.random_agent = False
         if file != "":
             model_file = file
         else:
@@ -290,6 +293,7 @@ class Agent(object):
         """
             Load Agent's 1st and 2nd hidden layer weights from file
         """
+        self.random_agent = False
         if file != "":
             model_file = file
         else:
@@ -303,6 +307,9 @@ class Agent(object):
         """
             Load memory from file
         """
+
+        self.random_agent = False
+
         if file != "":
             memory_file = file
         else:

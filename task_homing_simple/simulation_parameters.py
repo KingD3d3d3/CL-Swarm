@@ -38,6 +38,8 @@ parser.add_argument('--save_network_freq', help='save neural networks model ever
 parser.add_argument('--save_network_freq_training_it',
                     help='save neural networks model every defined training iterations', default='-1')
 parser.add_argument('--save_memory_freq', help='save memory every defined timesteps', default='-1')
+parser.add_argument('--start_save_nn_from_it', help='start saving neural networks model from defined training iterations', default='0')
+
 
 parser.add_argument('--wait_learning_score_and_save_model',
                     help='wait agent to reach specified learning score before to close application', default='-1')

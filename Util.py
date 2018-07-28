@@ -133,3 +133,11 @@ def distance(v1, v2):
     distance = np.sqrt((v1.x - v2.x) ** 2 +
                        (v1.y - v2.y) ** 2)
     return distance
+
+
+def IQM(x):
+    x = sorted(x)
+    quart = int(len(x) / 4)
+    x = x[quart:len(x) - quart]
+
+    return np.mean(x)

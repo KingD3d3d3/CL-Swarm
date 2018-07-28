@@ -68,9 +68,9 @@ class Model(object):
             Set lower layers weights of Q-Network and Target-Network
         """
         self.q_network.layers[0].set_weights(weights_h1)
-        self.q_network.layers[1].set_weights(weights_h2)
+        self.q_network.layers[2].set_weights(weights_h2)
         self.target_network.layers[0].set_weights(weights_h1)
-        self.target_network.layers[1].set_weights(weights_h2)
+        self.target_network.layers[2].set_weights(weights_h2)
 
     def shuffle_weights(self):
         """
@@ -457,6 +457,7 @@ class DQN(object):
         """
         self.model.q_network = load_model(model_file)
         self.model.target_network_network = load_model(model_file)
+        self.random_agent = False
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
@@ -466,6 +467,8 @@ class DQN(object):
                        ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
+        printColor(color=PRINT_RED, msg="Load model not working anymore !!??")
+
     def load_full_weights(self, model_file):
         """
             Load weights from file and set Q-Network, Target-Network
@@ -473,6 +476,7 @@ class DQN(object):
         """
         self.model.q_network.load_weights(model_file)
         self.model.target_network.load_weights(model_file)
+        self.random_agent = False
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
@@ -487,6 +491,8 @@ class DQN(object):
             Load lower layers' weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
+        self.random_agent = False
+
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
@@ -510,16 +516,17 @@ class DQN(object):
             Load lower layers' weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
+        self.random_agent = False
+
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
+        # ('model_copy layers', [<keras.layers.core.Dense object at 0x1163e36d0>, <keras.layers.core.Activation object at 0x1163e3790>, <keras.layers.core.Dense object at 0x1163e37d0>, <keras.layers.core.Activation object at 0x1163e38d0>, <keras.layers.core.Dense object at 0x1163e3910>])
+        # h2 weights are located in layers[2] of layers list
 
         weights_h1 = model_copy.layers[0].get_weights()
-        weights_h2 = model_copy.layers[1].get_weights()
+        weights_h2 = model_copy.layers[2].get_weights()
 
         self.model.set_h1h2_weights(weights_h1, weights_h2)
-
-        # if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
-        #     sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
@@ -534,6 +541,8 @@ class DQN(object):
             Load memory from file
             Default size = -1 means load full memory from the file
         """
+        self.random_agent = False
+
         experiences = []
         data = pd.read_csv(memory_file)
 

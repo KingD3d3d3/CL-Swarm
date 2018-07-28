@@ -67,6 +67,7 @@ class TestbedHomingSimple(object):
         self.save_network_freq = int(sim_param.save_network_freq)
         self.save_network_freq_training_it = int(sim_param.save_network_freq_training_it)
         self.save_memory_freq = int(sim_param.save_memory_freq)
+        self.start_save_nn_from_it = int(sim_param.start_save_nn_from_it)
 
         self.wait_learning_score_and_save_model = float(sim_param.wait_learning_score_and_save_model)
         self.record_ls = sim_param.record_ls == 'True'
@@ -208,25 +209,25 @@ class TestbedHomingSimple(object):
                 self.environment.agents[0].save_brain(dir=self.brain_dir, suffix=self.suffix)
             if event.type == KEYDOWN and event.key == K_b:
                 """
-                    B: Load model
+                    B: Load model and Stop training
                 """
                 self.environment.agents[0].load_model(self.file_to_load)
                 self.environment.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_l:
                 """
-                    L: Load full weights
+                    L: Load full weights and Stop training
                 """
                 self.environment.agents[0].load_full_weights(self.file_to_load)
                 self.environment.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_w:
                 """
-                    W: Load h1 weights
+                    W: Load h1 weights and Stop training
                 """
                 self.environment.agents[0].load_h1_weights(self.file_to_load)
                 self.environment.agents[0].stop_training()
             if event.type == KEYDOWN and event.key == K_z:
                 """
-                    Z: Load h1 h2 weights
+                    Z: Load h1 h2 weights and Stop training
                 """
                 self.environment.agents[0].load_h1h2_weights(self.file_to_load)
                 self.environment.agents[0].stop_training()
@@ -306,7 +307,7 @@ class TestbedHomingSimple(object):
         # Save neural networks model frequently based on training iterations
         if global_homing_simple.record and self.save_network_freq_training_it != -1:
             training_it = self.environment.agents[0].training_iterations()
-            if training_it != 0 and training_it % self.save_network_freq_training_it == 0:
+            if training_it != 0 and training_it >= self.start_save_nn_from_it and training_it % self.save_network_freq_training_it == 0:
                 it = str(training_it) + 'it_'
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
 
