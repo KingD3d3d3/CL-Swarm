@@ -130,12 +130,14 @@ def getTimeString2():
     return now.strftime("%Hh%Mm%Ss %Y/%m/%d")
 
 def distance(v1, v2):
-    distance = np.sqrt((v1.x - v2.x) ** 2 +
-                       (v1.y - v2.y) ** 2)
-    return distance
+    d = np.sqrt((v1.x - v2.x) ** 2 +
+                (v1.y - v2.y) ** 2)
+    return d
 
-
-def IQM(x):
+def interquartile_mean(x):
+    """
+        Return the Interquartile Mean of given collections x
+    """
     x = sorted(x)
     quart = int(len(x) / 4)
     x = x[quart:len(x) - quart]
