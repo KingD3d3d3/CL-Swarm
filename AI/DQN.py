@@ -318,7 +318,7 @@ class DQN(object):
 
         batch_reward = np.array(batch_reward)
 
-        # Optimization code - Matrix form
+        # Optimization -> Matrix form
         X = batch_state
         target = batch_reward + self.gamma * np.amax(q_values_t, axis=1)
         for i in xrange(self.batch_size):
@@ -563,11 +563,20 @@ class DQN(object):
             """
                 Load specified number of experiences
             """
+            # Random number on list
+            # shuffled_data = sklearn.utils.shuffle(data)
+            # for i, row in shuffled_data[0:size].iterrows():
+            #     exp = (row['state'], row['action'], row['reward'], row['next_state'])
+            #     experiences.append(exp)
+
+
             shuffled_data = sklearn.utils.shuffle(data)
-            #shuffled_data = shuffled_data[0:size]
             for i, row in shuffled_data[0:size].iterrows():
                 exp = (row['state'], row['action'], row['reward'], row['next_state'])
                 experiences.append(exp)
+
+
+
         self.memory.receive(experiences)
 
         printColor(color=PRINT_CYAN,

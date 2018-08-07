@@ -135,6 +135,9 @@ class EnvironmentHomingSimple(object):
         # Boundary
         self.border.draw()
 
+        # Show FPS
+        Util.PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+
         # Flip the screen
         pygame.display.flip()
 
@@ -162,34 +165,6 @@ class EnvironmentHomingSimple(object):
                     Faster machine e.g. render at 120fps -> step the physics one every 2 frames
                     Slower machine e.g. render at 30fps -> run the physics twice
                 """
-                while self.accumulator >= PHYSICS_TIME_STEP:
-
-                    # Physic step
-                    self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
-                    self.world.ClearForces()
-
-                    self.accumulator -= PHYSICS_TIME_STEP
-
-            # Frame dependent
-            else:
-                # Physic step
-                self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
-                self.world.ClearForces()
-
-        # No rendering
-        elif not self.render:
-            self.deltaTime = self.clock.tick() / 1000.0
-            self.fps = self.clock.get_fps()
-
-            # Frame dependent
-            if self.deltaTime <= TARGET_FPS:  # Frame is faster than target (60fps) -> simulation run faster
-
-                # Physic step
-                self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
-                self.world.ClearForces()
-
-            # Fixed your timestep
-            elif self.fixed_ur_timestep:
                 self.accumulator += self.deltaTime
 
                 while self.accumulator >= PHYSICS_TIME_STEP:
@@ -199,3 +174,27 @@ class EnvironmentHomingSimple(object):
                     self.world.ClearForces()
 
                     self.accumulator -= PHYSICS_TIME_STEP
+
+                return
+
+            # Frame dependent
+            else:
+                # Physic step
+                self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+                self.world.ClearForces()
+
+                return
+
+        # No rendering
+        elif not self.render:
+            self.deltaTime = self.clock.tick() / 1000.0
+            # self.fps = self.clock.get_fps()
+
+            # Frame dependent
+            # if self.deltaTime <= TARGET_FPS:  # Frame is faster than target (60fps) -> simulation run faster
+
+            # Physic step
+            self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
+            self.world.ClearForces()
+
+            return
