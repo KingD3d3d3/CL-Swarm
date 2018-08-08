@@ -53,6 +53,7 @@ fabric.properties
 
 # Excel files
 *.xlsx
+*.xls
 
 # Images files
 *.png

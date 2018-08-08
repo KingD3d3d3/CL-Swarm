@@ -8,9 +8,8 @@ try:
     from Circle import StaticCircle
     from AgentHoming import AgentHoming
     from Border import Wall
-    import debug_homing
-    import global_homing
-    import Global
+    import homing_global
+    import homing_debug
 except:
     # Running in command line
     import logging
@@ -21,9 +20,8 @@ except:
     from ..Circle import StaticCircle
     from .AgentHoming import AgentHoming
     from ..Border import Wall
-    import debug_homing
-    import global_homing
-    from .. import Global
+    import homing_global
+    import homing_debug
 
 EPSILON_TIMESTEP = 10  # 30
 
@@ -52,6 +50,9 @@ class MyContactListener(contactListener):
 
         objectA = bodyA.userData
         objectB = bodyB.userData
+
+        nameA = objectA.__class__.__name__
+        nameB = objectB.__class__.__name__
 
         self.checkAgentObstacleEndCollision(objectA, objectB)
         self.checkAgentWallEndCollision(objectA, objectB)
@@ -83,9 +84,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-
-            debug_homing.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
-
+            homing_debug.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
             return
 
         if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHoming):
@@ -100,8 +99,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            debug_homing.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
-
+            homing_debug.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
             return
 
     @classmethod
@@ -110,10 +108,10 @@ class MyContactListener(contactListener):
             Check if time between successive collision between the same agent and same obstacles was too short
         """
         if agent.lastObstacleCollide == obstacle:  # same objects colliding
-            agent.elapsedTimestepObstacleCollision = Global.timestep - agent.startTimestepObstacleCollision
+            agent.elapsedTimestepObstacleCollision = homing_global.timestep - agent.startTimestepObstacleCollision
 
             if agent.elapsedTimestepObstacleCollision <= EPSILON_TIMESTEP:  # Check elapsed timestep
-                agent.startTimestepObstacleCollision = Global.timestep  # update based on elapsed time
+                agent.startTimestepObstacleCollision = homing_global.timestep  # update based on elapsed time
 
                 # Keep colors
                 agent.collisionColor()
@@ -133,7 +131,8 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            agent.startTimestepObstacleCollision = Global.timestep  # Start counting
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
+            agent.startTimestepObstacleCollision = homing_global.timestep  # Start counting
             return
 
         if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHoming):
@@ -142,7 +141,8 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            agent.startTimestepObstacleCollision = Global.timestep  # Start counting
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("StaticCircle", obstacle.id))
+            agent.startTimestepObstacleCollision = homing_global.timestep  # Start counting
             return
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -163,8 +163,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            debug_homing.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
-
+            homing_debug.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
@@ -176,8 +175,7 @@ class MyContactListener(contactListener):
 
             agent.collisionColor()
 
-            debug_homing.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
-
+            homing_debug.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
             return
 
     @classmethod
@@ -187,14 +185,18 @@ class MyContactListener(contactListener):
         """
         if isinstance(objectA, AgentHoming) and isinstance(objectB, Wall):
             agent = objectA
+            obstacle = objectB
 
             agent.endCollisionColor()
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
             agent = objectB
+            obstacle = objectA
 
             agent.endCollisionColor()
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
             return
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -222,8 +224,8 @@ class MyContactListener(contactListener):
             agentB.agentCollisionCount += 1
             agentB.collisionColor()
 
-            debug_homing.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
-            debug_homing.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
+            homing_debug.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
+            homing_debug.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
 
             return
 
@@ -235,14 +237,14 @@ class MyContactListener(contactListener):
         idA = agentA.id
         idB = agentB.id
 
-        agentA.elapsedTimestepAgentCollision[idB] = Global.timestep - agentA.startTimestepAgentCollision[idB]
-        agentB.elapsedTimestepAgentCollision[idA] = Global.timestep - agentB.startTimestepAgentCollision[idA]
+        agentA.elapsedTimestepAgentCollision[idB] = homing_global.timestep - agentA.startTimestepAgentCollision[idB]
+        agentB.elapsedTimestepAgentCollision[idA] = homing_global.timestep - agentB.startTimestepAgentCollision[idA]
 
         if agentA.elapsedTimestepAgentCollision[idB] <= EPSILON_TIMESTEP \
                 and agentB.elapsedTimestepAgentCollision[idA] <= EPSILON_TIMESTEP:  # Check elapsed timestep
 
-            agentA.startTimestepAgentCollision[idB] = Global.timestep  # update based on elapsed time
-            agentB.startTimestepAgentCollision[idA] = Global.timestep  # update based on elapsed time
+            agentA.startTimestepAgentCollision[idB] = homing_global.timestep  # update based on elapsed time
+            agentB.startTimestepAgentCollision[idA] = homing_global.timestep  # update based on elapsed time
 
             # Keep colors
             agentA.collisionColor()
@@ -266,8 +268,9 @@ class MyContactListener(contactListener):
 
             agentA.endCollisionColor()
             agentB.endCollisionColor()
+            # homing_debug.printEvent(agent, "end collision {}: {}".format("Wall", obstacle.id))
 
-            agentA.startTimestepAgentCollision[idB] = Global.timestep  # Start counting
-            agentB.startTimestepAgentCollision[idA] = Global.timestep  # Start counting
+            agentA.startTimestepAgentCollision[idB] = homing_global.timestep  # Start counting
+            agentB.startTimestepAgentCollision[idA] = homing_global.timestep  # Start counting
             return
     # ------------------------------------------------------------------------------------------------------------------
