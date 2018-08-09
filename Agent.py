@@ -41,7 +41,7 @@ prev_turned_angle = 0
 
 
 class Agent(object):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=2):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5):
         self.screen = screen
         self.world = world
 
