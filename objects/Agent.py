@@ -30,7 +30,7 @@ except:
     from ..res import colors as Color
     from ..Setup import *
     from ..Util import worldToPixels
-    import Util
+    from .. import Util
     import Global
     from ..res.print_colors import printColor
 
