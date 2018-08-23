@@ -31,7 +31,7 @@ except:
     from ..Setup import *
     from ..Util import worldToPixels
     from .. import Util
-    import Global
+    from .. import Global
     from ..res.print_colors import printColor
 
 moveTicker = 0
