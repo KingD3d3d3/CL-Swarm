@@ -17,9 +17,9 @@ except:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from .Util import worldToPixels
-    from .Setup import *
-    from .res import colors as Color
+    from ..Util import worldToPixels
+    from ..Setup import *
+    from ..res import colors as Color
 
 class Box(object):
     def __init__(self, screen=None, world=None, x=0, y=0, width=1, height=1, angle=0):

@@ -1,3 +1,4 @@
+from __future__ import division
 import argparse
 import time
 import sys
@@ -31,6 +32,18 @@ parser.add_argument('--load_h1h2_weights',
 parser.add_argument('--load_h1_weights',
                     help='load hidden layer 1 weights of neural networks from master to learning agent',
                     default='False')
+
+parser.add_argument('--load_h2_weights',
+                    help='load h2 weights of neural networks from master to learning agent',
+                    default='False')
+parser.add_argument('--load_out_weights',
+                    help='load output weights of neural networks from master to learning agent',
+                    default='False')
+parser.add_argument('--load_h2out_weights',
+                    help='load h2 output weights of neural networks from master to learning agent',
+                    default='False')
+
+
 parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
 parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
 
@@ -67,6 +80,12 @@ def simulation_suffix(sim_param):
         suffix = "loadh1"
     elif sim_param.load_model == 'True':
         suffix = "loadmodel"
+    elif sim_param.load_h2_weights == 'True':
+        suffix = "loadh2"
+    elif sim_param.load_out_weights == 'True':
+        suffix = "loadout"
+    elif sim_param.load_h2out_weights == 'True':
+        suffix = "loadh2out"
 
     # Load memory
     if sim_param.load_memory != '-1':

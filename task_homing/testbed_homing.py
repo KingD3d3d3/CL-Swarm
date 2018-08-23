@@ -80,7 +80,7 @@ class TestbedHomingSimple(object):
         self.pause = False
         self.simulation_dir = sim_dir
         self.simlogs_dir = ""
-        self.simfile_suffix = "homing_simple"
+        self.simfile_suffix = "homing"
         self.brain_dir = ""
         self.ls_dir = ""
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
@@ -285,6 +285,7 @@ class TestbedHomingSimple(object):
         ls = self.environment.agents[0].learning_score()
         if self.best_ls < ls:
             self.best_ls = ls
+            # print('best_ls', self.best_ls)
 
         # Keep track of learning scores over time
         if self.record_ls:
@@ -419,7 +420,7 @@ if __name__ == '__main__':
         testbed.run_simulation()
         testbed.end_simulation()
 
-        # print("At simID: {}, highest ls: {}".format(simID, testbed.best_ls))
+        print("At simID: {}, highest ls: {}".format(simID, testbed.best_ls))
 
         total_timesteps += Global.timestep # Increment total timesteps
         global_homing.reset_simulation_global() # Reset global variables
@@ -429,7 +430,7 @@ if __name__ == '__main__':
           "Total simulations time: {}\n"
           "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
 
-    # print("highest ls", testbed.best_ls)
+    print("highest ls", testbed.best_ls)
 
     if simulation_parameters.record == 'True':
         # Save whole simulation summary in file (completion time, number of simulation, etc)

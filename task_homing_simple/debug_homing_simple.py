@@ -28,7 +28,7 @@ header = ("agent",
           )
 
 
-def printEvent(agent=None, event_message=""):
+def printEvent(color="", agent=None, event_message=""):
     """
         Agent           : agent ID
         Event           : event's message
@@ -39,6 +39,10 @@ def printEvent(agent=None, event_message=""):
         t       : time passed (since beginning of simulation)
     """
     global_homing_simple.event_count += 1  # increment the event counter
+
+    # Don't print in non-debug mode
+    if not global_homing_simple.debug:
+        return
 
     msg = ("SimID: {:3.0f}, ".format(global_homing_simple.simulation_id) +
            "Agent: {:3.0f}, ".format(agent.id) +
@@ -81,9 +85,11 @@ def printEvent(agent=None, event_message=""):
 
         global_homing_simple.simlogs_writer.writerow(msg_csv)
 
-    # Don't print in non-debug mode
+    # Print in debug mode
     if global_homing_simple.debug:
+        sys.stdout.write(color)
         print(msg)
+        sys.stdout.write(PRINT_RESET)
 
     return
 

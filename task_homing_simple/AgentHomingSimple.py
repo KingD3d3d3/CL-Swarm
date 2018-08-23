@@ -24,7 +24,7 @@ try:
     import res.colors as Color
     # from ..res import colors as Color
     from AI.DQN import DQN
-    from Agent import Agent
+    from objects.Agent import Agent
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
@@ -41,7 +41,7 @@ except:
     logger.info('Running from command line -> Import libraries as package')
     from ..res import colors as Color
     from ..AI.DQN import DQN
-    from ..Agent import Agent
+    from ..objects.Agent import Agent
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld
     from .. import Util
@@ -242,9 +242,8 @@ class AgentHomingSimple(Agent):
         self.elapsedTimestep = Global.timestep - self.startTimestep
 
         # Goal reached event
-        sys.stdout.write(PrintColor.PRINT_RED)
-        debug_homing_simple.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
-        sys.stdout.write(PrintColor.PRINT_RESET)
+        debug_homing_simple.printEvent(color=PrintColor.PRINT_RED, agent=self,
+                                       event_message="reached goal: {}".format(self.currentGoalIndex + 1))
 
         # Reset, Update
         self.startTime = global_homing_simple.timer

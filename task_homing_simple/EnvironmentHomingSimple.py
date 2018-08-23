@@ -20,9 +20,9 @@ try:
     # Running in PyCharm
     from AgentHomingSimple import AgentHomingSimple
     import res.colors as Color
-    from Border import Border
-    from Circle import StaticCircle
-    from Box import StaticBox
+    from objects.Border import Border
+    from objects.Circle import StaticCircle
+    from objects.Box import StaticBox
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
@@ -39,8 +39,8 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     from .AgentHomingSimple import AgentHomingSimple
-    from ..Border import Border
-    from ..Circle import StaticCircle
+    from ..objects.Border import Border
+    from ..objects.Circle import StaticCircle
     from ..res import colors as Color
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld

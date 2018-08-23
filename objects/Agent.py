@@ -27,12 +27,12 @@ except:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from .res import colors as Color
-    from .Setup import *
-    from .Util import worldToPixels
+    from ..res import colors as Color
+    from ..Setup import *
+    from ..Util import worldToPixels
     import Util
     import Global
-    from .res.print_colors import printColor
+    from ..res.print_colors import printColor
 
 moveTicker = 0
 prev_angle = 999
@@ -289,6 +289,34 @@ class Agent(object):
 
         self.brain.load_h1_weights(model_file)
 
+    def load_h2_weights(self, file=""):
+        """
+            Load Agent's 2nd hidden layer weights from file
+        """
+        self.random_agent = False
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_h2_weights(model_file)
+
+    def load_out_weights(self, file=""):
+        """
+            Load Agent's output layer weights from file
+        """
+        self.random_agent = False
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_out_weights(model_file)
+
     def load_h1h2_weights(self, file):
         """
             Load Agent's 1st and 2nd hidden layer weights from file
@@ -302,6 +330,20 @@ class Agent(object):
             model_file = directory + "brain" + "_model.h5"  # neural network model file
 
         self.brain.load_h1h2_weights(model_file)
+
+    def load_h2out_weights(self, file):
+        """
+            Load Agent's 2nd hidden layer and output layer weights from file
+        """
+        self.random_agent = False
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_h2out_weights(model_file)
 
     def load_memory(self, file="", size=-1):
         """

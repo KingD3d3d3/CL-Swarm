@@ -140,10 +140,6 @@ class SimulationHoming(object):
                     print("stop recording")
                     homing_global.record = False
                     homing_global.fo.close()
-            if event.type == KEYDOWN and event.key == K_g:
-                print("GET weights")
-                q_weights, t_weights = self.agents[0].brain.model.get_lower_layers_weights()
-                print('q_weights', q_weights)
             if event.type == KEYDOWN and event.key == K_h:
                 print("PUT weights")
                 print('agents[0].brain.model before', self.agents[0].brain.model.q_network.layers[0].get_weights())

@@ -22,7 +22,7 @@ try:
     import res.colors as Color
     # from ..res import colors as Color
     from AI.DQN import DQN
-    from Agent import Agent
+    from objects.Agent import Agent
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
@@ -40,7 +40,7 @@ except:
     logger.info('Running from command line -> Import libraries as package')
     from ..res import colors as Color
     from ..AI.DQN import DQN
-    from ..Agent import Agent
+    from ..objects.Agent import Agent
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld
     from .. import Util
@@ -442,10 +442,6 @@ class AgentHoming(Agent):
         # Agent's Reward
         self.last_reward = self.rewardFunction()
 
-        # Process agent's distance to goal
-        if self.distance < self.last_distance:  # getting closer
-            self.last_reward = Reward.GETTING_CLOSER
-
         # Reached Goal
         if self.distance < self.goalReachedThreshold:
             self.computeGoalReached()
@@ -455,8 +451,10 @@ class AgentHoming(Agent):
         self.elapsedTimestep = Global.timestep - self.startTimestep
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.body.angle
-
-
+        #
+        # print('  #####  ')
+        # print('last_signal', last_signal)
+        # print('last_reward', self.last_reward)
 
     def collisionColor(self):
         """

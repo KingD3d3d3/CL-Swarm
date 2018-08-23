@@ -21,9 +21,9 @@ try:
     # Running in PyCharm
     from AgentHoming import AgentHoming
     import res.colors as Color
-    from Border import Border
-    from Circle import StaticCircle
-    from Box import StaticBox
+    from objects.Border import Border
+    from objects.Circle import StaticCircle
+    from objects.Box import StaticBox
     from Setup import *
     from MyContactListener import MyContactListener
     from Util import worldToPixels, pixelsToWorld
@@ -41,8 +41,8 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     from .AgentHoming import AgentHoming
-    from ..Border import Border
-    from ..Circle import StaticCircle
+    from ..objects.Border import Border
+    from ..objects.Circle import StaticCircle
     from ..res import colors as Color
     from .MyContactListener import MyContactListener
     from ..Setup import *

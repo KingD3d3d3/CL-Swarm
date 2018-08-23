@@ -60,6 +60,11 @@ class TestbedHomingSimple(object):
         self.load_full_weights = sim_param.load_full_weights == 'True'
         self.load_h1h2_weights = sim_param.load_h1h2_weights == 'True'
         self.load_h1_weights = sim_param.load_h1_weights == 'True'
+
+        self.load_h2_weights = sim_param.load_h2_weights == 'True'
+        self.load_out_weights = sim_param.load_out_weights == 'True'
+        self.load_h2out_weights = sim_param.load_h2out_weights == 'True'
+
         self.load_memory = int(sim_param.load_memory)
         self.file_to_load = sim_param.file_to_load
         self.suffix = sim_suffix
@@ -157,6 +162,21 @@ class TestbedHomingSimple(object):
             # Load 1st and 2nd hidden layer weights to agent
             if self.load_h1h2_weights:
                 agent.load_h1h2_weights(self.file_to_load)
+
+            # ----------------------------------------------------
+            # Load h2 weights to agent
+            if self.load_h2_weights:
+                agent.load_h2_weights(self.file_to_load)
+
+            # Load output weights to agent
+            if self.load_out_weights:
+                agent.load_out_weights(self.file_to_load)
+
+            # Load h2 output weights to agent
+            if self.load_h2out_weights:
+                agent.load_h2out_weights(self.file_to_load)
+            # ----------------------------------------------------
+
 
             # Load memory to agent
             if self.load_memory != -1:
@@ -319,6 +339,7 @@ class TestbedHomingSimple(object):
                            ", tmstp: {:10.0f}".format(Global.timestep) +
                            ", t: {}".format(Global.get_time()))
             self.running = False
+            return
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
@@ -429,7 +450,7 @@ if __name__ == '__main__':
           "Total simulations time: {}\n"
           "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
 
-    # print("highest ls", testbed.best_ls)
+    print("highest ls", testbed.best_ls)
 
     if simulation_parameters.record == 'True':
         # Save whole simulation summary in file (completion time, number of simulation, etc)

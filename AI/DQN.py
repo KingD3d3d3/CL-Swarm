@@ -50,27 +50,49 @@ class Model(object):
         """
         self.target_network.set_weights(self.q_network.get_weights())
 
-    def get_lower_layers_weights(self):
+
+    def set_weights(self, weights, layer_num):
         """
-            Get lower layers weights of Q-Network
+            Set 1 layer weights of Q-Network and Target-Network
         """
-        return self.q_network.layers[0].get_weights()
+        self.q_network.layers[layer_num].set_weights(weights)
+        self.target_network.layers[layer_num].set_weights(weights)
 
     def set_h1_weights(self, weights):
         """
-            Set lower layers weights of Q-Network and Target-Network
+            Set h1 weights of Q-Network and Target-Network
         """
-        self.q_network.layers[0].set_weights(weights)
-        self.target_network.layers[0].set_weights(weights)
+        self.set_weights(weights, 0)
+
+    def set_h2_weights(self, weights):
+        """
+            Set h2 weights of Q-Network and Target-Network
+        """
+        self.set_weights(weights, 2)
+
+    def set_out_weights(self, weights):
+        """
+            Set output weights of Q-Network and Target-Network
+        """
+        self.set_weights(weights, 4)
 
     def set_h1h2_weights(self, weights_h1, weights_h2):
         """
-            Set lower layers weights of Q-Network and Target-Network
+            Set h1 h2 weights of Q-Network and Target-Network
         """
         self.q_network.layers[0].set_weights(weights_h1)
         self.q_network.layers[2].set_weights(weights_h2)
         self.target_network.layers[0].set_weights(weights_h1)
         self.target_network.layers[2].set_weights(weights_h2)
+
+    def set_h2out_weights(self, weights_h2, weights_output):
+        """
+            Set h2 output weights of Q-Network and Target-Network
+        """
+        self.q_network.layers[2].set_weights(weights_h2)
+        self.q_network.layers[4].set_weights(weights_output)
+        self.target_network.layers[2].set_weights(weights_h2)
+        self.target_network.layers[4].set_weights(weights_output)
 
     def shuffle_weights(self):
         """
@@ -110,7 +132,7 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
         """
             Get n samples randomly
         """
-        n = min(n, len(self.samples))
+        # n = min(n, len(self.samples))
         return random.sample(self.samples, n)
 
     def receive(self, samples):
@@ -276,7 +298,7 @@ class DQN(object):
             return random_action
 
         # Epsilon greedy
-        if np.random.rand() < self.epsilon:
+        if self.training and np.random.rand() < self.epsilon:
             return np.random.randint(0, self.actionCnt)
 
         action_values = self.model.predict(state)
@@ -474,9 +496,15 @@ class DQN(object):
             Load weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
+        # directory = "./simulation_data/good_for_analysis/NN_weights/loadh2out_30000it_100sim/brain_files/2/"
+        # model_file = directory + "20180814_173555_858127_30099tmstp_30000it_loadh2output_model.h5"  # neural network model file
+
+
         self.model.q_network.load_weights(model_file)
         self.model.target_network.load_weights(model_file)
         self.random_agent = False
+
+        # print('master', self.model.q_network.get_weights())
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
@@ -488,20 +516,23 @@ class DQN(object):
 
     def load_h1_weights(self, model_file):
         """
-            Load lower layers' weights from file and set Q-Network, Target-Network
+            Load first hidden layer weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
         self.random_agent = False
 
+        # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
-        weights = model_copy.layers[0].get_weights()
+        # Hidden layer 1 weights
+        weights_h1 = model_copy.layers[0].get_weights()
 
-        self.model.set_h1_weights(weights)
+        # Set weights
+        self.model.set_h1_weights(weights_h1)
 
-        if np.array_equal(self.model.q_network.layers[0].get_weights(), weights):
-            sys.exit('Error! Q-Network lower layer is not equal to the lower layer weights from file')
+        if np.array_equal(self.model.q_network.layers[0].get_weights(), weights_h1):
+            sys.exit('Error! Q-Network h1 weights is not equal to the h1 weights from file')
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
@@ -511,26 +542,122 @@ class DQN(object):
                        ", training_it: {:10.0f}".format(self.training_iterations) +
                        ", t: {}".format(Global.get_time()))
 
-    def load_h1h2_weights(self, model_file):
+    def load_h2_weights(self, model_file):
         """
-            Load lower layers' weights from file and set Q-Network, Target-Network
+            Load second hidden layer weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
         self.random_agent = False
 
+        # Load master
+        model_copy = clone_model(self.model.q_network)
+        model_copy.load_weights(model_file)
+
+        # Hidden layer 2 weights
+        weights_h2 = model_copy.layers[2].get_weights()
+
+        # Set weights
+        self.model.set_h2_weights(weights_h2)
+
+        if np.array_equal(self.model.q_network.layers[2].get_weights(), weights_h2):
+            sys.exit('Error! Q-Network h2 weights is not equal to the h2 weights from file')
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load 2nd hidden layer weights") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
+                       ", t: {}".format(Global.get_time()))
+    def load_out_weights(self, model_file):
+        """
+            Load second hidden layer weights from file and set Q-Network, Target-Network
+            Default: Stop training
+        """
+        self.random_agent = False
+
+        # Load master
+        model_copy = clone_model(self.model.q_network)
+        model_copy.load_weights(model_file)
+
+        # Output layer weights
+        weights_output = model_copy.layers[4].get_weights()
+
+        # Set weights
+        self.model.set_out_weights(weights_output)
+
+        if np.array_equal(self.model.q_network.layers[4].get_weights(), weights_output):
+            sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load output layer weights") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
+                       ", t: {}".format(Global.get_time()))
+
+    def load_h1h2_weights(self, model_file):
+        """
+            Load first and second hidden layers weights from file and set Q-Network, Target-Network
+            Default: Stop training
+        """
+        self.random_agent = False
+
+        # print('before', self.model.q_network.get_weights())
+
+        # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
         # ('model_copy layers', [<keras.layers.core.Dense object at 0x1163e36d0>, <keras.layers.core.Activation object at 0x1163e3790>, <keras.layers.core.Dense object at 0x1163e37d0>, <keras.layers.core.Activation object at 0x1163e38d0>, <keras.layers.core.Dense object at 0x1163e3910>])
         # h2 weights are located in layers[2] of layers list
 
+        # print('master', model_copy.get_weights())
+
+        # Hidden layer 1 weights
         weights_h1 = model_copy.layers[0].get_weights()
+
+        # Hidden layer 2 weights
         weights_h2 = model_copy.layers[2].get_weights()
 
+        # Set weights
         self.model.set_h1h2_weights(weights_h1, weights_h2)
+
+        # print('after', self.model.q_network.get_weights())
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load 1st and 2nd hidden layer weights") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
+                       ", t: {}".format(Global.get_time()))
+
+    def load_h2out_weights(self, model_file):
+        """
+            Load first and second hidden layers weights from file and set Q-Network, Target-Network
+            Default: Stop training
+        """
+        self.random_agent = False
+
+        # Load master
+        model_copy = clone_model(self.model.q_network)
+        model_copy.load_weights(model_file)
+        # ('model_copy layers', [<keras.layers.core.Dense object at 0x1163e36d0>, <keras.layers.core.Activation object at 0x1163e3790>, <keras.layers.core.Dense object at 0x1163e37d0>, <keras.layers.core.Activation object at 0x1163e38d0>, <keras.layers.core.Dense object at 0x1163e3910>])
+        # h2 weights are located in layers[2] of layers list
+
+        # Hidden layer 2 weights
+        weights_h2 = model_copy.layers[2].get_weights()
+
+        # Output layer weights
+        weights_output = model_copy.layers[4].get_weights()
+
+        # Set weights
+        self.model.set_h2out_weights(weights_h2, weights_output)
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load h2 and output weights") +
                        ", file: {}".format(model_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", training_it: {:10.0f}".format(self.training_iterations) +

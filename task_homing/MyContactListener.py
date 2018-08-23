@@ -5,9 +5,9 @@ import pygame, sys
 try:
     # Running in PyCharm
     import res.colors as Color
-    from Circle import StaticCircle
+    from objects.Circle import StaticCircle
     from AgentHoming import AgentHoming
-    from Border import Wall
+    from objects.Border import Wall
     import debug_homing
     import global_homing
     import Global
@@ -18,9 +18,9 @@ except:
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
     from ..res import colors as Color
-    from ..Circle import StaticCircle
+    from ..objects.Circle import StaticCircle
     from .AgentHoming import AgentHoming
-    from ..Border import Wall
+    from ..objects.Border import Wall
     import debug_homing
     import global_homing
     from .. import Global

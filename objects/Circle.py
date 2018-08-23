@@ -13,9 +13,9 @@ except:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
-    from .Util import worldToPixels
-    from .Setup import *
-    from .res import colors as Color
+    from ..Util import worldToPixels
+    from ..Setup import *
+    from ..res import colors as Color
 
 
 class Circle(object):
