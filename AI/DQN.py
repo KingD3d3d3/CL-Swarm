@@ -40,9 +40,11 @@ class Model(object):
             Predict q-values given an input state
         """
         if target:
-            return self.q_network.predict(state, batch_size=batch_len)
-        else:
+            # Predict from Target-network
             return self.target_network.predict(state, batch_size=batch_len)
+        else:
+            # Predict from Q-network
+            return self.q_network.predict(state, batch_size=batch_len)
 
     def updateTargetNetwork(self):
         """
@@ -124,24 +126,24 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 
     def push(self, sample):
         """
-            Append a new sample to the memory
+            Append a new sample to the memory, remove the oldest sample if memory was full
         """
         self.samples.append(sample)  # add only one event
 
-    def pop(self, n):
-        """
-            Get n samples randomly
-        """
-        # n = min(n, len(self.samples))
-        return random.sample(self.samples, n)
-
-    def receive(self, samples):
+    def push_multi(self, samples):
         """
             Samples : a list of samples
             Receive samples and append them to the memory
         """
         for sp in samples:
             self.push(sp)
+
+    def get(self, n):
+        """
+            Get n samples randomly from the memory
+        """
+        # n = min(n, len(self.samples))
+        return random.sample(self.samples, n)
 
     def is_full(self):
         """
@@ -161,8 +163,8 @@ BATCH_SIZE = 32
 MEMORY_CAPACITY = 10000  # 2000
 GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001 # 0.01
-TAU = 0.01  # 0.001 # update target network rate
-UPDATE_TARGET_TIMESTEP = 1 / TAU # every 100
+TAU = 0.01  # 0.1 # update target network rate
+UPDATE_TARGET_STEPS = 1 / TAU # every 100
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
 EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value
@@ -265,7 +267,8 @@ class DQN(object):
         new_state = self.preprocess(observation)
         experience = (self.last_state, self.last_action, self.last_reward, new_state)
 
-        if self.collect_experiences:
+        # Append new experience
+        if self.training and self.collect_experiences:
             self.record(experience)
 
         # Select action
@@ -277,6 +280,7 @@ class DQN(object):
             self.update_epsilon()
             self.reward_window.append(reward)
 
+        # Process last variable's states
         self.last_action = action
         self.last_state = new_state
         self.last_reward = reward
@@ -284,7 +288,7 @@ class DQN(object):
         self.update_counter += 1
 
         # Update target network
-        if self.training and self.training_iterations != 0 and self.training_iterations % UPDATE_TARGET_TIMESTEP == 0:
+        if self.training and self.training_iterations != 0 and self.training_iterations % UPDATE_TARGET_STEPS == 0:
             self.model.updateTargetNetwork()
 
         return action
@@ -328,25 +332,25 @@ class DQN(object):
                            ", t: {}".format(Global.get_time()))
             self.printTimeToLearn = True
 
-        batch = self.memory.pop(self.batch_size)
+        batch = self.memory.get(self.batch_size)
         batch = zip(*batch)
         batch_state, batch_action, batch_reward, batch_next_state = batch
 
         batch_state = np.array(batch_state).squeeze(axis=1)
-        labels = self.model.predict(batch_state, batch_len=self.batch_size)
+        q_values = self.model.predict(batch_state, batch_len=self.batch_size)
 
         batch_next_state = np.array(batch_next_state).squeeze(axis=1)
-        q_values_t = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
+        q_values_target = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
 
         batch_reward = np.array(batch_reward)
 
         # Optimization -> Matrix form
         X = batch_state
-        target = batch_reward + self.gamma * np.amax(q_values_t, axis=1)
+        target = batch_reward + self.gamma * np.amax(q_values_target, axis=1)
         for i in xrange(self.batch_size):
             a = batch_action[i]
-            labels[i][a] = target[i]
-        Y = labels
+            q_values[i][a] = target[i]
+        Y = q_values
 
         self.model.train(X, Y, batch_len=self.batch_size)
 
@@ -704,7 +708,7 @@ class DQN(object):
 
 
 
-        self.memory.receive(experiences)
+        self.memory.push_multi(experiences)
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
