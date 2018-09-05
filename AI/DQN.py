@@ -53,7 +53,7 @@ class Model(object):
         self.target_network.set_weights(self.q_network.get_weights())
 
 
-    def set_weights(self, weights, layer_num):
+    def set_weights_by_layer(self, weights, layer_num):
         """
             Set 1 layer weights of Q-Network and Target-Network
         """
@@ -64,19 +64,19 @@ class Model(object):
         """
             Set h1 weights of Q-Network and Target-Network
         """
-        self.set_weights(weights, 0)
+        self.set_weights_by_layer(weights, 0)
 
     def set_h2_weights(self, weights):
         """
             Set h2 weights of Q-Network and Target-Network
         """
-        self.set_weights(weights, 2)
+        self.set_weights_by_layer(weights, 2)
 
     def set_out_weights(self, weights):
         """
             Set output weights of Q-Network and Target-Network
         """
-        self.set_weights(weights, 4)
+        self.set_weights_by_layer(weights, 4)
 
     def set_h1h2_weights(self, weights_h1, weights_h2):
         """
@@ -96,6 +96,15 @@ class Model(object):
         self.target_network.layers[2].set_weights(weights_h2)
         self.target_network.layers[4].set_weights(weights_output)
 
+    def set_h1out_weights(self, weights_h1, weights_output):
+        """
+            Set h1 output weights of Q-Network and Target-Network
+        """
+        self.q_network.layers[0].set_weights(weights_h1)
+        self.q_network.layers[4].set_weights(weights_output)
+        self.target_network.layers[0].set_weights(weights_h1)
+        self.target_network.layers[4].set_weights(weights_output)
+
     def shuffle_weights(self):
         """
             Randomly permute the weights in `model`, or the given `weights`.
@@ -105,16 +114,16 @@ class Model(object):
             Credit: https://gist.github.com/jkleint/eb6dc49c861a1c21b612b568dd188668
         """
         # Get weights
-        q_weights = self.q_network.get_weights()
-        t_weights = self.target_network.get_weights()
+        weights = self.q_network.get_weights()
+        # t_weights = self.target_network.get_weights()
 
         # Randomize
-        q_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in q_weights]
-        t_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in t_weights]
+        weights = [np.random.permutation(w.flat).reshape(w.shape) for w in weights]
+        # t_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in t_weights]
 
         # Apply to networks
-        self.q_network.set_weights(q_weights)
-        self.target_network.set_weights(t_weights)
+        self.q_network.set_weights(weights)
+        self.target_network.set_weights(weights)
 
 # -------------------- MEMORY --------------------------
 
@@ -165,11 +174,11 @@ GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001 # 0.01
 TAU = 0.01  # 0.1 # update target network rate
 UPDATE_TARGET_STEPS = 1 / TAU # every 100
-INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy
-FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy
-EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value
-
+INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy during training
+FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy during training
+EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
 EPSILON_STEPS = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
+EPSILON_EXPLOIT = 0.05 # epsilon value during testing
 
 class DQN(object):
     def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, ratio_update=1, training=True, random_agent=False):
@@ -252,6 +261,21 @@ class DQN(object):
         self.model.q_network.compile(loss='mse', optimizer=optimizer)
         self.model.target_network.compile(loss='mse', optimizer=optimizer)
 
+        # Reset global variable
+        self.epsilon = INITIAL_EPSILON
+        self.last_state = self.preprocess(np.zeros(self.inputCnt))
+        self.last_action = 0
+        self.last_reward = 0.0
+        self.reward_window = deque(maxlen=1000)
+        self.printTimeToLearn = False
+        self.printStopExploration = False
+        self.training_iterations = 0
+
+        # Avoid the freeze
+        self.model.predict(self.zeros_state)
+        self.model.predict(self.zeros_state, target=True)
+        self.model.train(self.zeros_x, self.zeros_y)
+
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("reset brain") +
@@ -293,16 +317,19 @@ class DQN(object):
 
         return action
 
-    # Epsilon greedy action-selection policy
     def select_action(self, state):
-
+        """
+            * Epsilon greedy action-selection policy
+            * Random action when random agent
+            * Always best action when no training
+        """
         # Random agent
         if self.random_agent:
             random_action = np.random.randint(0, self.actionCnt)
             return random_action
 
         # Epsilon greedy
-        if self.training and np.random.rand() < self.epsilon:
+        if np.random.rand() < self.epsilon:
             return np.random.randint(0, self.actionCnt)
 
         action_values = self.model.predict(state)
@@ -395,7 +422,7 @@ class DQN(object):
             Stop exploration -> only exploitation
         """
         self.training = False
-        self.epsilon = FINAL_EPSILON
+        self.epsilon = EPSILON_EXPLOIT
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
@@ -408,7 +435,7 @@ class DQN(object):
         """
             Stop exploration -> only exploitation
         """
-        self.epsilon = FINAL_EPSILON
+        self.epsilon = EPSILON_EXPLOIT
 
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
@@ -500,9 +527,8 @@ class DQN(object):
             Load weights from file and set Q-Network, Target-Network
             Default: Stop training
         """
-        # directory = "./simulation_data/good_for_analysis/NN_weights/loadh2out_30000it_100sim/brain_files/2/"
-        # model_file = directory + "20180814_173555_858127_30099tmstp_30000it_loadh2output_model.h5"  # neural network model file
-
+        # directory = "./simulation_data/FINAL/Normal/normal_30000it_100sim_20180824/brain_files/1/"
+        # model_file = directory + "20180824_102251_784404_28599tmstp_28500it_normal_model.h5"  # neural network model file
 
         self.model.q_network.load_weights(model_file)
         self.model.target_network.load_weights(model_file)
@@ -662,6 +688,36 @@ class DQN(object):
         printColor(color=PRINT_CYAN,
                    msg="Agent: {:3.0f}, ".format(self.id) +
                        "{:>25s}".format("Load h2 and output weights") +
+                       ", file: {}".format(model_file) +
+                       ", tmstp: {:10.0f}".format(Global.timestep) +
+                       ", training_it: {:10.0f}".format(self.training_iterations) +
+                       ", t: {}".format(Global.get_time()))
+
+    def load_h1out_weights(self, model_file):
+        """
+            Load first hidden layers and output layers weights from file and set Q-Network, Target-Network
+            Default: Stop training
+        """
+        self.random_agent = False
+
+        # Load master
+        model_copy = clone_model(self.model.q_network)
+        model_copy.load_weights(model_file)
+        # ('model_copy layers', [<keras.layers.core.Dense object at 0x1163e36d0>, <keras.layers.core.Activation object at 0x1163e3790>, <keras.layers.core.Dense object at 0x1163e37d0>, <keras.layers.core.Activation object at 0x1163e38d0>, <keras.layers.core.Dense object at 0x1163e3910>])
+        # h2 weights are located in layers[2] of layers list
+
+        # Hidden layer 1 weights
+        weights_h1 = model_copy.layers[0].get_weights()
+
+        # Output layer weights
+        weights_output = model_copy.layers[4].get_weights()
+
+        # Set weights
+        self.model.set_h1out_weights(weights_h1, weights_output)
+
+        printColor(color=PRINT_CYAN,
+                   msg="Agent: {:3.0f}, ".format(self.id) +
+                       "{:>25s}".format("Load h1 and output weights") +
                        ", file: {}".format(model_file) +
                        ", tmstp: {:10.0f}".format(Global.timestep) +
                        ", training_it: {:10.0f}".format(self.training_iterations) +

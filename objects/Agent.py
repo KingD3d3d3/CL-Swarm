@@ -345,6 +345,21 @@ class Agent(object):
 
         self.brain.load_h2out_weights(model_file)
 
+
+    def load_h1out_weights(self, file):
+        """
+            Load Agent's 1st hidden layer and output layer weights from file
+        """
+        self.random_agent = False
+        if file != "":
+            model_file = file
+        else:
+            # Default file to load
+            directory = "./brain_files/"
+            model_file = directory + "brain" + "_model.h5"  # neural network model file
+
+        self.brain.load_h1out_weights(model_file)
+
     def load_memory(self, file="", size=-1):
         """
             Load memory from file

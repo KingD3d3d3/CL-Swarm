@@ -64,6 +64,7 @@ class TestbedHomingSimple(object):
         self.load_h2_weights = sim_param.load_h2_weights == 'True'
         self.load_out_weights = sim_param.load_out_weights == 'True'
         self.load_h2out_weights = sim_param.load_h2out_weights == 'True'
+        self.load_h1out_weights = sim_param.load_h1out_weights == 'True'
 
         self.load_memory = int(sim_param.load_memory)
         self.file_to_load = sim_param.file_to_load
@@ -175,6 +176,10 @@ class TestbedHomingSimple(object):
             # Load h2 output weights to agent
             if self.load_h2out_weights:
                 agent.load_h2out_weights(self.file_to_load)
+
+            # Load h1 output weights to agent
+            if self.load_h1out_weights:
+                agent.load_h1out_weights(self.file_to_load)
             # ----------------------------------------------------
 
 
@@ -300,12 +305,6 @@ class TestbedHomingSimple(object):
             count += self.environment.agents[j].goalReachedCount
         self.goal_reached_count = count
 
-
-        # Find the highest learning score
-        ls = self.environment.agents[0].learning_score()
-        if self.best_ls < ls:
-            self.best_ls = ls
-
         # Keep track of learning scores over time
         if self.record_ls:
             ls = self.environment.agents[0].learning_score()  # learning score of agent 0
@@ -334,36 +333,53 @@ class TestbedHomingSimple(object):
         # Reached max number of training timesteps
         if self.max_training_it != -1 and self.environment.agents[0].training_iterations() >= self.max_training_it:
 
+            # Find the highest learning score
+            ls = self.environment.agents[0].learning_score()
+            if self.best_ls < ls:
+                self.best_ls = ls
+            # Reach LS to find master
+            if self.wait_learning_score_and_save_model != -1:
+                self.wait_reach_ls_and_save()
+                return
+
             printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                            "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
                            ", tmstp: {:10.0f}".format(Global.timestep) +
                            ", t: {}".format(Global.get_time()))
             self.running = False
+
             return
 
         # Reached max number of timesteps
         if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
-
             self.running = False
 
-            self.wait_reach_ls_and_save()
+
+
 
     def wait_reach_ls_and_save(self):
         # Wait to reach specified learning score
         if self.wait_learning_score_and_save_model != -1:
+
+            # Reached learning score
             if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
+
                 printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                                "{:>25s}".format(
                                    "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
+                               ", training_it: {:10.0f}".format(self.environment.agents[0].training_iterations()) +
                                ", tmstp: {:10.0f}".format(Global.timestep) +
                                ", t: {}".format(Global.get_time()))
                 self.running = False
                 self.environment.agents[0].save_brain(dir=self.brain_dir)
 
+            # Not reached yet
             else:
                 self.running = True
 
-                if Global.timestep != 0 and Global.timestep % 150000 == 0:
+                # Reset brain every 150000 training it
+                if self.environment.agents[0].training_iterations() != 0 \
+                        and self.environment.agents[0].training_iterations() % 150000 == 0:
                     self.environment.agents[0].reset_brain()
 
     def end_simulation(self):

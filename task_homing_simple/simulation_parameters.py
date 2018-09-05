@@ -42,7 +42,9 @@ parser.add_argument('--load_out_weights',
 parser.add_argument('--load_h2out_weights',
                     help='load h2 output weights of neural networks from master to learning agent',
                     default='False')
-
+parser.add_argument('--load_h1out_weights',
+                    help='load h1 output weights of neural networks from master to learning agent',
+                    default='False')
 
 parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
 parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
@@ -86,6 +88,8 @@ def simulation_suffix(sim_param):
         suffix = "loadout"
     elif sim_param.load_h2out_weights == 'True':
         suffix = "loadh2out"
+    elif sim_param.load_h1out_weights == 'True':
+        suffix = "loadh1out"
 
     # Load memory
     if sim_param.load_memory != '-1':
