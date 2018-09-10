@@ -172,13 +172,13 @@ BATCH_SIZE = 32
 MEMORY_CAPACITY = 10000  # 2000
 GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001 # 0.01
-TAU = 0.01  # 0.1 # update target network rate
-UPDATE_TARGET_STEPS = 1 / TAU # every 100
+#TAU = 0.01  # 0.1 # update target network rate
+UPDATE_TARGET_STEPS = 1000 # 1 / TAU # every 1000 now # before was 100, too fast
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy during training
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
 EPSILON_STEPS = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
-EPSILON_EXPLOIT = 0.05 # epsilon value during testing
+EPSILON_EXPLOIT = FINAL_EPSILON # 0.05 # epsilon value during testing
 
 class DQN(object):
     def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, ratio_update=1, training=True, random_agent=False):

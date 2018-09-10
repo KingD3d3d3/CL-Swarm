@@ -71,6 +71,7 @@ class DQNHomingSimple(DQN):
 
         # Optimizer
         optimizer = Adam(lr=self.lr)
+        # optimizer = keras.optimizers.SGD(lr=self.lr)
         # optimizer = keras.optimizers.SGD(lr=self.lr, momentum=0.9, decay=0.0, nesterov=True)
 
         # Compile model
