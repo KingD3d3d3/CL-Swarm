@@ -178,7 +178,7 @@ INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy during train
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
 EPSILON_STEPS = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
-EPSILON_EXPLOIT = FINAL_EPSILON # 0.05 # epsilon value during testing
+EPSILON_EXPLOIT = 0.05 # FINAL_EPSILON # 0.05 # epsilon value during testing
 
 class DQN(object):
     def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, ratio_update=1, training=True, random_agent=False):
