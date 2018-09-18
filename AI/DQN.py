@@ -173,7 +173,7 @@ MEMORY_CAPACITY = 10000  # 2000
 GAMMA = 0.9  # Discount Factor
 LEARNING_RATE = 0.001 # 0.01
 #TAU = 0.01  # 0.1 # update target network rate
-UPDATE_TARGET_STEPS = 1000 # 1 / TAU # every 1000 now # before was 100, too fast
+UPDATE_TARGET_STEPS = 500 # 1000 # 1 / TAU # every 1000 now # before was 100, too fast
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy during training
 FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
@@ -610,11 +610,15 @@ class DQN(object):
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
+        # print('master', model_copy.get_weights())
+
         # Output layer weights
         weights_output = model_copy.layers[4].get_weights()
 
         # Set weights
         self.model.set_out_weights(weights_output)
+
+        # print('after', self.model.q_network.get_weights())
 
         if np.array_equal(self.model.q_network.layers[4].get_weights(), weights_output):
             sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
