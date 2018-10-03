@@ -71,7 +71,7 @@ class EnvironmentHomingSimple(object):
         self.screen = None
         if self.render:
             self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-            pygame.display.set_caption('Testbed Parameters Sharing')
+            pygame.display.set_caption('Testbed Homing Simple')
         self.clock = pygame.time.Clock()
         self.myfont = pygame.font.SysFont("monospace", 15)
 
@@ -190,10 +190,7 @@ class EnvironmentHomingSimple(object):
             self.deltaTime = self.clock.tick() / 1000.0
             # self.fps = self.clock.get_fps()
 
-            # Frame dependent
-            # if self.deltaTime <= TARGET_FPS:  # Frame is faster than target (60fps) -> simulation run faster
-
-            # Physic step
+            # Frame dependent -- Physic step
             self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
             self.world.ClearForces()
 

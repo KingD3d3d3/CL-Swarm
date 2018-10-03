@@ -181,7 +181,8 @@ EPSILON_STEPS = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
 EPSILON_EXPLOIT = 0.05 # FINAL_EPSILON # 0.05 # epsilon value during testing
 
 class DQN(object):
-    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, ratio_update=1, training=True, random_agent=False):
+    def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, ratio_update=1, training=True, random_agent=False,
+                 h1=-1, h2=-1):
 
         # Agent's ID
         self.id = id
@@ -208,8 +209,12 @@ class DQN(object):
         self.model_file = brain_file
 
         # Build Q-network and Target-network
-        self.model.q_network = self.build_model()
-        self.model.target_network = self.build_model()
+        self.model.q_network = self.build_model(h1, h2)
+        self.model.target_network = self.build_model(h1, h2)
+
+        # Print a summary representation of the model -- code to be deleted
+        # TODO 'summary' -> code to be deleted
+        self.model.q_network.summary()
 
         self.last_state = self.preprocess(np.zeros(inputCnt))
         self.last_action = 0
@@ -245,7 +250,7 @@ class DQN(object):
         if random_agent:
             self.go_random_agent()
 
-    def build_model(self):
+    def build_model(self, h1=-1, h2=-1):
         raise NotImplementedError("Build model method not implemented")
 
     def reset_brain(self):

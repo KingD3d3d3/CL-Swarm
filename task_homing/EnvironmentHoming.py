@@ -74,7 +74,7 @@ class EnvironmentHoming(object):
         self.screen = None
         if self.render:
             self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-            pygame.display.set_caption('Testbed Parameters Sharing')
+            pygame.display.set_caption('Testbed Homing')
         self.clock = pygame.time.Clock()
         self.myfont = pygame.font.SysFont("monospace", 15)
 
@@ -111,7 +111,7 @@ class EnvironmentHoming(object):
 
         # Obstacles
         self.obstacles = []
-        radius = 2
+        radius = 1.5 # 2 --> too big
         circle1 = StaticCircle(screen=self.screen, world=self.world, x=12.75, y=24, radius=radius)
         circle1.id = 1
         circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=28, radius=radius)
@@ -216,10 +216,7 @@ class EnvironmentHoming(object):
             self.deltaTime = self.clock.tick() / 1000.0
             # self.fps = self.clock.get_fps()
 
-            # Frame dependent
-            # if self.deltaTime <= TARGET_FPS:  # Frame is faster than target (60fps) -> simulation run faster
-
-            # Physic step
+            # Frame dependent -- Physic step
             self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
             self.world.ClearForces()
 

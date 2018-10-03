@@ -31,7 +31,7 @@ header = ("agent",
           "learning_score"
           )
 
-def printEvent(agent=None, event_message=""):
+def printEvent(color="", agent=None, event_message=""):
     """
         Agent           : agent ID
         Event           : event's message
@@ -46,6 +46,10 @@ def printEvent(agent=None, event_message=""):
         t       : time passed (since beginning of simulation)
     """
     global_homing.event_count += 1  # increment the event counter
+
+    # Don't print in non-debug mode
+    if not global_homing.debug:
+        return
 
     msg = ("SimID: {:3.0f}, ".format(global_homing.simulation_id) +
            "Agent: {:3.0f}, ".format(agent.id) +
@@ -98,7 +102,9 @@ def printEvent(agent=None, event_message=""):
 
     # Don't print in non-debug mode
     if global_homing.debug:
+        sys.stdout.write(color)
         print(msg)
+        sys.stdout.write(PRINT_RESET)
 
     return
 

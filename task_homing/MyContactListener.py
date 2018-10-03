@@ -75,16 +75,15 @@ class MyContactListener(contactListener):
             agent = objectA
             obstacle = objectB
 
+            # Same agent to obstacle collision in a small time
             if cls.isTimestepAgentObstacleCollisionShort(agent=agent, obstacle=obstacle):
-                return  # Same agent to obstacle collision in a small time
+                return
 
+            agent.lastObstacleCollide = obstacle
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
-
             agent.collisionColor()
-
-
-            debug_homing.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("StaticCircle", obstacle.id))
 
             return
 
@@ -92,15 +91,15 @@ class MyContactListener(contactListener):
             agent = objectB
             obstacle = objectA
 
+            # Same agent to obstacle collision in a small time
             if cls.isTimestepAgentObstacleCollisionShort(agent=agent, obstacle=obstacle):
-                return  # Same agent to obstacle collision in a small time
+                return
 
+            agent.lastObstacleCollide = obstacle
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
-
             agent.collisionColor()
-
-            debug_homing.printEvent(agent, "collision {}: {}".format("StaticCircle", obstacle.id))
+            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("StaticCircle", obstacle.id))
 
             return
 
@@ -156,27 +155,37 @@ class MyContactListener(contactListener):
         """
         if isinstance(objectA, AgentHoming) and isinstance(objectB, Wall):
             agent = objectA
-            obstacle = objectB
-            agent.lastObstacleCollide = obstacle
+            wall = objectB
+
+            # Same agent to wall collision in a small time
+            if cls.isTimestepAgentObstacleCollisionShort(agent=agent, obstacle=wall):
+                return
+
+            agent.lastObstacleCollide = wall
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
 
             agent.collisionColor()
 
-            debug_homing.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("Wall", wall.id))
 
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
             agent = objectB
-            obstacle = objectA
-            agent.lastObstacleCollide = obstacle
+            wall = objectA
+
+            # Same agent to wall collision in a small time
+            if cls.isTimestepAgentObstacleCollisionShort(agent=agent, obstacle=wall):
+                return
+
+            agent.lastObstacleCollide = wall
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
 
             agent.collisionColor()
 
-            debug_homing.printEvent(agent, "collision {}: {}".format("Wall", obstacle.id))
+            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("Wall", wall.id))
 
             return
 
@@ -187,12 +196,16 @@ class MyContactListener(contactListener):
         """
         if isinstance(objectA, AgentHoming) and isinstance(objectB, Wall):
             agent = objectA
+            wall = objectB
+            agent.lastObstacleCollide = wall
 
             agent.endCollisionColor()
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
             agent = objectB
+            wall = objectA
+            agent.lastObstacleCollide = wall
 
             agent.endCollisionColor()
             return
@@ -209,21 +222,24 @@ class MyContactListener(contactListener):
             agentA = objectA
             agentB = objectB
 
+            # Same agent to agent collision in a small time
             if cls.isTimestepAgentAgentCollisionShort(agentA=agentA, agentB=agentB):
-                return  # Same agent to obstacle collision in a small time
+                return
 
             # Agent A
             agentA.t2GAgentCollisionCount += 1
             agentA.agentCollisionCount += 1
             agentA.collisionColor()
+            agentA.lastObstacleCollide = agentB
 
             # Agent B
             agentB.t2GAgentCollisionCount += 1
             agentB.agentCollisionCount += 1
             agentB.collisionColor()
+            agentB.lastObstacleCollide = agentA
 
-            debug_homing.printEvent(agentA, "collision {}: {}".format("Agent", agentB.id))
-            debug_homing.printEvent(agentB, "collision {}: {}".format("Agent", agentA.id))
+            debug_homing.printEvent(agent=agentA, event_message="collision {}: {}".format("Agent", agentB.id))
+            debug_homing.printEvent(agent=agentB, event_message="collision {}: {}".format("Agent", agentA.id))
 
             return
 

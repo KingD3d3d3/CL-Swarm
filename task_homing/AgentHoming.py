@@ -54,11 +54,13 @@ except:
 # ----------- Agent's brain Neural Network Config ----------------
 
 class DQNHoming(DQN):
-    def build_model(self):
+    def build_model(self, h1=-1, h2=-1):
         model = Sequential()
 
-        h1 = 24  # 1st hidden layer's size
-        h2 = 24  # 2nd hidden layer's size
+        if h1 == -1 and h2 == -1:
+            # Default values -- need to find the good hyperparam
+            h1 = 10  # 1st hidden layer's size
+            h2 = 10  # 2nd hidden layer's size
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden
         model.add(Activation('relu'))
@@ -89,7 +91,6 @@ class Action(Enum):
     STOP = 3
     STOP_TURN_LEFT = 4
     STOP_TURN_RIGHT = 5
-
 
 # Rewards Mechanism
 class Reward:
@@ -136,9 +137,7 @@ class AgentHoming(Agent):
         self.id = id
 
         # Proximity Sensors
-        self.numSensors = 8
         self.raycastLength = 2.0
-        self.sensors = np.ones(self.numSensors) * self.raycastLength
         self.initial_raycastDiagonalColor = Color.Yellow
         self.raycastDiagonalColor = Color.Yellow
         self.initial_raycastStraightColor = Color.Red
@@ -153,6 +152,9 @@ class AgentHoming(Agent):
         bottom_right = vec2(0.70, -0.70)  # Raycast Right Back
         self.raycast_vectors = (top_left, forward_vec, top_right, right, bottom_right, backward, bottom_left,
                                 left)  # Store raycast direction vector for each raycast
+        self.numSensors = len(self.raycast_vectors)
+        self.sensors = np.ones(self.numSensors) * self.raycastLength # store the value of each sensors
+        # print("num sensors : {}".format(self.numSensors))
 
         # Input size
         self.input_size = self.numSensors + 1  # 8 sensors + 1 orientation
@@ -196,7 +198,7 @@ class AgentHoming(Agent):
         self.last_position = vec2(self.body.position.x, self.body.position.y)  # keep track of previous position
         self.last_orientation = self.orientationToGoal()
 
-    def setup(self, training=True, random_agent=False):
+    def setup(self, training=True, random_agent=False, h1=-1, h2=-1):
 
         # Update the agent's flag
         self.training = training
@@ -207,7 +209,7 @@ class AgentHoming(Agent):
 
         # Create agent's brain
         self.brain = DQNHoming(inputCnt=self.input_size, actionCnt=len(list(Action)), id=self.id,
-                               ratio_update=1, training=self.training, random_agent=self.random_agent)
+                               ratio_update=1, training=self.training, random_agent=self.random_agent, h1=h1, h2=h2)
 
         # Set agent's position : Start from goal 2
         start_pos = self.goals[1]
@@ -226,7 +228,7 @@ class AgentHoming(Agent):
         # Goals
         self.currentGoalIndex = 0
 
-        # Collision with obstacles (walls, obstacles in path)
+        # Collision with obstacles (walls, obstacles in path, agents)
         self.t2GCollisionCount = 0
         self.collisionCount = 0
         self.elapsedTimestepObstacleCollision = 0.00  # timestep passed between collision (for same objects collision)
@@ -234,8 +236,10 @@ class AgentHoming(Agent):
         self.lastObstacleCollide = None
 
         # Collision with Agents
-        self.elapsedTimestepAgentCollision = np.zeros(self.numAgents)  # timestep passed between collision (for same objects collision)
-        self.startTimestepAgentCollision = np.zeros(self.numAgents)  # start timestep since a collision (for same objects collision)
+        self.elapsedTimestepAgentCollision = np.zeros(
+            self.numAgents)  # timestep passed between collision (for same objects collision)
+        self.startTimestepAgentCollision = np.zeros(
+            self.numAgents)  # start timestep since a collision (for same objects collision)
         self.t2GAgentCollisionCount = 0
         self.agentCollisionCount = 0
 
@@ -253,6 +257,9 @@ class AgentHoming(Agent):
         self.distance = self.distanceToGoal()  # current distance to the goal
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.orientationToGoal()
+
+        debug_homing.printEvent(color=PrintColor.PRINT_CYAN, agent=self,
+                                event_message="agent is ready")
 
     def draw(self):
 
@@ -363,9 +370,8 @@ class AgentHoming(Agent):
         self.elapsedTimestep = Global.timestep - self.startTimestep
 
         # Goal reached event
-        sys.stdout.write(PrintColor.PRINT_RED)
-        debug_homing.printEvent(self, "reached goal: {}".format(self.currentGoalIndex + 1))
-        sys.stdout.write(PrintColor.PRINT_RESET)
+        debug_homing.printEvent(color=PrintColor.PRINT_RED, agent=self,
+                                event_message="reached goal: {}".format(self.currentGoalIndex + 1))
 
         # Reset, Update
         self.startTime = global_homing.timer
@@ -381,12 +387,12 @@ class AgentHoming(Agent):
         flagGC = False
         getting_closer = 0.
         if self.distance < self.last_distance:
-            flagGC = True # getting closer
+            flagGC = True  # getting closer
 
             # Calculate beta
             goal_position = self.goals[self.currentGoalIndex]
             v1 = (goal_position - self.last_position)  # goal to last position vector
-            v2 = (self.body.position - self.last_position) # current position to last position vector
+            v2 = (self.body.position - self.last_position)  # current position to last position vector
             angle_deg = Util.angle(v1, v2)
             angle = Util.degToRad(angle_deg)
 
@@ -399,11 +405,11 @@ class AgentHoming(Agent):
 
         # Process sensor's value
         r = np.fromiter((Reward.sensorReward(s) for s in self.sensors), self.sensors.dtype,
-                        count=len(self.sensors)) # Apply sensor reward function to all sensors value
+                        count=len(self.sensors))  # Apply sensor reward function to all sensors value
         sensorReward = np.amin(r)  # take the min value
 
         # Overall reward
-        reward = flagGC * getting_closer + sensorReward # + flagGR * Reward.GOAL_REACHED + Reward.LIVING_PENALTY
+        reward = flagGC * getting_closer + sensorReward  # + flagGR * Reward.GOAL_REACHED + Reward.LIVING_PENALTY
 
         return reward
 
@@ -451,10 +457,6 @@ class AgentHoming(Agent):
         self.elapsedTimestep = Global.timestep - self.startTimestep
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.body.angle
-        #
-        # print('  #####  ')
-        # print('last_signal', last_signal)
-        # print('last_reward', self.last_reward)
 
     def collisionColor(self):
         """
@@ -471,10 +473,18 @@ class AgentHoming(Agent):
             Reset agent color when end of collision
         """
         self.currentCollisionCount -= 1
-        if self.currentCollisionCount < 0:
-            sys.exit('Error! Cannot have currentCollisionCount of negative value')
 
-        elif self.currentCollisionCount == 0:
+
+        # if self.currentCollisionCount < 0:
+        #     # sys.exit('Error! Cannot have currentCollisionCount of negative value')
+        #     self.currentCollisionCount = 0
+        #     debug_homing.xprint(msg='Error! Cannot have currentCollisionCount of negative value')
+        #     self.color = self.initial_color
+        #     self.raycastStraightColor = self.initial_raycastStraightColor
+        #     self.raycastDiagonalColor = self.initial_raycastDiagonalColor
+
+        if self.currentCollisionCount <= 0:
+            self.currentCollisionCount = 0
             self.color = self.initial_color
             self.raycastStraightColor = self.initial_raycastStraightColor
             self.raycastDiagonalColor = self.initial_raycastDiagonalColor

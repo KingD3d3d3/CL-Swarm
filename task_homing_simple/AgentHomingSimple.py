@@ -294,7 +294,6 @@ class AgentHomingSimple(Agent):
         # Select action using AI
         action_num = self.brain.update(self.last_reward, last_signal)
         self.updateFriction()
-        # self.remainStatic()
         self.updateDrive(Action(action_num))
         # self.updateManualDrive()
 

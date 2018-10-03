@@ -35,7 +35,7 @@ except:
     from .simulation_parameters import *
     from .. import Global
 
-class TestbedHomingSimple(object):
+class TestbedHoming(object):
 
     def __init__(self, sim_param=None, sim_dir="./simulation_data/default/", sim_suffix=""):
 
@@ -60,6 +60,12 @@ class TestbedHomingSimple(object):
         self.load_full_weights = sim_param.load_full_weights == 'True'
         self.load_h1h2_weights = sim_param.load_h1h2_weights == 'True'
         self.load_h1_weights = sim_param.load_h1_weights == 'True'
+
+        self.load_h2_weights = sim_param.load_h2_weights == 'True'
+        self.load_out_weights = sim_param.load_out_weights == 'True'
+        self.load_h2out_weights = sim_param.load_h2out_weights == 'True'
+        self.load_h1out_weights = sim_param.load_h1out_weights == 'True'
+
         self.load_memory = int(sim_param.load_memory)
         self.file_to_load = sim_param.file_to_load
         self.suffix = sim_suffix
@@ -85,10 +91,10 @@ class TestbedHomingSimple(object):
         self.ls_dir = ""
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
         self.goal_reached_count = 0
-
+        self.collision_count = 0
         self.best_ls = 0
 
-    def setup_simulation(self, sim_id=1, file_to_load=""):
+    def setup_simulation(self, sim_id=1, file_to_load="", h1=-1, h2=-1):
 
         if file_to_load != "":
             self.file_to_load = file_to_load
@@ -102,6 +108,7 @@ class TestbedHomingSimple(object):
         self.pause = False
         self.learning_scores = []  # initializing the mean score curve (sliding window of the rewards) with respect to timestep
         self.goal_reached_count = 0
+        self.collision_count = 0
 
         # Record simulation
         self.simlogs_dir = self.simulation_dir + "sim_logs/"
@@ -120,11 +127,11 @@ class TestbedHomingSimple(object):
         self.ls_dir = self.simulation_dir + "ls_files/" + str(global_homing.simulation_id) + "/"
 
         # Setup agents
-        self.setup_agents()
+        self.setup_agents(h1, h2)
 
         debug_homing.xprint(msg='sim_id: {}, Setup complete, Start simulation'.format(sim_id))
 
-    def setup_agents(self):
+    def setup_agents(self, h1=-1, h2=-1):
         """
             Setup agents
         """
@@ -134,7 +141,7 @@ class TestbedHomingSimple(object):
         for agent in self.environment.agents:
 
             # Setup agent's location and brain
-            agent.setup(training=self.training, random_agent=self.random_agent)
+            agent.setup(training=self.training, random_agent=self.random_agent, h1=h1, h2=h2)
 
             if self.file_to_load != "":
                 debug_homing.xprint(msg='sim_id: {}, Loadind File Setup'.format(global_homing.simulation_id))
@@ -157,6 +164,25 @@ class TestbedHomingSimple(object):
             # Load 1st and 2nd hidden layer weights to agent
             if self.load_h1h2_weights:
                 agent.load_h1h2_weights(self.file_to_load)
+
+            # ----------------------------------------------------
+            # Load h2 weights to agent
+            if self.load_h2_weights:
+                agent.load_h2_weights(self.file_to_load)
+
+            # Load output weights to agent
+            if self.load_out_weights:
+                agent.load_out_weights(self.file_to_load)
+
+            # Load h2 output weights to agent
+            if self.load_h2out_weights:
+                agent.load_h2out_weights(self.file_to_load)
+
+            # Load h1 output weights to agent
+            if self.load_h1out_weights:
+                agent.load_h1out_weights(self.file_to_load)
+            # ----------------------------------------------------
+
 
             # Load memory to agent
             if self.load_memory != -1:
@@ -280,12 +306,16 @@ class TestbedHomingSimple(object):
             count += self.environment.agents[j].goalReachedCount
         self.goal_reached_count = count
 
+        # Total number of collision count
+        count = 0
+        for k in xrange(self.environment.numAgents):
+            count += self.environment.agents[k].collisionCount
+        self.collision_count = count
 
         # Find the highest learning score
         ls = self.environment.agents[0].learning_score()
         if self.best_ls < ls:
             self.best_ls = ls
-            # print('best_ls', self.best_ls)
 
         # Keep track of learning scores over time
         if self.record_ls:
@@ -315,6 +345,16 @@ class TestbedHomingSimple(object):
         # Reached max number of training timesteps
         if self.max_training_it != -1 and self.environment.agents[0].training_iterations() >= self.max_training_it:
 
+            # Find the highest learning score
+            ls = self.environment.agents[0].learning_score()
+            if self.best_ls < ls:
+                self.best_ls = ls
+                # print('best_ls', self.best_ls)
+            # Reach LS to find master
+            if self.wait_learning_score_and_save_model != -1:
+                self.wait_reach_ls_and_save()
+                return
+
             printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                            "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
                            ", tmstp: {:10.0f}".format(Global.timestep) +
@@ -326,12 +366,15 @@ class TestbedHomingSimple(object):
 
             self.running = False
 
-            self.wait_reach_ls_and_save()
+
 
     def wait_reach_ls_and_save(self):
         # Wait to reach specified learning score
         if self.wait_learning_score_and_save_model != -1:
+
+            # Reached learning score
             if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
+
                 printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                                "{:>25s}".format(
                                    "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
@@ -340,11 +383,17 @@ class TestbedHomingSimple(object):
                 self.running = False
                 self.environment.agents[0].save_brain(dir=self.brain_dir)
 
+            # Not reached yet
             else:
                 self.running = True
 
-                if Global.timestep != 0 and Global.timestep % 150000 == 0:
+                # Reset brain every 150000 training it
+                if self.environment.agents[0].training_iterations() != 0 \
+                        and self.environment.agents[0].training_iterations() % 150000 == 0:
                     self.environment.agents[0].reset_brain()
+
+                # if Global.timestep != 0 and Global.timestep % 150000 == 0:
+                #     self.environment.agents[0].reset_brain()
 
     def end_simulation(self):
         """
@@ -409,7 +458,7 @@ if __name__ == '__main__':
     # -------------------- Simulation ----------------------
 
     # Create Testbed
-    testbed = TestbedHomingSimple(sim_param=simulation_parameters, sim_dir=simulation_directory, sim_suffix=simulation_suffix)
+    testbed = TestbedHoming(sim_param=simulation_parameters, sim_dir=simulation_directory, sim_suffix=simulation_suffix)
 
     multi_simulation = int(simulation_parameters.multi_simulation)
     for i in xrange(multi_simulation):

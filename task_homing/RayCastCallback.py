@@ -19,11 +19,6 @@ class RayCastCallback(b2RayCastCallback):
     def ReportFixture(self, fixture, point, normal, fraction):
         self.fixture = fixture
 
-        # body = fixture.body
-        # o = body.userData
-        # if isinstance(o, Wall):
-        #     return 1
-
         self.point = b2Vec2(point)
         self.normal = b2Vec2(normal)
         self.hit = True # flag to inform raycast hit an object
