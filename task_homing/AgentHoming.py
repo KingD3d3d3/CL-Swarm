@@ -61,12 +61,18 @@ class DQNHoming(DQN):
             # Default values -- need to find the good hyperparam
             h1 = 10  # 1st hidden layer's size
             h2 = 10  # 2nd hidden layer's size
+            # TODO testing with 3 hidden layers
+            h3 = 5   # 3nd hidden layer's size
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden
         model.add(Activation('relu'))
 
         if h2 != 0:
             model.add(Dense(h2))  # hidden -> hidden
+            model.add(Activation('relu'))
+
+        if h3 != 0:
+            model.add(Dense(h3))  # hidden -> hidden
             model.add(Activation('relu'))
 
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
@@ -125,6 +131,7 @@ class Reward:
             angle_travelled = 45 deg -> reward = 0.1 * sqrt(2) / 2 = 0.07
             angle_travelled = 90 deg -> reward = 0
         """
+        # TODO testing without angle reward
         reward = Reward.GETTING_CLOSER * np.cos(angle)
         return reward
 
@@ -142,19 +149,25 @@ class AgentHoming(Agent):
         self.raycastDiagonalColor = Color.Yellow
         self.initial_raycastStraightColor = Color.Red
         self.raycastStraightColor = Color.Red
-        top_left = vec2(-0.70, 0.70)  # Raycast Front Left
         forward_vec = vec2(0, 1)  # Raycast Front Middle
-        top_right = vec2(0.70, 0.70)  # Raycast Front Right # sqr(2) / 2
-        left = vec2(-1, 0)  # Raycast Left Side
-        right = vec2(1, 0)  # Raycast Right Side
-        bottom_left = vec2(-0.70, -0.70)  # Raycast Left Back
-        backward = vec2(0, -1)  # Raycast Middle Back
-        bottom_right = vec2(0.70, -0.70)  # Raycast Right Back
-        self.raycast_vectors = (top_left, forward_vec, top_right, right, bottom_right, backward, bottom_left,
-                                left)  # Store raycast direction vector for each raycast
+        top_left = vec2(-0.80901699437, 0.58778525229)  # Raycast Front Left : pi/5 <-> [ -cos(pi/5) , sin(pi/5) ]
+        top_right = vec2(0.80901699437, 0.58778525229)  # Raycast Front Right : pi/5 <-> [ cos(pi/5) , sin(pi/5) ]
+
+
+        # TODO original top-left, top-right
+        # top_left = vec2(-0.70, 0.70)  # Raycast Front Left
+        # top_right = vec2(0.70, 0.70)  # Raycast Front Right # sqr(2) / 2
+
+        # TODO testing with 3 sensors
+        # left = vec2(-1, 0)  # Raycast Left Side
+        # right = vec2(1, 0)  # Raycast Right Side
+        # bottom_left = vec2(-0.70, -0.70)  # Raycast Left Back
+        # backward = vec2(0, -1)  # Raycast Middle Back
+        # bottom_right = vec2(0.70, -0.70)  # Raycast Right Back
+        self.raycast_vectors = (top_left, forward_vec, top_right) #, left, right) # bottom_right, backward, bottom_left)  # Store raycast direction vector for each raycast
         self.numSensors = len(self.raycast_vectors)
         self.sensors = np.ones(self.numSensors) * self.raycastLength # store the value of each sensors
-        # print("num sensors : {}".format(self.numSensors))
+        print("num sensors : {}".format(self.numSensors))
 
         # Input size
         self.input_size = self.numSensors + 1  # 8 sensors + 1 orientation
@@ -287,7 +300,7 @@ class AgentHoming(Agent):
             v = self.body.GetWorldVector(self.raycast_vectors[i])
             p1 = self.body.worldCenter + v * self.radius
             p2 = p1 + v * self.raycastLength
-            if i % 2 == 0:
+            if i == 0 or i == 2: #i % 2 == 0:
                 ray_color = self.raycastDiagonalColor
             else:
                 ray_color = self.raycastStraightColor

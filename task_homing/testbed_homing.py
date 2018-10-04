@@ -312,10 +312,11 @@ class TestbedHoming(object):
             count += self.environment.agents[k].collisionCount
         self.collision_count = count
 
-        # Find the highest learning score
-        ls = self.environment.agents[0].learning_score()
-        if self.best_ls < ls:
-            self.best_ls = ls
+        # Find the highest learning score (at least after a certain period of time)
+        if Global.timestep >= 1000:
+            ls = self.environment.agents[0].learning_score()
+            if self.best_ls < ls:
+                self.best_ls = ls
 
         # Keep track of learning scores over time
         if self.record_ls:
@@ -341,6 +342,27 @@ class TestbedHoming(object):
             if training_it != 0 and training_it >= self.start_save_nn_from_it and training_it % self.save_network_freq_training_it == 0:
                 it = str(training_it) + 'it_'
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
+
+        # # ----------------------------------------------------------------------------------
+        # # TODO code to be deleted
+        # if self.environment.agents[0].training_iterations() >= 10000 and self.environment.agents[0].learning_score() >= 0.089:
+        #     printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+        #                    "{:>25s}".format(
+        #                        "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
+        #                    ", tmstp: {:10.0f}".format(Global.timestep) +
+        #                    ", t: {}".format(Global.get_time()))
+        #     self.running = False
+        #     self.environment.agents[0].save_brain(dir=self.brain_dir)
+        #     self.end_simulation()
+        #
+        #     printColor(color=PRINT_RED, msg="BRUTE FORCE EXIT")
+        #
+        #     # End the game !
+        #     pygame.quit()
+        #     exit()
+        #     sys.exit()
+        # # ----------------------------------------------------------------------------------
+
 
         # Reached max number of training timesteps
         if self.max_training_it != -1 and self.environment.agents[0].training_iterations() >= self.max_training_it:
@@ -408,6 +430,11 @@ class TestbedHoming(object):
         if self.record_ls:
             self.plot_learning_scores(save_png=False, save_csv=False)
 
+        if global_homing.debug:
+            print(debug_homing.dico_event)
+
+        print("At simID: {}, highest ls: {}".format(global_homing.simulation_id, self.best_ls))
+
     def plot_learning_scores(self, save_png=False, save_csv=False):
         plt.plot(self.learning_scores)
         plt.xlabel('Training Iterations')
@@ -469,8 +496,6 @@ if __name__ == '__main__':
         testbed.run_simulation()
         testbed.end_simulation()
 
-        print("At simID: {}, highest ls: {}".format(simID, testbed.best_ls))
-
         total_timesteps += Global.timestep # Increment total timesteps
         global_homing.reset_simulation_global() # Reset global variables
 
@@ -489,3 +514,8 @@ if __name__ == '__main__':
                    "Total simulations time: {}\n"
                    "Total timesteps: {}".format(multi_simulation, Global.get_time(), total_timesteps))
         file.close()
+
+    # End the game !
+    pygame.quit()
+    exit()
+    sys.exit()

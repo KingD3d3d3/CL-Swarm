@@ -27,7 +27,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
      inkscape:cx="588.28013"
-     inkscape:cy="311.60707"
+     inkscape:cy="309.04882"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -100,15 +100,15 @@
     <circle
        style="fill:#00ff00;fill-opacity:1"
        id="path4184"
-       cx="342.70312"
-       cy="589.73792"
+       cx="294.82391"
+       cy="558.79309"
        r="30"
        transform="matrix(0.9961947,0.08715574,-0.08715574,0.9961947,0,0)" />
     <circle
        style="fill:#00ff00;fill-opacity:1"
        id="path4186"
-       cx="766.02039"
-       cy="838.79108"
+       cx="825.79211"
+       cy="833.56171"
        r="30"
        transform="matrix(0.9961947,0.08715574,-0.08715574,0.9961947,0,0)" />
     <circle
@@ -121,8 +121,8 @@
     <circle
        style="fill:#00ff00;fill-opacity:1"
        id="path4190"
-       cx="1053.1128"
-       cy="678.15808"
+       cx="1082.8113"
+       cy="730.7699"
        r="30"
        transform="matrix(0.9961947,0.08715574,-0.08715574,0.9961947,0,0)" />
     <text
@@ -156,8 +156,8 @@
     <circle
        style="fill:#00ff00;fill-opacity:1"
        id="path4202"
-       cx="692.09088"
-       cy="633.02289"
+       cx="688.81757"
+       cy="644.78149"
        r="30"
        transform="matrix(0.9961947,0.08715574,-0.08715574,0.9961947,0,0)" />
     <circle
@@ -170,8 +170,8 @@
     <circle
        style="fill:#00ff00;fill-opacity:1"
        id="path4206"
-       cx="611.61475"
-       cy="450.77188"
+       cx="551.84302"
+       cy="456.00122"
        r="30"
        transform="matrix(0.9961947,0.08715574,-0.08715574,0.9961947,0,0)" />
     <circle
@@ -181,8 +181,8 @@
        cy="452.3623"
        r="30" />
     <path
-       style="fill:none;stroke:#000000;stroke-width:2.18204951px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M -467.87237,898.46529 607.87244,1420.5451"
+       style="fill:none;stroke:#000000;stroke-width:0.91408604px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M -245.7403,732.3498 -2.8311029,1138.0891"
        id="path3395"
        inkscape:connector-curvature="0" />
     <path
@@ -192,7 +192,7 @@
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;stroke:#000000;stroke-width:1.01154828px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-       d="M -595.71259,945.22516 179.9984,1186.6423"
+       d="M -508.56973,816.65373 267.14126,1058.0709"
        id="path3399"
        inkscape:connector-curvature="0" />
   </g>

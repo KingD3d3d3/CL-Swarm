@@ -31,6 +31,8 @@ header = ("agent",
           "learning_score"
           )
 
+dico_event = {}
+
 def printEvent(color="", agent=None, event_message=""):
     """
         Agent           : agent ID
@@ -99,6 +101,12 @@ def printEvent(color="", agent=None, event_message=""):
             global_homing.header_write = True
 
         global_homing.simlogs_writer.writerow(msg_csv)
+
+    # Increment counter in event's dictionary
+    if event_message in dico_event:
+        dico_event[event_message] += 1
+    else: # First time event encounter
+        dico_event[event_message] = 1
 
     # Don't print in non-debug mode
     if global_homing.debug:

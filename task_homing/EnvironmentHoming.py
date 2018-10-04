@@ -112,20 +112,39 @@ class EnvironmentHoming(object):
         # Obstacles
         self.obstacles = []
         radius = 1.5 # 2 --> too big
-        circle1 = StaticCircle(screen=self.screen, world=self.world, x=12.75, y=24, radius=radius)
+
+        # 1
+        # circle1 = StaticCircle(screen=self.screen, world=self.world, x=12.75, y=24, radius=radius)
+        circle1 = StaticCircle(screen=self.screen, world=self.world, x=17.5, y=21.75, radius=radius)
         circle1.id = 1
-        circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=28, radius=radius)
+
+        # 7
+        # circle7 = StaticCircle(screen=self.screen, world=self.world, x=51.25, y=12, radius=radius)
+        circle7 = StaticCircle(screen=self.screen, world=self.world, x=46.5, y=14.25, radius=radius)
+        circle7.id = 7
+
+        # 2
+        # circle2 = StaticCircle(screen=self.screen, world=self.world, x=26, y=28, radius=radius)
+        circle2 = StaticCircle(screen=self.screen, world=self.world, x=30, y=29, radius=radius)
         circle2.id = 2
+
+        # 6
+        # circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=8, radius=radius)
+        circle6 = StaticCircle(screen=self.screen, world=self.world, x=34, y=7, radius=radius)
+        circle6.id = 6
+
+        # 3
         circle3 = StaticCircle(screen=self.screen, world=self.world, x=14.75, y=10, radius=radius)
         circle3.id = 3
-        circle4 = StaticCircle(screen=self.screen, world=self.world, x=32, y=18, radius=radius)
-        circle4.id = 4
+
+        # 5
         circle5 = StaticCircle(screen=self.screen, world=self.world, x=49.25, y=26, radius=radius)
         circle5.id = 5
-        circle6 = StaticCircle(screen=self.screen, world=self.world, x=38, y=8, radius=radius)
-        circle6.id = 6
-        circle7 = StaticCircle(screen=self.screen, world=self.world, x=51.25, y=12, radius=radius)
-        circle7.id = 7
+
+        # 4
+        circle4 = StaticCircle(screen=self.screen, world=self.world, x=32, y=18, radius=radius)
+        circle4.id = 4
+
         self.obstacles.extend((circle1, circle2, circle3, circle4, circle5, circle6, circle7))
         self.numObstacles = len(self.obstacles)
 
