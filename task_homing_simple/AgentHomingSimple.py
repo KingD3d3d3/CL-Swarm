@@ -53,7 +53,7 @@ except:
 # ----------- Agent's brain Neural Network Config ----------------
 
 class DQNHomingSimple(DQN):
-    def build_model(self):
+    def build_model(self, *args):
 
         model = Sequential()
 
@@ -108,7 +108,7 @@ class Reward:
 
 
 class AgentHomingSimple(Agent):
-    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, goals=vec2(0, 0)):
+    def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5, id=-1, goals=vec2(0, 0), num_agents=1):
         super(AgentHomingSimple, self).__init__(screen, world, x, y, angle, radius)
 
         # Agent's ID
@@ -135,6 +135,16 @@ class AgentHomingSimple(Agent):
         self.distance = self.distanceToGoal()  # 0.0  # current distance to the goal
         self.last_position = vec2(self.body.position.x, self.body.position.y)  # keep track of previous position
         self.last_orientation = self.orientationToGoal()
+
+        # Number of agents
+        self.num_agents = num_agents
+
+        # List of agents
+        self.agents_list = []
+
+        # Meeting with Agents
+        self.elapsed_timestep_meetings = np.zeros(num_agents)  # timestep passed between meetings
+        self.start_timestep_meetings = np.zeros(num_agents)  # start timestep since a meeting
 
     def setup(self, training=True, random_agent=False):
 
@@ -166,6 +176,10 @@ class AgentHomingSimple(Agent):
         # Goals
         self.currentGoalIndex = 0
 
+        # Meeting with Agents
+        self.elapsed_timestep_meetings = np.zeros(self.num_agents)
+        self.start_timestep_meetings = np.zeros(self.num_agents)
+
         # Event features
         self.goalReachedCount = 0
         self.startTime = 0.0
@@ -179,14 +193,20 @@ class AgentHomingSimple(Agent):
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.orientationToGoal()
 
+        debug_homing_simple.printEvent(color=PrintColor.PRINT_CYAN, agent=self,
+                                event_message="agent is ready")
+
+        # print("agent: {}, agent's list: {}".format(self.id, self.agents_list))
+
+
     def draw(self):
 
-        # Circle of collision
+        # Collision's circle
         position = self.body.transform * self.fixture.shape.pos * PPM
         position = (position[0], SCREEN_HEIGHT - position[1])
         pygame.draw.circle(self.screen, Color.Blue, [int(x) for x in position], int(self.radius * PPM))
 
-        # Triangle Shape
+        # Visual triangle
         vertex = [(-1, -1), (1, -1), (0, 1.5)]
         vertices = [(self.body.transform * v) * PPM for v in vertex]
         vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
@@ -199,6 +219,12 @@ class AgentHomingSimple(Agent):
         idPos = (self.body.transform * (0, 0)) * PPM
         idPos = (idPos[0] - offset[0], SCREEN_HEIGHT - idPos[1] - offset[1])
         self.screen.blit(idText, idPos)
+
+        # Communication's ellipse
+        position = self.body.transform * self.fixture.shape.pos * PPM
+        position = (position[0], SCREEN_HEIGHT - position[1])
+        pygame.draw.circle(self.screen, Color.Red, [int(x) for x in position], int(self.communication_range * PPM), 1)
+
 
     def updateDrive(self, action):
         """
@@ -296,6 +322,7 @@ class AgentHomingSimple(Agent):
         self.updateFriction()
         self.updateDrive(Action(action_num))
         # self.updateManualDrive()
+        # self.remainStatic()
 
         # Calculate agent's distance to the goal
         self.distance = self.distanceToGoal()
@@ -307,8 +334,47 @@ class AgentHomingSimple(Agent):
         if self.distance < self.goalReachedThreshold:
             self.computeGoalReached()
 
+        # TODO : Check distance to others agents
+        # for agent in self.agents_list:
+        #     if self != agent:
+        #
+        #         # In communication range
+        #         if Util.sqr_distance(self.body.position, agent.body.position) \
+        #                 <= (self.communication_range + agent.radius) ** 2:
+        #             pass
+        #             # # Frequency of communication between both agents
+        #             # if self.is_timestep_meeting_allowed(agent):
+        #             #     print("Myself agent: {} just met agent: {}".format(self.id, agent.id))
+
+        # Update variables
         self.last_distance = self.distance
         self.elapsedTime = global_homing_simple.timer - self.startTime
         self.elapsedTimestep = Global.timestep - self.startTimestep
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.body.angle
+
+    def is_timestep_meeting_allowed(self, other_agent):
+        """
+            Check if tmstp between successive meetings between the same 2 agent was too short
+        """
+        MEETING_TIMESTEP = 60 # 1s -> 60 timesteps
+
+        agentA = self
+        agentB = other_agent
+
+        idA = agentA.id
+        idB = agentB.id
+
+        agentA.elapsed_timestep_meetings[idB] = Global.timestep - agentA.start_timestep_meetings[idB]
+        agentB.elapsed_timestep_meetings[idA] = Global.timestep - agentB.start_timestep_meetings[idA]
+
+        if agentA.elapsed_timestep_meetings[idB] <= MEETING_TIMESTEP \
+                and agentB.elapsed_timestep_meetings[idA] <= MEETING_TIMESTEP:  # Check elapsed timestep
+
+            print("too short")
+            agentA.start_timestep_meetings[idB] = Global.timestep  # update based on elapsed time
+            agentB.start_timestep_meetings[idA] = Global.timestep  # update based on elapsed time
+
+            return False  # time was too short since the previous meeting -> return False
+
+        return True

@@ -54,8 +54,10 @@ class Agent(object):
         self.initial_color = Color.Magenta
         self.color = Color.Magenta
 
+        # Specifications
         self.speed = 10 # m/s
         self.rotation_speed = 2.0 * np.pi # rad/s
+        self.communication_range = 4 # m
 
         self.brain = None
 

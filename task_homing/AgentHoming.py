@@ -59,8 +59,8 @@ class DQNHoming(DQN):
 
         if h1 == -1 and h2 == -1:
             # Default values -- need to find the good hyperparam
-            h1 = 10  # 1st hidden layer's size
-            h2 = 10  # 2nd hidden layer's size
+            h1 = 24  # 1st hidden layer's size
+            h2 = 16  # 2nd hidden layer's size
             # TODO testing with 3 hidden layers
             h3 = 5   # 3nd hidden layer's size
 
@@ -131,7 +131,6 @@ class Reward:
             angle_travelled = 45 deg -> reward = 0.1 * sqrt(2) / 2 = 0.07
             angle_travelled = 90 deg -> reward = 0
         """
-        # TODO testing without angle reward
         reward = Reward.GETTING_CLOSER * np.cos(angle)
         return reward
 
@@ -155,10 +154,10 @@ class AgentHoming(Agent):
 
 
         # TODO original top-left, top-right
-        # top_left = vec2(-0.70, 0.70)  # Raycast Front Left
-        # top_right = vec2(0.70, 0.70)  # Raycast Front Right # sqr(2) / 2
+        # top_left = vec2(-0.70710678118, 0.70710678118)  # Raycast Front Left
+        # top_right = vec2(0.70710678118, 0.70710678118)  # Raycast Front Right # sqr(2) / 2
 
-        # TODO testing with 3 sensors
+        # TODO testing with 5 sensors
         # left = vec2(-1, 0)  # Raycast Left Side
         # right = vec2(1, 0)  # Raycast Right Side
         # bottom_left = vec2(-0.70, -0.70)  # Raycast Left Back

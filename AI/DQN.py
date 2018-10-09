@@ -167,7 +167,7 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 # -------------------- DQN AGENT -----------------------
 
 # DEFAULT HYPERPARAMETERS
-BATCH_SIZE = 32
+BATCH_SIZE = 32 # Good -> 32
 # B is typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
 MEMORY_CAPACITY = 10000  # 2000
 GAMMA = 0.9  # Discount Factor
@@ -214,7 +214,7 @@ class DQN(object):
 
         # Print a summary representation of the model -- code to be deleted
         # TODO 'summary' -> code to be deleted
-        self.model.q_network.summary()
+        # self.model.q_network.summary()
 
         self.last_state = self.preprocess(np.zeros(inputCnt))
         self.last_action = 0

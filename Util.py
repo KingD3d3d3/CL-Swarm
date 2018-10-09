@@ -134,6 +134,10 @@ def distance(v1, v2):
                 (v1.y - v2.y) ** 2)
     return d
 
+def sqr_distance(v1, v2):
+    d = (v1.x - v2.x) ** 2 + (v1.y - v2.y) ** 2
+    return d
+
 def interquartile_mean(x):
     """
         Return the Interquartile Mean of given collections x

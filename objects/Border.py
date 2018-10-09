@@ -12,6 +12,7 @@ try:
 except:
     # Running in command line
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info('Running from command line -> Import libraries as package')
@@ -35,6 +36,23 @@ class Wall(object):
         vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
         pygame.draw.polygon(self.screen, self.color, vertices)
 
+class Triangle(object):
+    def __init__(self, screen=None, world=None, x=0, y=0, vertices=None, color=Color.Gray):
+        if vertices is None:
+            vertices = [(0, 0), (1, 1), (0, 1)]
+
+        self.screen = screen
+        self.body = world.CreateStaticBody(
+            position=(x, y),
+            shapes=polygonShape(vertices=vertices),
+            userData=self
+        )
+        self.color = color
+
+    def draw(self):
+        vertices = [(self.body.transform * v) * PPM for v in self.body.fixtures[0].shape.vertices]
+        vertices = [(v[0], SCREEN_HEIGHT - v[1]) for v in vertices]
+        pygame.draw.polygon(self.screen, self.color, vertices)
 
 class Border(object):
     def __init__(self, screen=None, world=None):
@@ -63,9 +81,53 @@ class Border(object):
                     width=1,
                     height=int((SCREEN_HEIGHT / PPM) / 2))
         left.id = 3
-        self.boxList = [bottom, right, top, left]
+        self.box_list = [bottom, right, top, left]
+
+        # Corner Top Left
+        top_left_trig1 = Triangle(screen=screen, world=world, vertices=[(0, 0), (2, 2), (0, 2)],
+                                 x=1, y=int((SCREEN_HEIGHT / PPM) - 3))
+        top_left_trig2 = Triangle(screen=screen, world=world, vertices=[(0, -1), (1, 2), (0, 2)],
+                            x=1, y=int((SCREEN_HEIGHT / PPM) - 3))
+        top_left_trig3 = Triangle(screen=screen, world=world, vertices=[(0, 1), (3, 2), (0, 2)],
+                            x=1, y=int((SCREEN_HEIGHT / PPM) - 3))
+
+        # Corner Top Right
+        top_right_trig1 = Triangle(screen=screen, world=world, vertices=[(0, 2), (2, 0), (2, 2)],
+                                  x=int((SCREEN_WIDTH / PPM) - 3), y=int((SCREEN_HEIGHT / PPM) - 3))
+        top_right_trig2 = Triangle(screen=screen, world=world, vertices=[(-1, 2), (2, 1), (2, 2)],
+                                   x=int((SCREEN_WIDTH / PPM) - 3), y=int((SCREEN_HEIGHT / PPM) - 3))
+        top_right_trig3 = Triangle(screen=screen, world=world, vertices=[(1, 2), (2, -1), (2, 2)],
+                                   x=int((SCREEN_WIDTH / PPM) - 3), y=int((SCREEN_HEIGHT / PPM) - 3))
+
+        # Corner Bottom Left
+        bottom_left_trig1 = Triangle(screen=screen, world=world, vertices=[(0, 0), (2, 0), (0, 2)],
+                                    x=1, y=1)
+        bottom_left_trig2 = Triangle(screen=screen, world=world, vertices=[(0, 0), (1, 0), (0, 3)],
+                            x=1, y=1)
+        bottom_left_trig3 = Triangle(screen=screen, world=world, vertices=[(0, 0), (3, 0), (0, 1)],
+                            x=1, y=1)
+
+
+
+
+        # Corner Bottom Right
+        bottom_right_trig1 = Triangle(screen=screen, world=world, vertices=[(0, 0), (2, 0), (2, 2)],
+                                     x=int((SCREEN_WIDTH / PPM) - 3), y=1)
+        bottom_right_trig2 = Triangle(screen=screen, world=world, vertices=[(-1, 0), (2, 0), (2, 1)],
+                            x=int((SCREEN_WIDTH / PPM) - 3), y=1)
+        bottom_right_trig3 = Triangle(screen=screen, world=world, vertices=[(1, 0), (2, 0), (2, 3)],
+                            x=int((SCREEN_WIDTH / PPM) - 3), y=1)
+
+
+        self.triangle_list = [top_left_trig1, top_left_trig2, top_left_trig3,
+                              top_right_trig1, top_right_trig2, top_right_trig3,
+                              bottom_left_trig1, bottom_left_trig2, bottom_left_trig3,
+                              bottom_right_trig1, bottom_right_trig2, bottom_right_trig3
+                              ]
 
     def draw(self):
-        for box in self.boxList:
+        for box in self.box_list:
             box.draw()
 
+        for triangle in self.triangle_list:
+            triangle.draw()

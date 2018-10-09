@@ -49,6 +49,8 @@ class TestbedHomingSimple(object):
             debug_homing_simple.xprint(color=PRINT_GREEN, msg="Recording to directory: {}".format(sim_dir))
         self.fixed_ur_timestep = sim_param.fixed_ur_timestep == 'True'
 
+        self.num_agents = int(sim_param.num_agents)
+
         self.training = sim_param.training == 'True'
         self.exploration = sim_param.exploration == 'True'
         self.collect_experiences = sim_param.collect_experiences == 'True'
@@ -79,7 +81,8 @@ class TestbedHomingSimple(object):
         self.record_ls = sim_param.record_ls == 'True'
 
         # Create environment
-        self.environment = EnvironmentHomingSimple(render=self.render, fixed_ur_timestep=self.fixed_ur_timestep)
+        self.environment = EnvironmentHomingSimple(render=self.render,
+                                                   fixed_ur_timestep=self.fixed_ur_timestep, num_agents=self.num_agents)
 
         # Variables
         self.running = True

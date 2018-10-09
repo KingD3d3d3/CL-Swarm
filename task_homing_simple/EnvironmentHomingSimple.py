@@ -103,8 +103,12 @@ class EnvironmentHomingSimple(object):
             angle = Util.degToRad(angleDeg)
             angle = -angle  # start by looking at goal1
             a = AgentHomingSimple(screen=self.screen, world=self.world, x=start_pos.x, y=start_pos.y, angle=angle,
-                                  radius=1.5, id=j, goals=self.goals_vec)
+                                  radius=1.5, id=j, goals=self.goals_vec, num_agents=num_agents)
             self.agents.append(a)
+
+        # Affect list of agents to each agent
+        for agent in self.agents:
+            agent.agents_list = self.agents
 
     def draw(self):
         """
@@ -147,6 +151,10 @@ class EnvironmentHomingSimple(object):
         """
         for j in xrange(len(self.agents)):
             self.agents[j].update()
+
+        # # TODO code to be deleted
+        # self.agents[1].body.position = vec2(32, 18)
+        # self.agents[1].remainStatic()
 
     def fps_physic_step(self):
         """

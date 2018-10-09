@@ -11,6 +11,9 @@ parser.add_argument('--debug', help='print simulation log', default='True')
 parser.add_argument('--record', help='record simulation log in file', default='False')
 parser.add_argument('--fixed_ur_timestep', help='fixed your timestep', default='False')
 
+
+parser.add_argument('--num_agents', help='number of agents in the simulation', default='1')
+
 parser.add_argument('--training', help='train agent', default='True')
 parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)',
                     default='True')
@@ -106,6 +109,10 @@ def simulation_suffix(sim_param):
     # Random agent
     if sim_param.random_agent == 'True':
         suffix = "random"
+
+    # Number of agents
+    if sim_param.num_agents != '1':
+        suffix += "_" + sim_param.num_agents + "agents"
 
     # General purpose suffix
     if sim_param.suffix != '' and sim_param.suffix != "":

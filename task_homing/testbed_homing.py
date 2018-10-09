@@ -313,7 +313,7 @@ class TestbedHoming(object):
         self.collision_count = count
 
         # Find the highest learning score (at least after a certain period of time)
-        if Global.timestep >= 1000:
+        if Global.timestep >= 10000: # 1000
             ls = self.environment.agents[0].learning_score()
             if self.best_ls < ls:
                 self.best_ls = ls
@@ -344,24 +344,24 @@ class TestbedHoming(object):
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
 
         # # ----------------------------------------------------------------------------------
-        # # TODO code to be deleted
-        # if self.environment.agents[0].training_iterations() >= 10000 and self.environment.agents[0].learning_score() >= 0.089:
-        #     printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
-        #                    "{:>25s}".format(
-        #                        "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
-        #                    ", tmstp: {:10.0f}".format(Global.timestep) +
-        #                    ", t: {}".format(Global.get_time()))
-        #     self.running = False
-        #     self.environment.agents[0].save_brain(dir=self.brain_dir)
-        #     self.end_simulation()
-        #
-        #     printColor(color=PRINT_RED, msg="BRUTE FORCE EXIT")
-        #
-        #     # End the game !
-        #     pygame.quit()
-        #     exit()
-        #     sys.exit()
-        # # ----------------------------------------------------------------------------------
+        # TODO code to be deleted
+        if self.environment.agents[0].training_iterations() >= 10000 and self.environment.agents[0].learning_score() >= 0.084:
+            printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+                           "{:>25s}".format(
+                               "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
+                           ", tmstp: {:10.0f}".format(Global.timestep) +
+                           ", t: {}".format(Global.get_time()))
+            self.running = False
+            self.environment.agents[0].save_brain(dir=self.brain_dir)
+            self.end_simulation()
+
+            printColor(color=PRINT_RED, msg="BRUTE FORCE EXIT")
+
+            # End the game !
+            pygame.quit()
+            exit()
+            sys.exit()
+        # ----------------------------------------------------------------------------------
 
 
         # Reached max number of training timesteps
