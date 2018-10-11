@@ -347,6 +347,9 @@ class DQN(object):
         self.memory.push(sample)
 
     def replay(self):
+        """
+            DQN algorithm
+        """
         # If not training then return
         if not self.training:
             return
@@ -369,25 +372,39 @@ class DQN(object):
         batch_state, batch_action, batch_reward, batch_next_state = batch
 
         batch_state = np.array(batch_state).squeeze(axis=1)
-        q_values = self.model.predict(batch_state, batch_len=self.batch_size)
+        q = self.model.predict(batch_state, batch_len=self.batch_size)
 
         batch_next_state = np.array(batch_next_state).squeeze(axis=1)
-        q_values_target = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
+        q_next_target = self.model.predict(batch_next_state, batch_len=self.batch_size, target=True)
 
         batch_reward = np.array(batch_reward)
-
-        # Optimization -> Matrix form
         X = batch_state
-        target = batch_reward + self.gamma * np.amax(q_values_target, axis=1)
+
+        # ----------------- DQN ------------------------------
+        labels = batch_reward + self.gamma * np.amax(q_next_target, axis=1)
+        # ---------------------------------------------------
+
+
+        # #  ----------------- DDQN -----------------------------------------
+        # q_next = self.model.predict(batch_next_state, batch_len=self.batch_size, target=False)
+        #
+        # # Double DQN
+        # indices = np.argmax(q_next, axis=1)
+        # indices = np.expand_dims(indices, axis=0)  # need to add 1 dimension to be 2D array
+        # taken = np.take_along_axis(q_next_target, indices.T, axis=1).squeeze(axis=1)
+        # labels = batch_reward + self.gamma * taken
+        # # ----------------------------------------------------------------------
+
         for i in xrange(self.batch_size):
             a = batch_action[i]
-            q_values[i][a] = target[i]
-        Y = q_values
+            q[i][a] = labels[i]
+        Y = q
 
         self.model.train(X, Y, batch_len=self.batch_size)
 
         # Increment training iterations counter
         self.training_iterations += 1
+
 
     def update_epsilon(self):
 
