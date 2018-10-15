@@ -169,16 +169,15 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 # DEFAULT HYPERPARAMETERS
 BATCH_SIZE = 32 # Good -> 32
 # B is typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
-MEMORY_CAPACITY = 10000  # 2000
-GAMMA = 0.9  # Discount Factor
-LEARNING_RATE = 0.001 # 0.01
-#TAU = 0.01  # 0.1 # update target network rate
-UPDATE_TARGET_STEPS = 1000 # 500 # 1 / TAU # every 1000 now # before was 100, too fast
+MEMORY_CAPACITY = 100000  # 2000
+GAMMA = 0.99  # Discount Factor
+LEARNING_RATE = 0.001
+UPDATE_TARGET_STEPS = 1000 # update target network rate every given timesteps
 INITIAL_EPSILON = 1.0  # Initial value of epsilon in epsilon-greedy during training
-FINAL_EPSILON = 0.1  # Final value of epsilon in epsilon-greedy during training
+FINAL_EPSILON = 0.05  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
 EPSILON_STEPS = (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORATION_STEPS
-EPSILON_EXPLOIT = 0.05 # FINAL_EPSILON # 0.05 # epsilon value during testing
+EPSILON_EXPLOIT = 0.01 # 0.05 # FINAL_EPSILON # epsilon value during testing
 
 class DQN(object):
     def __init__(self, inputCnt, actionCnt, brain_file="", id=-1, ratio_update=1, training=True, random_agent=False,
@@ -381,18 +380,18 @@ class DQN(object):
         X = batch_state
 
         # ----------------- DQN ------------------------------
-        labels = batch_reward + self.gamma * np.amax(q_next_target, axis=1)
+        # labels = batch_reward + self.gamma * np.amax(q_next_target, axis=1)
         # ---------------------------------------------------
 
 
         # #  ----------------- DDQN -----------------------------------------
-        # q_next = self.model.predict(batch_next_state, batch_len=self.batch_size, target=False)
-        #
-        # # Double DQN
-        # indices = np.argmax(q_next, axis=1)
-        # indices = np.expand_dims(indices, axis=0)  # need to add 1 dimension to be 2D array
-        # taken = np.take_along_axis(q_next_target, indices.T, axis=1).squeeze(axis=1)
-        # labels = batch_reward + self.gamma * taken
+        q_next = self.model.predict(batch_next_state, batch_len=self.batch_size, target=False)
+
+        # Double DQN
+        indices = np.argmax(q_next, axis=1)
+        indices = np.expand_dims(indices, axis=0)  # need to add 1 dimension to be 2D array
+        taken = np.take_along_axis(q_next_target, indices.T, axis=1).squeeze(axis=1)
+        labels = batch_reward + self.gamma * taken
         # # ----------------------------------------------------------------------
 
         for i in xrange(self.batch_size):

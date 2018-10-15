@@ -259,6 +259,11 @@ class TestbedHomingSimple(object):
                 """
                 self.environment.agents[0].load_h1h2_weights(self.file_to_load)
                 self.environment.agents[0].stop_training()
+            if event.type == KEYDOWN and event.key == K_y:
+                """
+                    Y: Stop training only Exploit
+                """
+                self.environment.agents[0].stop_training()
 
     def run_simulation(self):
         """"

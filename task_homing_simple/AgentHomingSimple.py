@@ -57,8 +57,8 @@ class DQNHomingSimple(DQN):
 
         model = Sequential()
 
-        h1 = 8  # 1st hidden layer's size
-        h2 = 5  # 2nd hidden layer's size
+        h1 = 24 # 8  # 1st hidden layer's size
+        h2 = 24 # 5  # 2nd hidden layer's size
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden
         model.add(Activation('relu'))
@@ -92,8 +92,8 @@ class Action(Enum):
 class Reward:
 
     GETTING_CLOSER = 0.1
-    LIVING_PENALTY = 0.  # -0.01 # 0 #-0.5
-    GOAL_REACHED = 0.  # 1.0 # 10.0 # useless reward
+    LIVING_PENALTY = -1.  # -0.01 # 0 #-0.5
+    GOAL_REACHED = 0.  # 1.0 # 10.0
 
     @classmethod
     def getting_closer(cls, angle):
@@ -103,7 +103,7 @@ class Reward:
             angle_travelled = 45 deg -> reward = 0.1 * sqrt(2) / 2 = 0.07
             angle_travelled = 90 deg -> reward = 0
         """
-        reward = Reward.GETTING_CLOSER * np.cos(angle)
+        reward = Reward.GETTING_CLOSER # * np.cos(angle)
         return reward
 
 
@@ -145,6 +145,9 @@ class AgentHomingSimple(Agent):
         # Meeting with Agents
         self.elapsed_timestep_meetings = np.zeros(num_agents)  # timestep passed between meetings
         self.start_timestep_meetings = np.zeros(num_agents)  # start timestep since a meeting
+
+        # Terminal state : reaching goal
+        self.reached_goal = False
 
     def setup(self, training=True, random_agent=False):
 
@@ -299,6 +302,7 @@ class AgentHomingSimple(Agent):
         flagGR = False
         if self.distance < self.goalReachedThreshold:
             flagGR = True
+            return 0.0
 
         # Overall reward
         reward = flagGC * getting_closer + flagGR * Reward.GOAL_REACHED + Reward.LIVING_PENALTY
@@ -312,7 +316,11 @@ class AgentHomingSimple(Agent):
         super(AgentHomingSimple, self).update()
 
         # Orientation to the goal
-        orientation = self.orientationToGoal()
+        if self.reached_goal:
+            orientation = 0.0
+            self.reached_goal = False
+        else:
+            orientation = self.orientationToGoal()
 
         # Agent's signal
         last_signal = np.asarray([orientation])
@@ -332,6 +340,7 @@ class AgentHomingSimple(Agent):
 
         # Reached Goal
         if self.distance < self.goalReachedThreshold:
+            self.reached_goal = True
             self.computeGoalReached()
 
         # TODO : Check distance to others agents
