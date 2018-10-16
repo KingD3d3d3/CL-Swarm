@@ -240,7 +240,6 @@ class AgentHoming(Agent):
                          worldToPixels(self.raycastRight_point2))  # draw the raycast
 
     def readSensors(self):
-        # TODO refactor raycast method, multiple copies of the same code
 
         # Raycast Left
         rayCastLeft = RayCastCallback()

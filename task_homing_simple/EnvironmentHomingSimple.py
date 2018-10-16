@@ -152,7 +152,7 @@ class EnvironmentHomingSimple(object):
         for j in xrange(len(self.agents)):
             self.agents[j].update()
 
-        # # TODO code to be deleted
+        # # TODO quick test with static agent in the middle of environment
         # self.agents[1].body.position = vec2(32, 18)
         # self.agents[1].remainStatic()
 

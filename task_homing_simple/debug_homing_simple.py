@@ -56,7 +56,7 @@ def printEvent(color="", agent=None, event_message=""):
            "t: {}"
            .format(
                Global.timestep,
-               agent.training_iterations(),
+               agent.training_it(),
                agent.goalReachedCount,
                agent.elapsedTimestep,
                agent.learning_score(),

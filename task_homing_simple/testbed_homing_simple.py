@@ -333,13 +333,13 @@ class TestbedHomingSimple(object):
 
         # Save neural networks model frequently based on training iterations
         if global_homing_simple.record and self.save_network_freq_training_it != -1:
-            training_it = self.environment.agents[0].training_iterations()
+            training_it = self.environment.agents[0].training_it()
             if training_it != 0 and training_it >= self.start_save_nn_from_it and training_it % self.save_network_freq_training_it == 0:
                 it = str(training_it) + 'it_'
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
 
         # Reached max number of training timesteps
-        if self.max_training_it != -1 and self.environment.agents[0].training_iterations() >= self.max_training_it:
+        if self.max_training_it != -1 and self.environment.agents[0].training_it() >= self.max_training_it:
 
             # Find the highest learning score
             ls = self.environment.agents[0].learning_score()
@@ -375,7 +375,7 @@ class TestbedHomingSimple(object):
                 printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                                "{:>25s}".format(
                                    "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
-                               ", training_it: {:10.0f}".format(self.environment.agents[0].training_iterations()) +
+                               ", training_it: {:10.0f}".format(self.environment.agents[0].training_it()) +
                                ", tmstp: {:10.0f}".format(Global.timestep) +
                                ", t: {}".format(Global.get_time()))
                 self.running = False
@@ -386,8 +386,8 @@ class TestbedHomingSimple(object):
                 self.running = True
 
                 # Reset brain every 150000 training it
-                if self.environment.agents[0].training_iterations() != 0 \
-                        and self.environment.agents[0].training_iterations() % 150000 == 0:
+                if self.environment.agents[0].training_it() != 0 \
+                        and self.environment.agents[0].training_it() % 150000 == 0:
                     self.environment.agents[0].reset_brain()
 
     def end_simulation(self):

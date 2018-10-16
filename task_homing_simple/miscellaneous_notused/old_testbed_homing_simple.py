@@ -360,13 +360,13 @@ class TestbedHomingSimple(object):
 
         # Save neural networks model frequently based on training iterations
         if self.save_network_freq_training_it != -1:
-            training_it = self.agents[0].training_iterations()
+            training_it = self.agents[0].training_it()
             if training_it != 0 and training_it % self.save_network_freq_training_it == 0:
                 suff = '_' + str(training_it) + "it"
                 self.agents[0].save_model(dir=self.brain_dir, suffix=self.suffix + suff)
 
         # Reached max number of training timesteps
-        if self.max_training_it != -1 and self.agents[0].training_iterations() >= self.max_training_it:
+        if self.max_training_it != -1 and self.agents[0].training_it() >= self.max_training_it:
             printColor(msg="Agent: {:3.0f}, ".format(self.agents[0].id) +
                            "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
                            ", tmstp: {:10.0f}".format(Global.timestep) +

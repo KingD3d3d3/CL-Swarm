@@ -57,8 +57,8 @@ class DQNHomingSimple(DQN):
 
         model = Sequential()
 
-        h1 = 24 # 8  # 1st hidden layer's size
-        h2 = 24 # 5  # 2nd hidden layer's size
+        h1 = 8 # 24 # 8  # 1st hidden layer's size
+        h2 = 8 # 24 # 5  # 2nd hidden layer's size
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden
         model.add(Activation('relu'))
@@ -130,11 +130,14 @@ class AgentHomingSimple(Agent):
         self.elapsedTime = 0.00
         self.elapsedTimestep = 0
 
-        self.last_reward = 0.0  # last agent's reward
         self.last_distance = 0.0  # last agent's distance to the goal
         self.distance = self.distanceToGoal()  # 0.0  # current distance to the goal
         self.last_position = vec2(self.body.position.x, self.body.position.y)  # keep track of previous position
         self.last_orientation = self.orientationToGoal()
+        self.ready_observe = False # flag that tells if agent receive reward and new state at the beginning
+        self.reward = None  # last agent's reward
+        self.action = None
+        self.state = None
 
         # Number of agents
         self.num_agents = num_agents
@@ -160,7 +163,8 @@ class AgentHomingSimple(Agent):
 
         # Create agent's brain
         self.brain = DQNHomingSimple(inputCnt=self.input_size, actionCnt=len(list(Action)), id=self.id,
-                                     ratio_update=1, training=self.training, random_agent=self.random_agent)
+                                     training=self.training, random_agent=self.random_agent, ratio_train=1,
+                                     batch_size=32, gamma=0.99)
 
         # Set agent's position : Start from goal 2
         start_pos = self.goals[1]
@@ -173,6 +177,10 @@ class AgentHomingSimple(Agent):
         angle = Util.degToRad(angleDeg)
         angle = -angle
         self.body.angle = angle
+
+        # Initial state
+        observation = np.asarray([self.orientationToGoal()])
+        self.state = self.brain.preprocess(observation)
 
         # -------------------- Reset agent's variables --------------------
 
@@ -190,7 +198,8 @@ class AgentHomingSimple(Agent):
         self.elapsedTime = 0.00
         self.elapsedTimestep = 0
 
-        self.last_reward = 0.0
+        self.ready_observe = False
+        self.reward = 0.0
         self.last_distance = 0.0
         self.distance = self.distanceToGoal() # current distance to the goal
         self.last_position = vec2(self.body.position.x, self.body.position.y)
@@ -314,6 +323,7 @@ class AgentHomingSimple(Agent):
             Main function of the agent
         """
         super(AgentHomingSimple, self).update()
+        # TODO refactor agent homing task to work with updated DQN code
 
         # Orientation to the goal
         if self.reached_goal:
@@ -322,13 +332,13 @@ class AgentHomingSimple(Agent):
         else:
             orientation = self.orientationToGoal()
 
-        # Agent's signal
-        last_signal = np.asarray([orientation])
+        # Agent's observation
+        observation = np.asarray([orientation])
 
         # Select action using AI
-        action_num = self.brain.update(self.last_reward, last_signal)
+        action = self.update_brain(self.reward, observation)
         self.updateFriction()
-        self.updateDrive(Action(action_num))
+        self.updateDrive(Action(action))
         # self.updateManualDrive()
         # self.remainStatic()
 
@@ -336,7 +346,7 @@ class AgentHomingSimple(Agent):
         self.distance = self.distanceToGoal()
 
         # Agent's Reward
-        self.last_reward = self.rewardFunction()
+        self.reward = self.rewardFunction()
 
         # Reached Goal
         if self.distance < self.goalReachedThreshold:
@@ -361,6 +371,46 @@ class AgentHomingSimple(Agent):
         self.elapsedTimestep = Global.timestep - self.startTimestep
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.body.angle
+        self.action = action
+        self.ready_observe = True
+
+    def update_brain(self, reward, observation, done=False):
+        """
+            Main function of the agent's brain
+            Return the action to be performed
+        """
+        if self.ready_observe:
+            new_state = self.brain.preprocess(observation)
+            experience = (self.state, self.action, self.reward, new_state, done)
+
+            # Add new experience to memory
+            self.brain.record(experience)
+
+            # Update variable's states
+            self.state = new_state
+            self.reward = reward
+
+            # Training
+            self.brain.train()
+
+        # Select action
+        action = self.brain.select_action(self.state)
+
+        # Append reward
+        self.brain.reward_window.append(reward)
+
+        return action
+
+
+
+
+
+
+
+
+
+
+
 
     def is_timestep_meeting_allowed(self, other_agent):
         """

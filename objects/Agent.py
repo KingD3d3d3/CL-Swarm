@@ -34,11 +34,6 @@ except:
     from .. import Global
     from ..res.print_colors import printColor
 
-moveTicker = 0
-prev_angle = 999
-go_print_Turn = False
-prev_turned_angle = 0
-
 
 class Agent(object):
     def __init__(self, screen=None, world=None, x=0, y=0, angle=0, radius=1.5):
@@ -105,60 +100,6 @@ class Agent(object):
             print('training FLAG wasnt the same')
             self.stop_training()
 
-    def updateManualDriveTestAngle(self, angle):
-        speed = self.speed
-        global moveTicker
-        global prev_angle
-        global go_print_Turn
-        global prev_turned_angle
-
-        if go_print_Turn:
-            myAngle = Util.radToDeg(self.body.angle % (2 * pi))
-            turned_angle = myAngle - prev_angle
-            print('bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
-                                                                            prev_angle,
-                                                                            turned_angle))
-            go_print_Turn = False
-
-        myAngle = Util.radToDeg(self.body.angle % (2 * pi))
-        turned_angle = myAngle - prev_angle
-        if not (prev_turned_angle - 0.1 <= turned_angle <= prev_turned_angle or
-                prev_turned_angle <= turned_angle <= prev_turned_angle + 0.1):
-            print('### bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
-                                                                                prev_angle,
-                                                                                turned_angle))
-        prev_turned_angle = turned_angle
-
-        key = pygame.key.get_pressed()
-        if key[K_LEFT]:  # Turn Left
-            if moveTicker == 0:
-                self.body.angularVelocity = angle
-                prev_angle = Util.radToDeg(self.body.angle % (2 * pi))
-                print('left pressed')
-                go_print_Turn = True
-            moveTicker += 1
-
-            if moveTicker > 60:
-                moveTicker = 0
-            pass
-        if key[K_RIGHT]:  # Turn Right
-            if moveTicker == 0:
-                self.body.angularVelocity = -angle
-                prev_angle = Util.radToDeg(self.body.angle % (2 * pi))
-                print('right pressed')
-                go_print_Turn = True
-            moveTicker += 1
-
-            if moveTicker > 60:
-                moveTicker = 0
-            pass
-        if key[K_SPACE]:  # Break
-            speed = 0
-            pass
-
-        forward_vec = self.body.GetWorldVector((0, 1))
-        self.body.linearVelocity = forward_vec * speed
-
     def updateManualDrive(self):
         speed = self.speed
         move = True
@@ -181,7 +122,6 @@ class Agent(object):
         else:
             impulse = -self.getForwardVelocity() * self.body.mass * (2. / 3.)
             self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill forward
-
 
     def draw(self):
         position = self.body.transform * self.fixture.shape.pos * PPM
@@ -398,11 +338,11 @@ class Agent(object):
         """
         self.brain.stop_collect_experiences()
 
-    def training_iterations(self):
+    def training_it(self):
         """
             Return the agent's number of training iterations
         """
-        return self.brain.training_iterations
+        return self.brain.training_it
 
     def go_random_agent(self):
         """
@@ -413,3 +353,75 @@ class Agent(object):
 
     def reset_brain(self):
         self.brain.reset_brain()
+
+
+
+
+
+
+
+
+
+
+
+
+# -------------------------------------- Old dirty code ------------------------------------------------------------
+
+    def updateManualDriveTestAngle(self, angle):
+        speed = self.speed
+        global moveTicker
+        global prev_angle
+        global go_print_Turn
+        global prev_turned_angle
+
+        if go_print_Turn:
+            myAngle = Util.radToDeg(self.body.angle % (2 * pi))
+            turned_angle = myAngle - prev_angle
+            print('bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
+                                                                            prev_angle,
+                                                                            turned_angle))
+            go_print_Turn = False
+
+        myAngle = Util.radToDeg(self.body.angle % (2 * pi))
+        turned_angle = myAngle - prev_angle
+        if not (prev_turned_angle - 0.1 <= turned_angle <= prev_turned_angle or
+                prev_turned_angle <= turned_angle <= prev_turned_angle + 0.1):
+            print('### bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
+                                                                                prev_angle,
+                                                                                turned_angle))
+        prev_turned_angle = turned_angle
+
+        key = pygame.key.get_pressed()
+        if key[K_LEFT]:  # Turn Left
+            if moveTicker == 0:
+                self.body.angularVelocity = angle
+                prev_angle = Util.radToDeg(self.body.angle % (2 * pi))
+                print('left pressed')
+                go_print_Turn = True
+            moveTicker += 1
+
+            if moveTicker > 60:
+                moveTicker = 0
+            pass
+        if key[K_RIGHT]:  # Turn Right
+            if moveTicker == 0:
+                self.body.angularVelocity = -angle
+                prev_angle = Util.radToDeg(self.body.angle % (2 * pi))
+                print('right pressed')
+                go_print_Turn = True
+            moveTicker += 1
+
+            if moveTicker > 60:
+                moveTicker = 0
+            pass
+        if key[K_SPACE]:  # Break
+            speed = 0
+            pass
+
+        forward_vec = self.body.GetWorldVector((0, 1))
+        self.body.linearVelocity = forward_vec * speed
+
+moveTicker = 0
+prev_angle = 999
+go_print_Turn = False
+prev_turned_angle = 0

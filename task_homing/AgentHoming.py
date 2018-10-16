@@ -61,18 +61,12 @@ class DQNHoming(DQN):
             # Default values -- need to find the good hyperparam
             h1 = 24  # 1st hidden layer's size
             h2 = 16  # 2nd hidden layer's size
-            # TODO testing with 3 hidden layers
-            h3 = 5   # 3nd hidden layer's size
 
         model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden
         model.add(Activation('relu'))
 
         if h2 != 0:
             model.add(Dense(h2))  # hidden -> hidden
-            model.add(Activation('relu'))
-
-        if h3 != 0:
-            model.add(Dense(h3))  # hidden -> hidden
             model.add(Activation('relu'))
 
         model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
