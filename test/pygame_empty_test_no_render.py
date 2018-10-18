@@ -1,11 +1,11 @@
-from __future__ import division
+
 
 import pygame
 from pygame.locals import *
 import math
 
 def slowFunction():
-    for i in xrange(50000):
+    for i in range(50000):
         a = math.sqrt(9123456)
 
 if __name__ == '__main__':

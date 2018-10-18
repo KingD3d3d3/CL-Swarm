@@ -1,4 +1,4 @@
-from __future__ import division
+
 import sys
 
 try:
@@ -7,13 +7,14 @@ try:
     from res.print_colors import *
     import Util
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     import global_homing_simple
     from ..res.print_colors import *
     from .. import Util

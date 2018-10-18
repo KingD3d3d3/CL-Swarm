@@ -1,4 +1,4 @@
-from __future__ import division
+
 import random
 import sys
 
@@ -21,12 +21,13 @@ try:
     import Util
     from res.print_colors import printColor
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from ..res import colors as Color
     from ..Setup import *
     from ..Util import worldToPixels

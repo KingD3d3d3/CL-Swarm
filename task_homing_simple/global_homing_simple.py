@@ -1,4 +1,4 @@
-from __future__ import division
+
 import os
 import errno
 import time
@@ -6,7 +6,8 @@ import time
 try:
     import Util
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     from .. import Util
     from .. import Global
 

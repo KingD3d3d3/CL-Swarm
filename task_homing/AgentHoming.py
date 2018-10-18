@@ -1,4 +1,4 @@
-from __future__ import division
+
 import numpy as np
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
@@ -31,13 +31,14 @@ try:
     import debug_homing
     import global_homing
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from ..res import colors as Color
     from ..AI.DQN import DQN
     from ..objects.Agent import Agent
@@ -62,14 +63,14 @@ class DQNHoming(DQN):
             h1 = 24  # 1st hidden layer's size
             h2 = 16  # 2nd hidden layer's size
 
-        model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden
+        model.add(Dense(h1, input_dim=self.input_size))  # input -> hidden
         model.add(Activation('relu'))
 
         if h2 != 0:
             model.add(Dense(h2))  # hidden -> hidden
             model.add(Activation('relu'))
 
-        model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
+        model.add(Dense(self.action_size, activation='linear'))  # hidden -> output
 
         # Optimizer
         optimizer = Adam(lr=self.lr)
@@ -289,7 +290,7 @@ class AgentHoming(Agent):
         self.screen.blit(idText, idPos)
 
         # Draw raycasts
-        for i in xrange(self.numSensors):
+        for i in range(self.numSensors):
             v = self.body.GetWorldVector(self.raycast_vectors[i])
             p1 = self.body.worldCenter + v * self.radius
             p2 = p1 + v * self.raycastLength
@@ -302,7 +303,7 @@ class AgentHoming(Agent):
     def readSensors(self):
 
         # Read raycasts value
-        for i in xrange(self.numSensors):
+        for i in range(self.numSensors):
             raycast = RayCastCallback()
             v = self.body.GetWorldVector(self.raycast_vectors[i])
             p1 = self.body.worldCenter + v * self.radius
@@ -435,7 +436,7 @@ class AgentHoming(Agent):
         self.readSensors()
 
         # Normalize sensor's value
-        for i in xrange(self.numSensors):
+        for i in range(self.numSensors):
             normed_sensor = self.normalizeSensorsValue(self.sensors[i])
             last_signal.append(normed_sensor)
 

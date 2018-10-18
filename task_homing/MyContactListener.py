@@ -1,4 +1,4 @@
-from __future__ import division
+
 from Box2D.b2 import (world, polygonShape, vec2, contactListener)
 import pygame, sys
 
@@ -11,12 +11,13 @@ try:
     import debug_homing
     import global_homing
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from ..res import colors as Color
     from ..objects.Circle import StaticCircle
     from .AgentHoming import AgentHoming

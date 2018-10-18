@@ -1,31 +1,67 @@
-from __future__ import division
+
 import numpy as np
 import random
 from collections import deque
 from keras.models import load_model, clone_model
 import csv
+from keras.models import Sequential
+from keras.layers import Dense
 import pandas as pd
 import sklearn.utils
 from keras.optimizers import Adam
+import os
+import errno
 try:
     from res.print_colors import *
     import Global
-except:
+    import Util
+except NameError as err:
+    print(err, "--> our error message")
     from ..res.print_colors import *
     from .. import Global
+    from .. import Util
+
+
+# DEFAULT HYPERPARAMETERS
+H1 = 64 # number of neurons in the 1st hidden layer
+H2 = 64 # number of neurons in the 2nd hidden layer
+BATCH_SIZE = 32 # Typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
+MEMORY_CAPACITY = 100000  # 2000
+GAMMA = 0.99  # Discount Factor
+LEARNING_RATE = 0.001 # default Adam optimizer learning rate value
+UPDATE_TARGET_STEPS = 1000 # update target network rate every given timesteps
+EPSILON_START = 1.  # Initial value of epsilon in epsilon-greedy during training
+EPSILON_END = 0.1  # Final value of epsilon in epsilon-greedy during training
+EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
+EPSILON_TEST = 0.05 # 0.05 # FINAL_EPSILON # epsilon value during testing after training is done
 
 # -------------------- MODEL -------------------------
 
 class Model(object):
-    def __init__(self, inputCnt, actionCnt):
-        self.inputCnt = inputCnt
-        self.actionCnt = actionCnt
+    def __init__(self, input_size, output_size, h1=H1, h2=H2, lr=LEARNING_RATE):
 
-        # Q-Network
-        self.q_network = None
+        self.input_size = input_size
+        self.output_size = output_size
+        self.h1 = h1
+        self.h2 = h2
+        self.lr = lr
 
-        # Target Network
-        self.target_network = None
+        self.q_network = self.build_model() # Q-Network
+        self.target_network = self.build_model() # Target Network
+
+        self.dummy_processing() # prevent training freeze
+
+    def build_model(self):
+        model = Sequential()  # Sequential() creates the foundation of the layers.
+
+        # 'Dense' define fully connected layers
+        model.add(Dense(self.h1, activation='relu', input_dim=self.input_size))   # 1st hidden layer
+        if self.h2:
+            model.add(Dense(self.h2, activation='relu'))                     # 2nd hidden layer
+        model.add(Dense(self.output_size, activation='linear'))              # Output layer
+        model.compile(loss='mse', optimizer=Adam(lr=self.lr))  # Adam optimizer for stochastic gradient descent
+
+        return model
 
     def train(self, x, y, nb_epochs=1, verbose=0, batch_len=1):
         """
@@ -44,6 +80,18 @@ class Model(object):
         else:
             # Predict from Q-network
             return self.q_network.predict(state, batch_size=batch_len)
+
+    def dummy_processing(self):
+        """
+            Dummy Neural Network Processing to avoid the freeze when training starts
+        """
+        zeros_state = np.zeros([1, self.input_size])
+        zeros_x = np.zeros((1, self.input_size))
+        zeros_y = np.zeros((1, self.output_size))
+
+        self.predict(zeros_state)
+        self.predict(zeros_state, target=True)
+        self.train(zeros_x, zeros_y)
 
     def update_target_network(self):
         """
@@ -68,13 +116,13 @@ class Model(object):
         """
             Set h2 weights of Q-Network and Target-Network
         """
-        self.set_weights_by_layer(weights, 2)
+        self.set_weights_by_layer(weights, 1)
 
     def set_out_weights(self, weights):
         """
             Set output weights of Q-Network and Target-Network
         """
-        self.set_weights_by_layer(weights, 4)
+        self.set_weights_by_layer(weights, 2)
 
     def set_h1h2_weights(self, weights_h1, weights_h2):
         """
@@ -105,13 +153,8 @@ class Model(object):
             (i.e., the weights have the same distribution along each dimension).
             Credit: https://gist.github.com/jkleint/eb6dc49c861a1c21b612b568dd188668
         """
-        # Get weights
-        weights = self.q_network.get_weights()
-        # t_weights = self.target_network.get_weights()
-
-        # Randomize
-        weights = [np.random.permutation(w.flat).reshape(w.shape) for w in weights]
-        # t_weights = [np.random.permutation(w.flat).reshape(w.shape) for w in t_weights]
+        weights = self.q_network.get_weights() # Get weights
+        weights = [np.random.permutation(w.flat).reshape(w.shape) for w in weights] # Randomize
 
         # Apply to networks
         self.q_network.set_weights(weights)
@@ -124,6 +167,10 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
     def __init__(self, capacity):
         self.capacity = capacity # max capacity of container
         self.samples = deque(maxlen=capacity) # container of experiences (queue)
+
+        # TODO : verify it is a random seed for each instance
+        random.seed()
+        np.random.seed()
 
     def push(self, sample):
         """
@@ -160,22 +207,16 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 
 # -------------------- DQN AGENT -----------------------
 
-# DEFAULT HYPERPARAMETERS
-BATCH_SIZE = 32 # Typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
-MEMORY_CAPACITY = 100000  # 2000
-GAMMA = 0.99  # Discount Factor
-LEARNING_RATE = 0.001 # default Adam optimizer learning rate value
-UPDATE_TARGET_STEPS = 1000 # update target network rate every given timesteps
-EPSILON_START = 1.0  # Initial value of epsilon in epsilon-greedy during training
-EPSILON_END = 0.05  # Final value of epsilon in epsilon-greedy during training
-EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
-EPSILON_TEST = 0.01 # 0.05 # FINAL_EPSILON # epsilon value during testing after training is done
-
 class DQN(object):
-    def __init__(self, inputCnt, actionCnt, id=-1, training=True, random_agent=False, ratio_train=1, brain_file="",
-                 h1=-1, h2=-1, batch_size=BATCH_SIZE, mem_capacity=MEMORY_CAPACITY, gamma=GAMMA, lr=LEARNING_RATE,
+
+    def __init__(self, input_size, action_size, id=-1, training=True, random_agent=False, ratio_train=1, brain_file="",
+                 h1=H1, h2=H2, mem_capacity=MEMORY_CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, lr=LEARNING_RATE,
                  update_target_steps=UPDATE_TARGET_STEPS, eps_start=EPSILON_START, eps_end=EPSILON_END, eps_test=EPSILON_TEST,
                  exploration_steps=EXPLORATION_STEPS, use_double_dqn=True, use_prioritized_experience_replay=False):
+
+        # TODO : verify it is a random seed for each instance
+        random.seed()
+        np.random.seed()
 
         # Agent's ID
         self.id = id
@@ -198,29 +239,17 @@ class DQN(object):
         self.eps_decay = (eps_start - eps_end) / exploration_steps
 
         # Input - Output
-        self.inputCnt = inputCnt
-        self.actionCnt = actionCnt
+        self.input_size = input_size
+        self.action_size = action_size
 
-        # Instantiate the model
-        self.model = Model(inputCnt, actionCnt)
+        # Create the model
+        self.model = Model(input_size=input_size, output_size=action_size, h1=h1, h2=h2, lr=lr)
 
         # Create the memory Experience Replay
         self.memory = Memory(mem_capacity)
 
         # File to be used when saving the model
         self.model_file = brain_file
-
-        # Build Q-network and Target-network
-        self.model.q_network = self.build_model(h1, h2)
-        self.model.target_network = self.build_model(h1, h2)
-
-        # Dummy Neural Network Processing, to avoid the freeze at the beginning of training
-        self.zeros_state = np.zeros([1, inputCnt])
-        self.zeros_x = np.zeros((1, inputCnt))
-        self.zeros_y = np.zeros((1, actionCnt))
-        self.model.predict(self.zeros_state)
-        self.model.predict(self.zeros_state, target=True)
-        self.model.train(self.zeros_x, self.zeros_y)
 
         # Count the number of training iterations
         self.training_it = 0
@@ -247,28 +276,19 @@ class DQN(object):
         # Print summary of the DQN config
         self.summary_config()
 
-        # self.last_state = self.preprocess(np.zeros(inputCnt))
-        # self.last_action = 0
-        # self.last_reward = 0.0
-        # self.reward_window = deque(maxlen=1000)
-
-    def build_model(self, h1=-1, h2=-1):
-        raise NotImplementedError("Build model method not implemented")
-
     def summary_config(self):
 
-        print("#####################################")
-        print("#### Summary of DQN agent config ####")
-        print("#####################################\n")
+        print("_________________________________________________________________")
+        print("*** Summary of DQN agent config ***\n")
 
-        print("Input: {}".format(self.inputCnt))
-        print("Action: {}".format(self.actionCnt))
+        print("Input: {}".format(self.input_size))
+        print("Action: {}".format(self.action_size))
         print("Training: {}".format(self.training))
         print("Random agent: {}".format(self.random_agent))
         print("Ratio update: {}".format(self.ratio_train))
 
         print("\n----------------")
-        print("Hyperparameters:\n")
+        print("Hyperparameters\n")
 
         print("batch size: {}".format(self.batch_size))
         print("memory capacity: {}".format(self.mem_capacity))
@@ -284,7 +304,7 @@ class DQN(object):
         print("use prioritized experience replay: {}".format(self.use_prioritized_experience_replay))
 
         print("\n-----------------------")
-        print("Neural network summary:")
+        print("Neural network summary")
         self.model.q_network.summary()
 
     def preprocess(self, observation):
@@ -293,7 +313,7 @@ class DQN(object):
             Add 1 dimension for batching
         """
         # Input shape in Keras : (batch_size, input_dim)
-        return np.reshape(observation, [1, self.inputCnt])  # need to add 1 dimension when batching
+        return np.reshape(observation, [1, self.input_size])  # need to add 1 dimension when batching
 
     def select_action(self, state):
         """
@@ -303,12 +323,12 @@ class DQN(object):
         """
         # Random agent
         if self.random_agent:
-            random_action = np.random.randint(0, self.actionCnt)
+            random_action = np.random.randint(0, self.action_size)
             return random_action
 
         # Epsilon greedy
         if np.random.rand() < self.eps:
-            return np.random.randint(0, self.actionCnt)
+            return np.random.randint(0, self.action_size)
 
         action_values = self.model.predict(state)
         return np.argmax(action_values[0])
@@ -325,9 +345,10 @@ class DQN(object):
             Main training function of DQN agent
         """
         # Training
-        if self.training and len(self.memory.samples) >= self.batch_size and self.update_counter % self.ratio_train == 0:
+        if self.training and len(self.memory.samples) >= self.batch_size: # and self.update_counter % self.ratio_train == 0:
             self.replay() # replay from memory
             self.update_epsilon()
+            self.training_it += 1  # increment training iterations counter
 
             # Update target network
             if self.training_it != 0 and self.training_it % self.update_target_steps == 0:
@@ -340,6 +361,10 @@ class DQN(object):
             DQN algorithm
             Sample minibatch from memory and perform gradient descent
         """
+        # If not enough sample in memory
+        if len(self.memory.samples) < self.batch_size:
+            return
+
         # Print "time to learn" event
         if not self.printTimeToLearn:
             printColor(color=PRINT_CYAN,
@@ -374,14 +399,17 @@ class DQN(object):
             # DQN
             labels = batch_reward + self.gamma * np.amax(q_next_target, axis=1)
 
-        for i in xrange(self.batch_size):
+        for i in range(self.batch_size):
             a = batch_action[i]
-            q[i][a] = labels[i]
+
+            if batch_done[i]:  # Terminal state
+                r = batch_reward[i]
+                q[i][a] = r
+            else:
+                q[i][a] = labels[i]
+
         Y = q
-
         self.model.train(X, Y, batch_len=self.batch_size)
-
-        self.training_it += 1  # increment training iterations counter
 
     def update_epsilon(self):
         """
@@ -395,7 +423,7 @@ class DQN(object):
                 if not self.printStopExploration:
                     printColor(color=PRINT_CYAN,
                                msg="Agent: {:3.0f}, ".format(self.id) +
-                                   "{:>25s}".format("finished exploration") +
+                                   "{:>25s}".format("finished exploration, final eps = {:.2f}".format(self.eps)) +
                                    ", tmstp: {:10.0f}".format(Global.timestep) +
                                    ", training_it: {:10.0f}".format(self.training_it) +
                                    ", t: {}".format(Global.get_time()))
@@ -457,10 +485,26 @@ class DQN(object):
                        ", training_it: {:10.0f}".format(self.training_it) +
                        ", t: {}".format(Global.get_time()))
 
-    def save_model(self, model_file):
+    def save_model(self, dir, suffix=''):
         """
             Save model (neural network, optimizer, loss, etc ..) in given file
         """
+        model_file = dir
+        model_file += Util.getTimeString() # timestring
+        model_file += '_' + suffix
+        model_file += '_' + str(self.model.h1) + 'h1_' + str(self.model.h1) + 'h2' # NN architecture
+        model_file += '_' + str(Global.timestep) + 'tmstp' + '_' # timesteps
+        model_file += 'model.h5'  # model file extension
+
+        # Create the /brain_files/ directory if it doesn't exist
+        if not os.path.exists(os.path.dirname(dir)):
+            try:
+                os.makedirs(os.path.dirname(dir))
+                print("@save_model: directory: {} doesn't exist. Creating directory.".format(dir))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
         self.model.q_network.save(model_file)
 
         printColor(color=PRINT_CYAN,
@@ -539,7 +583,7 @@ class DQN(object):
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
-        # Hidden layer 1 weights
+        # 1st hidden layer weights
         weights_h1 = model_copy.layers[0].get_weights()
 
         # Set weights
@@ -566,13 +610,13 @@ class DQN(object):
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
-        # Hidden layer 2 weights
-        weights_h2 = model_copy.layers[2].get_weights()
+        # 2nd hidden layer weights
+        weights_h2 = model_copy.layers[1].get_weights()
 
         # Set weights
         self.model.set_h2_weights(weights_h2)
 
-        if np.array_equal(self.model.q_network.layers[2].get_weights(), weights_h2):
+        if np.array_equal(self.model.q_network.layers[1].get_weights(), weights_h2):
             sys.exit('Error! Q-Network h2 weights is not equal to the h2 weights from file')
 
         printColor(color=PRINT_CYAN,
@@ -588,17 +632,23 @@ class DQN(object):
         """
         self.random_agent = False
 
+        # print('before', self.model.q_network.get_weights().layers[0])
+
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
+        # print('master', model_copy.layers[0].get_weights())
+
         # Output layer weights
-        weights_output = model_copy.layers[4].get_weights()
+        weights_output = model_copy.layers[2].get_weights()
 
         # Set weights
         self.model.set_out_weights(weights_output)
 
-        if np.array_equal(self.model.q_network.layers[4].get_weights(), weights_output):
+        # print('after', self.model.q_network.get_weights())
+
+        if np.array_equal(self.model.q_network.layers[2].get_weights(), weights_output):
             sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
 
         printColor(color=PRINT_CYAN,
@@ -625,11 +675,11 @@ class DQN(object):
 
         # print('master', model_copy.get_weights())
 
-        # Hidden layer 1 weights
+        # 1st hidden layer weights
         weights_h1 = model_copy.layers[0].get_weights()
 
-        # Hidden layer 2 weights
-        weights_h2 = model_copy.layers[2].get_weights()
+        # 2nd hidden layer weights
+        weights_h2 = model_copy.layers[1].get_weights()
 
         # Set weights
         self.model.set_h1h2_weights(weights_h1, weights_h2)
@@ -654,11 +704,11 @@ class DQN(object):
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
-        # Hidden layer 2 weights
-        weights_h2 = model_copy.layers[2].get_weights()
+        # 2nd hidden layer weights
+        weights_h2 = model_copy.layers[1].get_weights()
 
         # Output layer weights
-        weights_output = model_copy.layers[4].get_weights()
+        weights_output = model_copy.layers[2].get_weights()
 
         # Set weights
         self.model.set_h2out_weights(weights_h2, weights_output)
@@ -681,11 +731,11 @@ class DQN(object):
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
-        # Hidden layer 1 weights
+        # 1st hidden layer weights
         weights_h1 = model_copy.layers[0].get_weights()
 
         # Output layer weights
-        weights_output = model_copy.layers[4].get_weights()
+        weights_output = model_copy.layers[2].get_weights()
 
         # Set weights
         self.model.set_h1out_weights(weights_h1, weights_output)
@@ -764,7 +814,7 @@ class DQN(object):
 
         # Reset global variable
         self.eps = self.eps_start
-        self.last_state = self.preprocess(np.zeros(self.inputCnt))
+        self.last_state = self.preprocess(np.zeros(self.input_size))
         self.last_action = 0
         self.last_reward = 0.0
         self.reward_window = deque(maxlen=1000)

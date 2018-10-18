@@ -1,4 +1,4 @@
-from __future__ import division
+
 import pygame
 from pygame.locals import *
 import random, sys
@@ -7,12 +7,13 @@ try:
     from Util import worldToPixels
     from Setup import *
     import res.colors as Color
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from ..Util import worldToPixels
     from ..Setup import *
     from ..res import colors as Color

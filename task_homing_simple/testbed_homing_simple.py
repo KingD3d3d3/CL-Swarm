@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 import pygame
 from pygame.locals import *
@@ -18,13 +18,14 @@ try:
     from EnvironmentHomingSimple import EnvironmentHomingSimple
     from simulation_parameters import *
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from ..Setup import *
     from .. import Util
     import debug_homing_simple
@@ -309,7 +310,7 @@ class TestbedHomingSimple(object):
         """
         # Total number of goal reached
         count = 0
-        for j in xrange(self.environment.numAgents):
+        for j in range(self.environment.numAgents):
             count += self.environment.agents[j].goalReachedCount
         self.goal_reached_count = count
 
@@ -456,7 +457,7 @@ if __name__ == '__main__':
     testbed = TestbedHomingSimple(sim_param=simulation_parameters, sim_dir=simulation_directory, sim_suffix=simulation_suffix)
 
     multi_simulation = int(simulation_parameters.multi_simulation)
-    for i in xrange(multi_simulation):
+    for i in range(multi_simulation):
         simID = i + 1
         debug_homing_simple.xprint(color=PRINT_GREEN, msg="Start Simulation: {}".format(simID))
 

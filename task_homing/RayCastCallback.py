@@ -1,4 +1,4 @@
-from __future__ import division
+
 from Box2D import b2RayCastCallback, b2Vec2
 
 class RayCastCallback(b2RayCastCallback):

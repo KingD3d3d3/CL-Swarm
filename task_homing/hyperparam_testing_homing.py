@@ -1,4 +1,4 @@
-from __future__ import division
+
 import glob
 import os
 import sys
@@ -22,13 +22,14 @@ try:
     import global_homing
     import Util
     from simulation_parameters import *
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from .testbed_homing import TestbedHoming
     from ..Setup import *
     from ..res import print_colors as PrintColor
@@ -108,8 +109,8 @@ if __name__ == '__main__':
 
     # ----------------------------------------------------------------------
     # # # Test every hyperparam combinations
-    # for h2 in xrange(0, max_h2 + 1):
-    #     for h1 in xrange(1, max_h1 + 1):
+    # for h2 in range(0, max_h2 + 1):
+    #     for h1 in range(1, max_h1 + 1):
 
     # Directly test
     # h1 = 1
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     # Instantiate simulation
     testbed = TestbedHoming(sim_param=sim_param)
 
-    for i in xrange(multi_simulation):
+    for i in range(multi_simulation):
         simID = i + 1
         debug_homing.xprint(color=PRINT_GREEN, msg="Start Simulation: {}".format(simID))
 

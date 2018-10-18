@@ -1,4 +1,4 @@
-from __future__ import division
+
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (polygonShape)
@@ -9,13 +9,14 @@ try:
     # Running in PyCharm
     import res.colors as Color
     from Setup import *
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from ..res import colors as Color
     from ..Setup import *
 

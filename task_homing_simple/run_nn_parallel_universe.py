@@ -1,4 +1,4 @@
-from __future__ import division
+
 import glob
 import os
 import pandas as pd
@@ -14,13 +14,14 @@ try:
     import global_homing_simple
     import Util
     from simulation_parameters import *
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from .testbed_homing_simple import TestbedHomingSimple
     from ..Setup import *
     from ..res import print_colors as PrintColor

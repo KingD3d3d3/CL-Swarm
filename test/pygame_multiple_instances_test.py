@@ -1,11 +1,11 @@
-from __future__ import division
+
 import pygame
 from pygame.locals import *
 import math
 
 
 def slowFunction():
-    for i in xrange(1000000):
+    for i in range(1000000):
         a = math.sqrt(9123456)
 
 
@@ -20,7 +20,7 @@ class Simulation(object):
         self.running = True
 
     def run(self):
-        for j in xrange(2):
+        for j in range(2):
             # while self.running:
             slowFunction()
 
@@ -36,7 +36,7 @@ class Simulation(object):
 
 
 if __name__ == '__main__':
-    for i in xrange(100):
+    for i in range(100):
         print('****************************************')
         simulation = Simulation(i)
         simulation.run()

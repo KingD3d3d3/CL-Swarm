@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 import random
 import argparse
@@ -31,13 +31,14 @@ try:
     import global_homing_simple
     import res.print_colors as PrintColor
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from .AgentHomingSimple import AgentHomingSimple
     from ..objects.Border import Border
     from ..objects.Circle import StaticCircle
@@ -94,7 +95,7 @@ class EnvironmentHomingSimple(object):
         # Agents
         self.numAgents = num_agents  # total numbers of agents in the simulation
         self.agents = []
-        for j in xrange(num_agents):
+        for j in range(num_agents):
             start_pos = pixelsToWorld(self.goals_pixels[1])  # start from goal 2
 
             toGoal = Util.normalize(pixelsToWorld(self.goals_pixels[0]) - start_pos)
@@ -133,7 +134,7 @@ class EnvironmentHomingSimple(object):
                          (self.goals_pixels[1][0] - 8, self.goals_pixels[1][1] - 12))
 
         # Moving Objects
-        for j in xrange(len(self.agents)):
+        for j in range(len(self.agents)):
             self.agents[j].draw()
 
         # Boundary
@@ -149,7 +150,7 @@ class EnvironmentHomingSimple(object):
         """
             Call agent's update
         """
-        for j in xrange(len(self.agents)):
+        for j in range(len(self.agents)):
             self.agents[j].update()
 
         # # TODO quick test with static agent in the middle of environment

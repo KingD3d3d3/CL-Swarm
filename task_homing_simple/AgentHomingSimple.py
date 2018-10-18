@@ -1,4 +1,4 @@
-from __future__ import division
+
 import numpy as np
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
@@ -32,13 +32,14 @@ try:
     import debug_homing_simple
     import global_homing_simple
     import Global
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from ..res import colors as Color
     from ..AI.DQN import DQN
     from ..objects.Agent import Agent
@@ -60,14 +61,14 @@ class DQNHomingSimple(DQN):
         h1 = 8 # 24 # 8  # 1st hidden layer's size
         h2 = 8 # 24 # 5  # 2nd hidden layer's size
 
-        model.add(Dense(h1, input_dim=self.inputCnt))  # input -> hidden
+        model.add(Dense(h1, input_dim=self.input_size))  # input -> hidden
         model.add(Activation('relu'))
 
         if h2 != 0:
             model.add(Dense(h2))  # hidden -> hidden
             model.add(Activation('relu'))
 
-        model.add(Dense(self.actionCnt, activation='linear'))  # hidden -> output
+        model.add(Dense(self.action_size, activation='linear'))  # hidden -> output
 
         # Optimizer
         optimizer = Adam(lr=self.lr)

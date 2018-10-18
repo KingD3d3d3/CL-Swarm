@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 720  # 640, 480
 # 1280 / PPM , 720 / PPM -> 64 , 36

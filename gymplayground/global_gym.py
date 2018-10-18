@@ -16,7 +16,7 @@ record = False  # record flag, if yes record simulation's events in file
 debug = True  # debug mode flag, if debug mode then print event's message in console
 
 # Changed directly
-simulation_id = 1
+sim_id = 0
 
 # Variables that will be reset
 timer = 0.00  # times passed since beginning of simulation
@@ -25,6 +25,7 @@ header_write = False # Write header of record file only once at the beginning of
 simlogs_writer = None  # writer object to record events
 event_count = 0
 timestr = Util.getTimeString()
+start_time = time.time()
 
 def reset_simulation_global():
     global timer
@@ -33,6 +34,7 @@ def reset_simulation_global():
     global simlogs_writer
     global event_count
     global timestr
+    global start_time
 
     Global.timestep = 0  # timesteps passed since beginning of simulation
     timer = 0.00  # times passed since beginning of simulation
@@ -41,6 +43,7 @@ def reset_simulation_global():
     simlogs_writer = None  # writer object to record events
     event_count = 0
     timestr = Util.getTimeString()
+    start_time = time.time()
 
 def fileCreate(dir, suffix="", extension=".csv"):
     """

@@ -1,19 +1,23 @@
-from __future__ import division
+
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (vec2)
 import math
 import numpy as np
+import argparse
 import time
 
+import os
+import errno
 from datetime import datetime
 try:
     from Setup import *
-except:
+except NameError as err:
+    print(err, "--> our error message")
     # Running in command line
     import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info('Running from command line -> Import libraries as package')
+    logger.info("Running from command line -> Import libraries as package")
     from .Setup import *
 
 
@@ -27,10 +31,13 @@ def PrintFPS(screen, font, text, color=(255, 0, 0, 255)):  # red
 def worldToPixels(vector):
     return vector.x * PPM, SCREEN_HEIGHT - vector.y * PPM
 
+# Python 2 code with tuple unpacking
+# def pixelsToWorld((a, b)):
+#     return vec2(a / PPM, (SCREEN_HEIGHT - b) / PPM)
 
-def pixelsToWorld((a, b)):
-    return vec2(a / PPM, (SCREEN_HEIGHT - b) / PPM)
-
+# Python 3 version
+def pixelsToWorld(p):
+    return vec2(p[0] / PPM, (SCREEN_HEIGHT - p[1]) / PPM)
 
 def normalize(vector):
     length = vector.length
@@ -67,7 +74,7 @@ def angle(vec1, vec2):
 
 
 def megaSlowFunction():
-    for i in xrange(500000):
+    for i in range(500000):
         a = math.sqrt(9123456)
 
 def minMaxNormalization(x, _min, _max, new_min, new_max):
@@ -147,3 +154,22 @@ def interquartile_mean(x):
     x = x[quart:len(x) - quart]
 
     return np.mean(x)
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+def create_dir(dir):
+    """
+        Create the given directory if it doesn't exist
+    """
+    if not os.path.exists(os.path.dirname(dir)):
+        try:
+            os.makedirs(os.path.dirname(dir))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
