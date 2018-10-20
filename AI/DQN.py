@@ -38,28 +38,29 @@ EPSILON_TEST = 0.05 # 0.05 # FINAL_EPSILON # epsilon value during testing after 
 # -------------------- MODEL -------------------------
 
 class Model(object):
-    def __init__(self, input_size, output_size, h1=H1, h2=H2, lr=LEARNING_RATE):
+    def __init__(self, input_size, output_size, layers=(H1, H2), lr=LEARNING_RATE):
+        """
+            :param input_size: size of the input layer
+            :param output_size: size of the output layer
+            :param layers: list of ints defining the size of each layer used in the model
+            :param lr: learning rate
+        """
+        self.q_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
+        self.target_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
 
-        self.input_size = input_size
-        self.output_size = output_size
-        self.h1 = h1
-        self.h2 = h2
-        self.lr = lr
+        self.dummy_processing(input_size, output_size) # prevent training freeze
 
-        self.q_network = self.build_model() # Q-Network
-        self.target_network = self.build_model() # Target Network
-
-        self.dummy_processing() # prevent training freeze
-
-    def build_model(self):
+    @staticmethod
+    def build_model(input_size, output_size, layers, lr):
         model = Sequential()  # Sequential() creates the foundation of the layers.
 
-        # 'Dense' define fully connected layers
-        model.add(Dense(self.h1, activation='relu', input_dim=self.input_size))   # 1st hidden layer
-        if self.h2:
-            model.add(Dense(self.h2, activation='relu'))                     # 2nd hidden layer
-        model.add(Dense(self.output_size, activation='linear'))              # Output layer
-        model.compile(loss='mse', optimizer=Adam(lr=self.lr))  # Adam optimizer for stochastic gradient descent
+        model.add(Dense(layers[0], activation='relu', input_dim=input_size)) # add input to 1st hidden layer
+
+        for layer in layers[1:]:
+            model.add(Dense(layer, activation='relu')) # add successive hidden layers
+
+        model.add(Dense(output_size, activation='linear')) # Output layer
+        model.compile(loss='mse', optimizer=Adam(lr=lr))  # Adam optimizer for stochastic gradient descent
 
         return model
 
@@ -81,13 +82,13 @@ class Model(object):
             # Predict from Q-network
             return self.q_network.predict(state, batch_size=batch_len)
 
-    def dummy_processing(self):
+    def dummy_processing(self, input_size, output_size):
         """
             Dummy Neural Network Processing to avoid the freeze when training starts
         """
-        zeros_state = np.zeros([1, self.input_size])
-        zeros_x = np.zeros((1, self.input_size))
-        zeros_y = np.zeros((1, self.output_size))
+        zeros_state = np.zeros([1, input_size])
+        zeros_x = np.zeros((1, input_size))
+        zeros_y = np.zeros((1, output_size))
 
         self.predict(zeros_state)
         self.predict(zeros_state, target=True)
@@ -210,7 +211,7 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 class DQN(object):
 
     def __init__(self, input_size, action_size, id=-1, training=True, random_agent=False, ratio_train=1, brain_file="",
-                 h1=H1, h2=H2, mem_capacity=MEMORY_CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, lr=LEARNING_RATE,
+                 layers=(H1, H2), mem_capacity=MEMORY_CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, lr=LEARNING_RATE,
                  update_target_steps=UPDATE_TARGET_STEPS, eps_start=EPSILON_START, eps_end=EPSILON_END, eps_test=EPSILON_TEST,
                  exploration_steps=EXPLORATION_STEPS, use_double_dqn=True, use_prioritized_experience_replay=False):
 
@@ -222,6 +223,7 @@ class DQN(object):
         self.id = id
 
         # Hyperparameters
+        self.layers = layers
         self.batch_size = batch_size
         self.mem_capacity = mem_capacity
         self.gamma = gamma
@@ -243,7 +245,7 @@ class DQN(object):
         self.action_size = action_size
 
         # Create the model
-        self.model = Model(input_size=input_size, output_size=action_size, h1=h1, h2=h2, lr=lr)
+        self.model = Model(input_size=input_size, output_size=action_size, layers=layers, lr=lr)
 
         # Create the memory Experience Replay
         self.memory = Memory(mem_capacity)
@@ -290,6 +292,7 @@ class DQN(object):
         print("\n----------------")
         print("Hyperparameters\n")
 
+        print("layers: {}".format(self.layers))
         print("batch size: {}".format(self.batch_size))
         print("memory capacity: {}".format(self.mem_capacity))
         print("discount factor gamma: {}".format(self.gamma))
@@ -351,7 +354,7 @@ class DQN(object):
             self.training_it += 1  # increment training iterations counter
 
             # Update target network
-            if self.training_it != 0 and self.training_it % self.update_target_steps == 0:
+            if self.training_it and self.training_it % self.update_target_steps == 0:
                 self.model.update_target_network()
 
         self.update_counter += 1
@@ -367,12 +370,7 @@ class DQN(object):
 
         # Print "time to learn" event
         if not self.printTimeToLearn:
-            printColor(color=PRINT_CYAN,
-                       msg="Agent: {:3.0f}, ".format(self.id) +
-                           "{:>25s}".format("time to learn") +
-                           ", tmstp: {:10.0f}".format(Global.timestep) +
-                           ", training_it: {:10.0f}".format(self.training_it) +
-                           ", t: {}".format(Global.get_time()))
+            self.dqn_print(msg="Time to learn")
             self.printTimeToLearn = True
 
         batch = self.memory.get(self.batch_size)
@@ -421,12 +419,7 @@ class DQN(object):
             # Reached final epsilon
             if self.eps <= self.eps_end:
                 if not self.printStopExploration:
-                    printColor(color=PRINT_CYAN,
-                               msg="Agent: {:3.0f}, ".format(self.id) +
-                                   "{:>25s}".format("finished exploration, final eps = {:.2f}".format(self.eps)) +
-                                   ", tmstp: {:10.0f}".format(Global.timestep) +
-                                   ", training_it: {:10.0f}".format(self.training_it) +
-                                   ", t: {}".format(Global.get_time()))
+                    self.dqn_print(msg="Finished exploration final eps = {:.2f}".format(self.eps))
                     self.printStopExploration = True
 
     def stop_training(self):
@@ -437,12 +430,7 @@ class DQN(object):
         self.training = False
         self.eps = self.eps_test
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Stop training, Stop exploring") +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Stop training. Stop exploring")
 
     def stop_exploring(self):
         """
@@ -450,12 +438,7 @@ class DQN(object):
         """
         self.eps = self.eps_test
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Stop exploring") +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Stop exploring")
 
     def go_random_agent(self):
         """
@@ -463,12 +446,9 @@ class DQN(object):
         """
         self.random_agent = True
         if self.random_agent:
-            printColor(color=PRINT_CYAN,
-                       msg="Agent: {:3.0f}, ".format(self.id) +
-                           "{:>25s}".format("Random agent") +
-                           ", tmstp: {:10.0f}".format(Global.timestep) +
-                           ", training_it: {:10.0f}".format(self.training_it) +
-                           ", t: {}".format(Global.get_time()))
+
+            self.dqn_print(msg="Go random agent")
+
             if self.training:
                 self.stop_training()
 
@@ -478,22 +458,18 @@ class DQN(object):
         """
         self.collect_experiences = False
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Stop collecting experiences") +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Stop collecting experiences")
 
     def save_model(self, dir, suffix=''):
         """
-            Save model (neural network, optimizer, loss, etc ..) in given file
+            Save model (neural network, optimizer, loss, etc ..) in file
+            Also create the /brain_files/{sim_id}/ directory if it doesn't exist
         """
         model_file = dir
         model_file += Util.getTimeString() # timestring
         model_file += '_' + suffix
-        model_file += '_' + str(self.model.h1) + 'h1_' + str(self.model.h1) + 'h2' # NN architecture
-        model_file += '_' + str(Global.timestep) + 'tmstp' + '_' # timesteps
+        # model_file += '_' + str(self.model.h1) + 'h1_' + str(self.model.h1) + 'h2' # NN architecture
+        model_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_' # timesteps
         model_file += 'model.h5'  # model file extension
 
         # Create the /brain_files/ directory if it doesn't exist
@@ -507,32 +483,46 @@ class DQN(object):
 
         self.model.q_network.save(model_file)
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Save Agent's model") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Save agent's model" + " -> file: {}".format(model_file))
 
-    def save_memory(self, memory_file):
+    def save_mem(self, dir, suffix=''):
         """
-            Save agent's experiences in given file
+            Save agent's experiences in csv file
+            Also create the /brain_files/{sim_id}/ directory if it doesn't exist
         """
+        memory_file = dir
+        memory_file += Util.getTimeString() # timestring
+        memory_file += '_' + suffix
+        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_' # timesteps
+        memory_file += 'mem.csv'  # memory file extension
+
+        # Create the /brain_files/ directory if it doesn't exist
+        if not os.path.exists(os.path.dirname(dir)):
+            try:
+                os.makedirs(os.path.dirname(dir))
+                print("@save_model: directory: {} doesn't exist. Creating directory.".format(dir))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
         header = ("state", "action", "reward", "next_state", "done")
 
-        with open(memory_file, 'w') as f:
-            writer = csv.writer(f)
-            writer.writerow(header)
-            writer.writerows(self.memory.samples)
+        fo = open(memory_file, 'a')
+        writer = csv.writer(fo)
+        writer.writerow(header) # write header
+        for i in range(len(self.memory.samples)):
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Save Agent's memory") +
-                       ", file: {}".format(memory_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+            state = Util.remove_blank(np.array2string(self.memory.samples[i][0])).replace(' ]', ']').replace('[ ', '[')
+            action = str(self.memory.samples[i][1])
+            reward = str(self.memory.samples[i][2])
+            next_state = Util.remove_blank(np.array2string(self.memory.samples[i][3])).replace(' ]', ']').replace('[ ', '[')
+            done = str(self.memory.samples[i][4])
+            experience = (state, action, reward, next_state, done)
+            writer.writerow(experience) # write experience
+
+        fo.close() # close file properly
+
+        self.dqn_print(msg="Save agent's memory" + " -> file: {}".format(memory_file))
 
     def load_model(self, model_file):
         """
@@ -540,17 +530,10 @@ class DQN(object):
         """
         self.model.q_network = load_model(model_file)
         self.model.target_network_network = load_model(model_file)
-        self.random_agent = False
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load full model") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load full model (nn and optimizer)" + " <- file: {}".format(model_file))
 
-        printColor(color=PRINT_RED, msg="Load model not working anymore !!??")
+        # printColor(color=PRINT_RED, msg="Load model not working anymore !!??")
 
     def load_full_weights(self, model_file):
         """
@@ -561,24 +544,15 @@ class DQN(object):
 
         self.model.q_network.load_weights(model_file)
         self.model.target_network.load_weights(model_file)
-        self.random_agent = False
 
         # print('master', self.model.q_network.get_weights())
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load model full weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load all weights" + " <- file: {}".format(model_file))
 
     def load_h1_weights(self, model_file):
         """
             Load first hidden layer weights from given file and set Q-Network, Target-Network
         """
-        self.random_agent = False
-
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -592,20 +566,12 @@ class DQN(object):
         if np.array_equal(self.model.q_network.layers[0].get_weights(), weights_h1):
             sys.exit('Error! Q-Network h1 weights is not equal to the h1 weights from file')
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load 1st hidden layer weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load 1st hidden layer weights" + " <- file: {}".format(model_file))
 
     def load_h2_weights(self, model_file):
         """
             Load second hidden layer weights from given file and set Q-Network, Target-Network
         """
-        self.random_agent = False
-
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -619,19 +585,12 @@ class DQN(object):
         if np.array_equal(self.model.q_network.layers[1].get_weights(), weights_h2):
             sys.exit('Error! Q-Network h2 weights is not equal to the h2 weights from file')
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load 2nd hidden layer weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load 2nd hidden layer weights" + " <- file: {}".format(model_file))
+
     def load_out_weights(self, model_file):
         """
             Load second hidden layer weights from given file and set Q-Network, Target-Network
         """
-        self.random_agent = False
-
         # print('before', self.model.q_network.get_weights().layers[0])
 
         # Load master
@@ -651,20 +610,12 @@ class DQN(object):
         if np.array_equal(self.model.q_network.layers[2].get_weights(), weights_output):
             sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load output layer weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load output layer weights" + " <- file: {}".format(model_file))
 
     def load_h1h2_weights(self, model_file):
         """
             Load first and second hidden layers weights from given file and set Q-Network, Target-Network
         """
-        self.random_agent = False
-
         # print('before', self.model.q_network.get_weights())
 
         # Load master
@@ -686,20 +637,12 @@ class DQN(object):
 
         # print('after', self.model.q_network.get_weights())
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load 1st and 2nd hidden layer weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load 1st and 2nd hidden layer weights" + " <- file: {}".format(model_file))
 
     def load_h2out_weights(self, model_file):
         """
             Load first and second hidden layers weights from given file and set Q-Network, Target-Network
         """
-        self.random_agent = False
-
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -713,20 +656,12 @@ class DQN(object):
         # Set weights
         self.model.set_h2out_weights(weights_h2, weights_output)
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load h2 and output weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load h2 and output weights" + " <- file: {}".format(model_file))
 
     def load_h1out_weights(self, model_file):
         """
             Load first hidden layers and output layers weights from given file and set Q-Network, Target-Network
         """
-        self.random_agent = False
-
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -740,20 +675,12 @@ class DQN(object):
         # Set weights
         self.model.set_h1out_weights(weights_h1, weights_output)
 
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load h1 and output weights") +
-                       ", file: {}".format(model_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
+        self.dqn_print(msg="Load h1 and output weights" + " <- file: {}".format(model_file))
 
-    def load_memory(self, memory_file, size):
+    def load_mem(self, memory_file, size=-1):
         """
             Load memory from given file
         """
-        self.random_agent = False
-
         experiences = []
         data = pd.read_csv(memory_file)
 
@@ -763,10 +690,11 @@ class DQN(object):
         data['state'] = data['state'].map(remove_bracket).map(string_to_array)
         data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
 
-        if size == self.mem_capacity:
+        if size == -1:
             """
-                Load full memory
+                Default: Load full memory
             """
+            size = self.mem_capacity
             for i, row in data.iterrows():
                 exp = (row['state'], row['action'], row['reward'], row['next_state'], row['done'])
                 experiences.append(exp)
@@ -788,83 +716,13 @@ class DQN(object):
         # Add experiences to memory
         self.memory.push_multi(experiences)
 
+        self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
+
+    def dqn_print(self, msg=""):
         printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("Load memory: {} exp".format(size)) +
-                       ", file: {}".format(memory_file) +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
-
-
-# -------------------------------------- Old dirty code ------------------------------------------------------------
-
-    def reset_brain(self):
-
-        # Reinstantiate Memory
-        self.memory = Memory(self.mem_capacity)
-
-        # Shuffle NN
-        self.model.shuffle_weights()
-
-        # Recompile model
-        optimizer = Adam(lr=self.lr)
-        self.model.q_network.compile(loss='mse', optimizer=optimizer)
-        self.model.target_network.compile(loss='mse', optimizer=optimizer)
-
-        # Reset global variable
-        self.eps = self.eps_start
-        self.last_state = self.preprocess(np.zeros(self.input_size))
-        self.last_action = 0
-        self.last_reward = 0.0
-        self.reward_window = deque(maxlen=1000)
-        self.printTimeToLearn = False
-        self.printStopExploration = False
-        self.training_it = 0
-
-        # Avoid the freeze
-        self.model.predict(self.zeros_state)
-        self.model.predict(self.zeros_state, target=True)
-        self.model.train(self.zeros_x, self.zeros_y)
-
-        printColor(color=PRINT_CYAN,
-                   msg="Agent: {:3.0f}, ".format(self.id) +
-                       "{:>25s}".format("reset brain") +
-                       ", tmstp: {:10.0f}".format(Global.timestep) +
-                       ", training_it: {:10.0f}".format(self.training_it) +
-                       ", t: {}".format(Global.get_time()))
-
-    def update(self, reward, observation, done=False):
-        """
-            Main function of the agent's brain
-            Return the action to be performed
-        """
-        new_state = self.preprocess(observation)
-        experience = (self.last_state, self.last_action, self.last_reward, new_state, done)
-
-        # Add new experience to memory
-        self.record(experience)
-
-        # Select action
-        action = self.select_action(self.last_state)
-
-        # Training
-        self.train()
-
-        # Append reward
-        self.reward_window.append(reward)
-
-        # Process last variable's states
-        self.last_action = action
-        self.last_state = new_state
-        self.last_reward = reward
-
-        return action
-
-
-    def learning_score(self):
-        """
-            Score is the mean of the reward in the sliding window
-        """
-        learning_score = sum(self.reward_window) / (len(self.reward_window) + 1.)  # +1 to avoid division by zero
-        return learning_score
+                   msg="agent: {:4.0f}, ".format(self.id) +
+                       "{: <35s}, ".format(msg) +
+                       "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
+                       "training_it: {:8.0f}, ".format(self.training_it) +
+                       "global_t: {}, ".format(Global.get_time()) +
+                       "world_t: {}".format(Util.getTimeString2()))

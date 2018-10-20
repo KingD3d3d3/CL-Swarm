@@ -374,7 +374,7 @@ class AgentHoming(Agent):
     def computeGoalReached(self):
         self.goalReachedCount += 1
         self.elapsedTime = global_homing.timer - self.startTime
-        self.elapsedTimestep = Global.timestep - self.startTimestep
+        self.elapsedTimestep = Global.sim_timesteps - self.startTimestep
 
         # Goal reached event
         debug_homing.printEvent(color=PrintColor.PRINT_RED, agent=self,
@@ -382,7 +382,7 @@ class AgentHoming(Agent):
 
         # Reset, Update
         self.startTime = global_homing.timer
-        self.startTimestep = Global.timestep
+        self.startTimestep = Global.sim_timesteps
         self.currentGoalIndex = (self.currentGoalIndex + 1) % self.num_goals  # change goal
         self.distance = self.distanceToGoal()
         self.t2GCollisionCount = 0
@@ -461,7 +461,7 @@ class AgentHoming(Agent):
 
         self.last_distance = self.distance
         self.elapsedTime = global_homing.timer - self.startTime
-        self.elapsedTimestep = Global.timestep - self.startTimestep
+        self.elapsedTimestep = Global.sim_timesteps - self.startTimestep
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.body.angle
 

@@ -110,10 +110,10 @@ class MyContactListener(contactListener):
             Check if time between successive collision between the same agent and same obstacles was too short
         """
         if agent.lastObstacleCollide == obstacle:  # same objects colliding
-            agent.elapsedTimestepObstacleCollision = Global.timestep - agent.startTimestepObstacleCollision
+            agent.elapsedTimestepObstacleCollision = Global.sim_timesteps - agent.startTimestepObstacleCollision
 
             if agent.elapsedTimestepObstacleCollision <= EPSILON_TIMESTEP:  # Check elapsed timestep
-                agent.startTimestepObstacleCollision = Global.timestep  # update based on elapsed time
+                agent.startTimestepObstacleCollision = Global.sim_timesteps  # update based on elapsed time
 
                 # Keep colors
                 agent.collisionColor()
@@ -133,7 +133,7 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            agent.startTimestepObstacleCollision = Global.timestep  # Start counting
+            agent.startTimestepObstacleCollision = Global.sim_timesteps  # Start counting
             return
 
         if isinstance(objectA, StaticCircle) and isinstance(objectB, AgentHoming):
@@ -142,7 +142,7 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
 
             agent.endCollisionColor()
-            agent.startTimestepObstacleCollision = Global.timestep  # Start counting
+            agent.startTimestepObstacleCollision = Global.sim_timesteps  # Start counting
             return
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -252,14 +252,14 @@ class MyContactListener(contactListener):
         idA = agentA.id
         idB = agentB.id
 
-        agentA.elapsedTimestepAgentCollision[idB] = Global.timestep - agentA.startTimestepAgentCollision[idB]
-        agentB.elapsedTimestepAgentCollision[idA] = Global.timestep - agentB.startTimestepAgentCollision[idA]
+        agentA.elapsedTimestepAgentCollision[idB] = Global.sim_timesteps - agentA.startTimestepAgentCollision[idB]
+        agentB.elapsedTimestepAgentCollision[idA] = Global.sim_timesteps - agentB.startTimestepAgentCollision[idA]
 
         if agentA.elapsedTimestepAgentCollision[idB] <= EPSILON_TIMESTEP \
                 and agentB.elapsedTimestepAgentCollision[idA] <= EPSILON_TIMESTEP:  # Check elapsed timestep
 
-            agentA.startTimestepAgentCollision[idB] = Global.timestep  # update based on elapsed time
-            agentB.startTimestepAgentCollision[idA] = Global.timestep  # update based on elapsed time
+            agentA.startTimestepAgentCollision[idB] = Global.sim_timesteps  # update based on elapsed time
+            agentB.startTimestepAgentCollision[idA] = Global.sim_timesteps  # update based on elapsed time
 
             # Keep colors
             agentA.collisionColor()
@@ -284,7 +284,7 @@ class MyContactListener(contactListener):
             agentA.endCollisionColor()
             agentB.endCollisionColor()
 
-            agentA.startTimestepAgentCollision[idB] = Global.timestep  # Start counting
-            agentB.startTimestepAgentCollision[idA] = Global.timestep  # Start counting
+            agentA.startTimestepAgentCollision[idB] = Global.sim_timesteps  # Start counting
+            agentB.startTimestepAgentCollision[idA] = Global.sim_timesteps  # Start counting
             return
     # ------------------------------------------------------------------------------------------------------------------

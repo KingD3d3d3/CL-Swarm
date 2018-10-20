@@ -8,8 +8,7 @@ environment = {
 }
 
 hyperparams = {
-    'h1': 32,
-    'h2': 32,
+    'layers': (32, 32),
     'mem_capacity': 10000,
     'batch_size': 32,
     'eps_start': 1.,

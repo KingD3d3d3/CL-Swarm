@@ -128,7 +128,7 @@ if __name__ == '__main__':
         testbed.end_simulation()
         ls_list.append(testbed.learning_scores)
 
-        total_timesteps += Global.timestep # Increment total timesteps
+        total_timesteps += Global.sim_timesteps # Increment total timesteps
         global_homing.reset_simulation_global() # Reset global variables
 
     Y_IQM = [Util.interquartile_mean(e) for e in zip(*ls_list)]

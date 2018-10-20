@@ -49,7 +49,7 @@ parser.add_argument('--load_h1out_weights',
                     help='load h1 output weights of neural networks from master to learning agent',
                     default='False')
 
-parser.add_argument('--load_memory', help='load defined number of experiences to agent', default='-1')
+parser.add_argument('--load_mem', help='load defined number of experiences to agent', default='-1')
 parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
 
 parser.add_argument('--save_network_freq', help='save neural networks model every defined timesteps', default='-1')
@@ -95,8 +95,8 @@ def simulation_suffix(sim_param):
         suffix = "loadh1out"
 
     # Load memory
-    if sim_param.load_memory != '-1':
-        suffix += "load" + sim_param.load_memory + "xp"
+    if sim_param.load_mem != '-1':
+        suffix += "load" + sim_param.load_mem + "xp"
 
     # Normal case
     if suffix == "":

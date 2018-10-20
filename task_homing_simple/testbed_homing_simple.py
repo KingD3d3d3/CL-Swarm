@@ -69,7 +69,7 @@ class TestbedHomingSimple(object):
         self.load_h2out_weights = sim_param.load_h2out_weights == 'True'
         self.load_h1out_weights = sim_param.load_h1out_weights == 'True'
 
-        self.load_memory = int(sim_param.load_memory)
+        self.load_memory = int(sim_param.load_mem)
         self.file_to_load = sim_param.file_to_load
         self.suffix = sim_suffix
 
@@ -189,7 +189,7 @@ class TestbedHomingSimple(object):
 
             # Load memory to agent
             if self.load_memory != -1:
-                agent.load_memory(self.file_to_load, self.load_memory)
+                agent.load_mem(self.file_to_load, self.load_memory)
 
             # Collect experiences
             if not self.collect_experiences:
@@ -299,7 +299,7 @@ class TestbedHomingSimple(object):
             self.environment.draw()
 
             # Step counter
-            Global.timestep += 1
+            Global.sim_timesteps += 1
 
             # Time counter
             global_homing_simple.timer += self.environment.deltaTime
@@ -321,13 +321,13 @@ class TestbedHomingSimple(object):
 
         # Save neural networks model frequently
         if global_homing_simple.record and self.save_network_freq != -1:
-            if Global.timestep != 0 and Global.timestep % self.save_network_freq == 0:
+            if Global.sim_timesteps != 0 and Global.sim_timesteps % self.save_network_freq == 0:
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=self.suffix)
 
         # Save memory frequently
         if global_homing_simple.record and self.save_memory_freq != -1:
-            if Global.timestep != 0 and Global.timestep % self.save_memory_freq == 0:
-                self.environment.agents[0].save_memory(dir=self.brain_dir, suffix=self.suffix)
+            if Global.sim_timesteps != 0 and Global.sim_timesteps % self.save_memory_freq == 0:
+                self.environment.agents[0].save_mem(dir=self.brain_dir, suffix=self.suffix)
 
                 if self.wait_learning_score_and_save_model != -1:
                     print("highest ls", testbed.best_ls)
@@ -353,14 +353,14 @@ class TestbedHomingSimple(object):
 
             printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                            "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
-                           ", tmstp: {:10.0f}".format(Global.timestep) +
+                           ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
                            ", t: {}".format(Global.get_time()))
             self.running = False
 
             return
 
         # Reached max number of timesteps
-        if self.max_timesteps != -1 and Global.timestep >= self.max_timesteps:
+        if self.max_timesteps != -1 and Global.sim_timesteps >= self.max_timesteps:
             self.running = False
 
 
@@ -377,7 +377,7 @@ class TestbedHomingSimple(object):
                                "{:>25s}".format(
                                    "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
                                ", training_it: {:10.0f}".format(self.environment.agents[0].training_it()) +
-                               ", tmstp: {:10.0f}".format(Global.timestep) +
+                               ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
                                ", t: {}".format(Global.get_time()))
                 self.running = False
                 self.environment.agents[0].save_brain(dir=self.brain_dir)
@@ -467,7 +467,7 @@ if __name__ == '__main__':
 
         # print("At simID: {}, highest ls: {}".format(simID, testbed.best_ls))
 
-        total_timesteps += Global.timestep # Increment total timesteps
+        total_timesteps += Global.sim_timesteps # Increment total timesteps
         global_homing_simple.reset_simulation_global() # Reset global variables
 
     print("All simulation finished\n" 

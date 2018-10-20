@@ -86,7 +86,7 @@ if __name__ == '__main__':
             testbed.run_simulation()
             testbed.end_simulation()
 
-            total_timesteps += Global.timestep # Increment total timesteps
+            total_timesteps += Global.sim_timesteps # Increment total timesteps
             global_homing_simple.reset_simulation_global() # Reset global variables
 
             # f gives the whole path, let's save only the filename

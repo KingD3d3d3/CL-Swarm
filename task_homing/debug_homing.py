@@ -67,7 +67,7 @@ def printEvent(color="", agent=None, event_message=""):
            "event_count: {:5.0f}, "
            "t: {}"
            .format(
-               Global.timestep,
+               Global.sim_timesteps,
                agent.training_it(),
                agent.goalReachedCount,
                agent.elapsedTimestep,
@@ -81,7 +81,7 @@ def printEvent(color="", agent=None, event_message=""):
 
     msg_csv = (agent.id,
                event_message,
-               Global.timestep,
+               Global.sim_timesteps,
                agent.goalReachedCount,
                agent.elapsedTimestep,
                agent.t2GCollisionCount,
@@ -120,5 +120,5 @@ def printEvent(color="", agent=None, event_message=""):
 
 def xprint(color=PRINT_BLUE, msg=""):
     printColor(color=color, msg="{: <37s}".format(msg) +
-                                ", tmstp: {:10.0f}, t: {}".format(Global.timestep, Global.get_time()) +
+                                ", tmstp: {:10.0f}, t: {}".format(Global.sim_timesteps, Global.get_time()) +
                                 ", world_t: {}".format(Util.getTimeString2()))

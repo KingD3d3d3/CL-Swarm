@@ -20,6 +20,8 @@ parser = argparse.ArgumentParser(description='Testbed Gym Playground')
 parser.add_argument('--render', help='render the simulation', default=True, type=Util.str2bool)
 parser.add_argument('--debug', help='print simulation log', default=True, type=Util.str2bool)
 parser.add_argument('--record', help='record simulation log in file', default=False, type=Util.str2bool)
+parser.add_argument('--save_model', help='save agent model in file', default=False, type=Util.str2bool)
+parser.add_argument('--save_mem', help='save agent experiences in file', default=False, type=Util.str2bool)
 parser.add_argument('--num_agents', help='number of agents in the simulation', default=1, type=int)
 
 parser.add_argument('--training', help='train agent', default=True, type=Util.str2bool)
@@ -40,7 +42,7 @@ parser.add_argument('--load_h2out_weights', help='load h2 output weights of neur
 parser.add_argument('--load_h1out_weights', help='load h1 output weights of neural networks', default=False, type=Util.str2bool)
 
 # Load experiences
-parser.add_argument('--load_memory', help='load defined number of experiences to agent', default=0, type=int)
+parser.add_argument('--load_mem', help='load defined number of experiences to agent', default=0, type=int)
 parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
 
 parser.add_argument('--save_network_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)
@@ -79,8 +81,8 @@ def sim_suffix():
         suffix = 'loadh1out'
 
     # Load memory
-    if args.load_memory:
-        suffix += 'load' + args.load_memory + 'xp'
+    if args.load_mem:
+        suffix += 'load' + str(args.load_mem) + 'xp'
 
     # Normal case
     if not suffix:

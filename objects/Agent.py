@@ -143,7 +143,7 @@ class Agent(object):
     def save_brain(self, dir, suffix=""):
         """
             Save agent's brain (neural network model and memory) in file
-            Call save_model() and save_memory()
+            Call save_model() and save_mem()
         """
         self.save_model(dir, suffix)
         self.save_memory(dir, suffix)
@@ -156,7 +156,7 @@ class Agent(object):
 
         timestr = Util.getTimeString()
         directory = dir
-        timestep = "_" + str(Global.timestep) + "tmstp"
+        timestep = "_" + str(Global.sim_timesteps) + "tmstp"
         suffix = "_" + suffix
         network_model = directory + timestr + timestep + suffix + "_model.h5"  # neural network model file
 
@@ -176,7 +176,7 @@ class Agent(object):
         """
         timestr = Util.getTimeString()
         directory = dir
-        timestep = "_" + str(Global.timestep) + "tmstp"
+        timestep = "_" + str(Global.sim_timesteps) + "tmstp"
         suffix = "_" + suffix
         memory_file = directory + timestr + timestep + suffix + "_memory.csv"  # neural network model file
 
@@ -187,7 +187,7 @@ class Agent(object):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        self.brain.save_memory(memory_file)
+        self.brain.save_mem(memory_file)
 
     def load_model(self, file=""):
         """
@@ -317,7 +317,7 @@ class Agent(object):
             directory = "./brain_files/"
             memory_file = directory + "brain" + "_memory.csv"  # neural network model file
 
-        self.brain.load_memory(memory_file, size)
+        self.brain.load_mem(memory_file, size)
 
     def stop_training(self):
         """

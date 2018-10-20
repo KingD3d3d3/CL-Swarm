@@ -4,7 +4,6 @@ from Box2D.b2 import (vec2)
 import math
 import numpy as np
 import argparse
-import time
 
 import os
 import errno
@@ -57,21 +56,20 @@ def radToDeg(radian):
 
 
 def angle(vec1, vec2):
-    '''Computes the angle between a and b, and returns the angle in
-    degrees.
-    pytorch vector angle implementation
-    >>> Vector(100, 0).angle((0, 100))
-    -90.0
-    >>> Vector(87, 23).angle((-77, 10))
-    -157.7920283010705
-    >>> Vector(0, 1).angle((1, 0))
-    90.0
-    '''
-    angle = -(180 / math.pi) * math.atan2(
+    """
+        Computes the angle between a and b, and returns the angle in degrees.
+        pytorch vector angle implementation
+        -> Vector(100, 0).angle((0, 100))
+            -90.0
+        -> Vector(87, 23).angle((-77, 10))
+            -157.7920283010705
+        -> Vector(0, 1).angle((1, 0))
+            90.0
+    """
+    ang = -(180 / math.pi) * math.atan2(
         vec1.x * vec2.y - vec1.y * vec2.x,
         vec1.x * vec2.x + vec1.y * vec2.y)
-    return angle
-
+    return ang
 
 def megaSlowFunction():
     for i in range(500000):
@@ -100,30 +98,6 @@ def minMaxNormalization_m1_1(x, _min, _max):
         Using MinMax normalization and scaling
     """
     return minMaxNormalization(x, _min, _max, -1., 1.)
-
-
-
-
-#
-# def minMaxNormalization_0_1(x, minX, maxX):
-#     """
-#         Normalize input x to range [0,1]
-#         Using MinMax normalization
-#     """
-#     if minX == maxX:
-#         return 0.5
-#     else:
-#         return (x - minX) / (maxX - minX)
-#
-# def minMaxNormalization_m1_1(x, minX, maxX):
-#     """
-#         Normalize input x to range [-1,1]
-#         Using MinMax normalization and scaling
-#     """
-#     if minX == maxX:
-#         return 0
-#     else:
-#         return 2 * (x - minX) / (maxX - minX) - 1
 
 def getTimeString():
     now = datetime.now()
@@ -173,3 +147,9 @@ def create_dir(dir):
         except OSError as exc:  # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
+
+def remove_blank(s):
+    """
+        Remove leading spaces, trailing spaces, successive spaces, newline characters and tab characters
+    """
+    return " ".join(s.split())

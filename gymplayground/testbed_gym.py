@@ -2,6 +2,7 @@ import time
 import importlib
 import os
 import errno
+import csv
 try:
     # Running in PyCharm
     from gymplayground.AgentGym import AgentGym
@@ -29,8 +30,6 @@ except NameError as err:
 
 class TestbedGym(object):
     def __init__(self, sim_param=None):
-
-        self.total_timesteps = 0  # total number of timesteps during the testbed
 
         self.sim_param = sim_param
 
@@ -64,15 +63,16 @@ class TestbedGym(object):
         self.load_all_weights = sim_param.load_all_weights
         self.load_h1h2_weights = sim_param.load_h1h2_weights
         self.load_h1_weights = sim_param.load_h1_weights
-
         self.load_h2_weights = sim_param.load_h2_weights
         self.load_out_weights = sim_param.load_out_weights
         self.load_h2out_weights = sim_param.load_h2out_weights
         self.load_h1out_weights = sim_param.load_h1out_weights
+        self.load_mem = sim_param.load_mem
 
-        self.load_memory = sim_param.load_memory
         self.file_to_load = sim_param.file_to_load
 
+        self.save_model = sim_param.save_model
+        self.save_mem = sim_param.save_mem
         self.save_network_freq_ep = sim_param.save_network_freq_ep
         self.save_memory_freq_ep = sim_param.save_memory_freq_ep
 
@@ -89,7 +89,7 @@ class TestbedGym(object):
             self.suffix = sim_param_gym.sim_suffix()
             self.sim_dir = sim_param_gym.sim_dir()
             Util.create_dir(self.sim_dir) # create the directory
-            print("Records directory: {}".format(sim_param_gym.sim_dir()))
+            print("Record directory: {}".format(sim_param_gym.sim_dir()))
 
         # Simulation running flag
         self.running = True
@@ -116,21 +116,23 @@ class TestbedGym(object):
         self.sim_count += 1
         self.running = True
 
-        # # Record simulation
-        # self.simlogs_dir = self.sim_dir + "sim_logs/"
-        # if global_gym.record:
-        #     debug_gym.xprint(msg="sim_id: {}, Start recording".format(sim_id))
-        #     filename = global_gym.fileCreate(dir=self.simlogs_dir,
-        #                                suffix=self.simfile_suffix + '_sim' + str(global_gym.sim_id) + '_' + self.suffix,
-        #                                extension=".csv")
-        #     global_gym.simlogs_fo = open(filename, 'a')
-        #     global_gym.simlogs_writer = csv.writer(global_gym.simlogs_fo)
-
+        # Record simulation
+        self.simlogs_dir = self.sim_dir + "sim_logs/"
         if global_gym.record:
 
+            debug_gym.xprint(msg="Start recording".format(sim_id))
+
+            # CSV event file
+            suffix = self.env_name + '_sim' + str(global_gym.sim_id) + '_' + self.suffix
+            filename = debug_gym.create_record_file(dir=self.simlogs_dir, suffix=suffix)
+            global_gym.simlogs_fo = open(filename, 'a')
+            global_gym.simlogs_writer = csv.writer(global_gym.simlogs_fo)
+            global_gym.simlogs_writer.writerow(debug_gym.header) # write header of the record file
+
             # Brain directory
-            self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
-            Util.create_dir(self.brain_dir)
+            if self.save_model or self.save_mem:
+                self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
+                Util.create_dir(self.brain_dir)
 
         # Setup agents
         self.setup_agents()
@@ -186,8 +188,8 @@ class TestbedGym(object):
             # ----------------------------------------------------
 
             # Load memory to agent
-            if self.load_memory:
-                agent.brain.load_memory(self.file_to_load, self.load_memory)
+            if self.load_mem:
+                agent.brain.load_mem(self.file_to_load, self.load_mem)
 
             # Collect experiences
             if not self.collect_experiences:
@@ -212,12 +214,8 @@ class TestbedGym(object):
                 agent.update()
 
             # Step counter
-            Global.timestep += 1
-
-            # # Time counter
-            # elapsed_time = time.time() - global_gym.start_time
-            # global_gym.timer += elapsed_time
-            # global_gym.start_time = time.time()
+            Global.sim_timesteps += 1
+            Global.timesteps += 1
 
     def simulation_logic(self):
         """
@@ -231,7 +229,7 @@ class TestbedGym(object):
         # # Save memory frequently
         # if global_gym.record and self.save_memory_freq:
         #     if Global.timestep != 0 and Global.timestep % self.save_memory_freq == 0:
-        #         self.agents[0].save_memory(dir=self.brain_dir, suffix=self.suffix)
+        #         self.agents[0].save_mem(dir=self.brain_dir, suffix=self.suffix)
 
         # # Save neural networks model frequently based on training iterations
         # if global_gym.record and self.save_network_freq_training_it:
@@ -253,18 +251,31 @@ class TestbedGym(object):
         """
         debug_gym.xprint(msg="Exit simulation")
 
-        # Close environment properly
+        # Close environment
         for agent in self.agents:
             agent.env.close()
 
-        if global_gym.record:
-            for agent in self.agents:
-                agent.brain.save_model(dir=self.brain_dir, suffix=self.env_name)
+        # Save model or memory experiences of agents
+        if self.save_model or self.save_mem:
 
-            # global_gym.simlogs_fo.close()
+            for agent in self.agents:
+                suffix = self.env_name + '_end'
+
+                # Solved problem suffix
+                if agent.problem_solved:
+                    suffix += '_solved' + str(agent.episodes) + 'ep'  # add number of episodes it took to solve the problem
+
+                if self.save_model:
+                    agent.brain.save_model(dir=self.brain_dir, suffix=suffix)  # save model
+
+                if self.save_mem:
+                    agent.brain.save_mem(dir=self.brain_dir, suffix=suffix) # save memory of experiences
+
+        # Close record file
+        if global_gym.record:
+            global_gym.simlogs_fo.close() # close event file
             debug_gym.xprint(msg="Stop recording")
 
-        self.total_timesteps += Global.timestep  # Increment total timesteps
         global_gym.reset_simulation_global()  # Reset global variables
 
     def save_summary(self):
@@ -278,7 +289,7 @@ class TestbedGym(object):
         file.write("--------------------------\n\n")
         file.write("Number of simulations: {}\n".format(self.sim_count) +
                    "Total simulations time: {}\n".format(Global.get_time()) +
-                   "Total simulations timesteps: {}\n\n".format(self.total_timesteps))
+                   "Total simulations timesteps: {}\n\n".format(Global.timesteps))
 
         file.write("---------------------\n")
         file.write("Testbed configuration\n")
@@ -317,7 +328,7 @@ if __name__ == '__main__':
     print("All simulation finished\n"
           "Number of simulations: {}\n".format(testbed.sim_count) +
           "Total simulations time: {}\n".format(Global.get_time()) +
-          "Total simulations timesteps: {}".format(testbed.total_timesteps))
+          "Total simulations timesteps: {}".format(Global.timesteps))
 
     # Simulation summary (completion time, number of simulation, etc)
     if param.record:

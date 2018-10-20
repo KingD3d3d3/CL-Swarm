@@ -1,3 +1,9 @@
+"""
+    Print log, record simulation event
+    Print simulation setup
+"""
+import os
+import errno
 
 try:
     # Running in PyCharm
@@ -18,83 +24,76 @@ except NameError as err:
     from .. import Util
     from .. import Global
 
-header = ("agent",
-          "event",
-          "timestep",
-          "goal_reached",
-          "timestep_to_goal",
-          "learning_score"
-          )
+header = (
+    'agent',
+    'episode',
+    'score',
+    'avg_score',
+    'timesteps',
+    'tot_timesteps'
+)
 
 
-def printEvent(color="", agent=None, event_message=""):
+def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, record=False, debug=True):
     """
-        Agent           : agent ID
-        Event           : event's message
-        tmstp           : timestep passed (since beginning of simulation)
-        GR              : goal reached count
-        tmstp2G         : timestep to goal
-        LS              : learning score of the agent (average of rewards in sliding window)
-        t       : time passed (since beginning of simulation)
+        agent           : agent
+        episode         : event's message
+        score           : score of the episode
+        avg_score       : average score over the last 100 episodes
+        timesteps        : number of timesteps passed for the episode
+        tot_timesteps   : total number of timesteps passed
     """
-    global_homing_simple.event_count += 1  # increment the event counter
+    msg_event = (
+        "sim_id: {:3.0f}, ".format(global_gym.sim_id) +
+        "agent: {:3.0f}, ".format(agent.id) +
+        "episode: {:5.0f}, ".format(episode) +
+        "score: {:4.0f}, ".format(score) +
+        "avg_score: {:8.2f}, ".format(avg_score) +
+        "timesteps: {:4.0f}, ".format(timesteps) +
+        "tot_timesteps: {:8.0f}, ".format(tot_timesteps) +
+        "training_it: {:8.0f}, ".format(agent.brain.training_it) +
+        "global_t: {}, ".format(Global.get_time()) +
+        "world_t: {}".format(Util.getTimeString2())
+    )
 
-    # Don't print in non-debug mode
-    if not global_homing_simple.debug:
-        return
-
-    msg = ("sim_id: {:3.0f}, ".format(global_homing_simple.simulation_id) +
-           "agent: {:3.0f}, ".format(agent.id) +
-           "{:>25s}".format(event_message) +  # 28
-           ", tmstp: {:10.0f}, "
-           "training_it: {:10.0f}, "
-           "GR: {:5.0f}, "
-           "tmstp2G : {:8.0f}, "
-           "LS: {:3.4f}, "
-           "event_count: {:5.0f}, "
-           "t: {}"
-           .format(
-               Global.timestep,
-               agent.training_it(),
-               agent.goalReachedCount,
-               agent.elapsedTimestep,
-               agent.learning_score(),
-               global_homing_simple.event_count,
-               Global.get_time()
-           )
-           )
-
-    msg_csv = (agent.id,
-               event_message,
-               Global.timestep,
-               agent.goalReachedCount,
-               agent.elapsedTimestep,
-               agent.learning_score()
-               )
+    msg_csv = (
+        agent.id,
+        episode,
+        score,
+        avg_score,
+        timesteps,
+        tot_timesteps
+    )
 
     # Record data
-    if global_homing_simple.record:
-
-        # Write header only once at the beginning
-        if not global_homing_simple.header_write:
-            if len(header) != len(msg_csv):
-                sys.exit("Header doesn't match csv data")
-            global_homing_simple.simlogs_writer.writerow(header)
-            global_homing_simple.header_write = True
-
-        global_homing_simple.simlogs_writer.writerow(msg_csv)
+    if global_gym.record and record:
+        global_gym.simlogs_writer.writerow(msg_csv)
 
     # Print in debug mode
-    if global_homing_simple.debug:
-        sys.stdout.write(color)
-        print(msg)
-        sys.stdout.write(PRINT_RESET)
-
-    return
+    if global_gym.debug and debug:
+        print(msg_event)
 
 
 def xprint(color=PRINT_BLUE, msg=""):
     printColor(color=color, msg="sim_id: {:3.0f}, ".format(global_gym.sim_id) +
-                                "{: <37s}, ".format(msg) +
-                                "tmstp: {:10.0f}, t: {}, ".format(Global.timestep, Global.get_time()) +
+                                "{: <35s}, ".format(msg) +
+                                "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
+                                "global_t: {}, ".format(Global.get_time()) +
                                 "world_t: {}".format(Util.getTimeString2()))
+
+def create_record_file(dir, suffix=""):
+    """
+        Create record CSV file and return it
+        Also create the directory if it doesn't exist
+    """
+    time_str = Util.getTimeString()
+    filename = dir + time_str + '_' + suffix + ".csv"
+
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
+    return filename

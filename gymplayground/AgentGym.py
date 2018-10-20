@@ -52,20 +52,19 @@ class AgentGym(object):
         self.config = config # configuration file
         self.solved_score = solved_score # average score need to reach for the problem to be solved
         self.max_episodes = max_episodes
-        self.total_timesteps = 0 # total number of timesteps of all simulations
-        self.total_episodes = 0 # total number of episodes of all simulations
 
-        # ------------------ Variables that will be set at each simulation --------------------
+        # ------------------ Variables to set at each simulation --------------------
 
         self.brain = None
 
         self.episodes = 0 # number of episodes during current simulation
         self.scores = deque(maxlen=100) # keep total scores of last 100 episodes
-        self.problem_done = False # when problem is solved, the simulation end
+        self.problem_done = False # when problem is done, the simulation end
+        self.problem_solved = False # problem is solved Flag
         self.episode_inited = False # at the beginning of an episode we need to rest environment
         self.episode_done = False
         self.average = 0 # calculate average of last 100 episodes's score
-        self.problem_timesteps = 0 # total number of timesteps of all episodes passed during 1 simulation
+        self.tot_timesteps = 0 # total number of timesteps of all episodes passed during 1 simulation
 
         # Need to be initialized because they are property
         self.state = None
@@ -74,11 +73,8 @@ class AgentGym(object):
 
     def setup(self, training=True, random_agent=False):
 
-        # Update the agent's flag
-        training = training
-
-        if random_agent:  # can't train when random
-            training = False
+        if random_agent:
+            training = False # no training for random agent
             random_agent = random_agent
 
         # Create agent's brain
@@ -88,16 +84,15 @@ class AgentGym(object):
         self.episodes = 0
         self.scores = deque(maxlen=100)
         self.problem_done = False
+        self.problem_solved = False
         self.episode_inited = False
         self.episode_done = False
         self.average = 0
-        self.problem_timesteps = 0
+        self.tot_timesteps = 0
 
         self.state = None
         self.score = 0
         self.timesteps = 0
-
-#        debug_gym.printEvent(color=PrintColor.PRINT_CYAN, agent=self, event_message="agent is ready")
 
     def update(self):
         """
@@ -123,11 +118,10 @@ class AgentGym(object):
             self.brain.record((self.state, action, reward, next_state, done))
             self.state = next_state
 
+            self.brain.train()
+
             self.score += reward
             self.timesteps += 1
-
-            # train each step
-            self.brain.train()
 
             if done:  # either game over or reached maximum timesteps of episode
                 self.episodes += 1
@@ -136,26 +130,33 @@ class AgentGym(object):
                 return
             # -----------------------------------------------------------------
 
-            self.episode_inited = False # re-initiate the environment for the next episode
-            self.problem_timesteps += self.timesteps # increment total number of timesteps of all episodes
+            # Calculate average over the last episodes
+            average = sum(self.scores) / len(self.scores)
 
-            # Problem solved
-            average = sum(self.scores) / len(self.scores) # average over the last episodes
-            if average >= self.solved_score and len(self.scores) >= 100: # need reach solved score and at least 100 episodes to terminate
-                # brain.save_model(directory + 'Finished_' + str(episodeCnt) + '_' + BRAIN_FILE)
-                print("*** Solved after {} episodes ***".format(self.episodes))
-                self.problem_done = True
-                return
+            self.episode_inited = False # re-initiate the environment for the next episode
+            self.tot_timesteps += self.timesteps # increment total number of timesteps of all episodes
+
+            # Record event (every timestep)
+            if global_gym.record:
+                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=average,
+                                      timesteps=self.timesteps, tot_timesteps=self.tot_timesteps, record=True, debug=False)
 
             # Periodically print current average of reward
             if self.episodes % 10 == 0:
-                print("episode: {:5.0f}, timesteps: {:3.0f}, tot_timestep: {:8.0f}, score: {:3.0f}, average: {:3.2f}"
-                      .format(self.episodes, self.timesteps, self.problem_timesteps, self.score,
-                              average))
+                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=average,
+                                      timesteps=self.timesteps, tot_timesteps=self.tot_timesteps, record=False, debug=True)
+
+            # Problem solved
+            if average >= self.solved_score and len(self.scores) >= 100:  # need reach solved score and at least 100 episodes to terminate
+                print("agent: {:4.0f}, *** Solved after {} episodes ***".format(self.id, self.episodes))
+                self.problem_done = True
+                self.problem_solved = True
+                return
 
             # Reached maximum limit of episodes
             if self.episodes >= self.max_episodes:
-                print("*** Reached maximum number of episodes: {} ***".format(self.episodes))
+                print(
+                    "agent: {:4.0f}, *** Reached maximum number of episodes: {} ***".format(self.id, self.episodes))
                 self.problem_done = True
                 return
             # --------------------------------------------------------------------------------------------------------------

@@ -279,7 +279,7 @@ class AgentHomingSimple(Agent):
     def computeGoalReached(self):
         self.goalReachedCount += 1
         self.elapsedTime = global_homing_simple.timer - self.startTime
-        self.elapsedTimestep = Global.timestep - self.startTimestep
+        self.elapsedTimestep = Global.sim_timesteps - self.startTimestep
 
         # Goal reached event
         debug_homing_simple.printEvent(color=PrintColor.PRINT_RED, agent=self,
@@ -287,7 +287,7 @@ class AgentHomingSimple(Agent):
 
         # Reset, Update
         self.startTime = global_homing_simple.timer
-        self.startTimestep = Global.timestep
+        self.startTimestep = Global.sim_timesteps
         self.currentGoalIndex = (self.currentGoalIndex + 1) % self.num_goals  # change goal
         self.distance = self.distanceToGoal()
 
@@ -369,7 +369,7 @@ class AgentHomingSimple(Agent):
         # Update variables
         self.last_distance = self.distance
         self.elapsedTime = global_homing_simple.timer - self.startTime
-        self.elapsedTimestep = Global.timestep - self.startTimestep
+        self.elapsedTimestep = Global.sim_timesteps - self.startTimestep
         self.last_position = vec2(self.body.position.x, self.body.position.y)
         self.last_orientation = self.body.angle
         self.action = action
@@ -425,15 +425,15 @@ class AgentHomingSimple(Agent):
         idA = agentA.id
         idB = agentB.id
 
-        agentA.elapsed_timestep_meetings[idB] = Global.timestep - agentA.start_timestep_meetings[idB]
-        agentB.elapsed_timestep_meetings[idA] = Global.timestep - agentB.start_timestep_meetings[idA]
+        agentA.elapsed_timestep_meetings[idB] = Global.sim_timesteps - agentA.start_timestep_meetings[idB]
+        agentB.elapsed_timestep_meetings[idA] = Global.sim_timesteps - agentB.start_timestep_meetings[idA]
 
         if agentA.elapsed_timestep_meetings[idB] <= MEETING_TIMESTEP \
                 and agentB.elapsed_timestep_meetings[idA] <= MEETING_TIMESTEP:  # Check elapsed timestep
 
             print("too short")
-            agentA.start_timestep_meetings[idB] = Global.timestep  # update based on elapsed time
-            agentB.start_timestep_meetings[idA] = Global.timestep  # update based on elapsed time
+            agentA.start_timestep_meetings[idB] = Global.sim_timesteps  # update based on elapsed time
+            agentB.start_timestep_meetings[idA] = Global.sim_timesteps  # update based on elapsed time
 
             return False  # time was too short since the previous meeting -> return False
 
