@@ -1,4 +1,3 @@
-
 import numpy as np
 import random
 from collections import deque
@@ -11,6 +10,7 @@ import sklearn.utils
 from keras.optimizers import Adam
 import os
 import errno
+
 try:
     from res.print_colors import *
     import Global
@@ -21,19 +21,19 @@ except NameError as err:
     from .. import Global
     from .. import Util
 
-
 # DEFAULT HYPERPARAMETERS
-H1 = 64 # number of neurons in the 1st hidden layer
-H2 = 64 # number of neurons in the 2nd hidden layer
-BATCH_SIZE = 32 # Typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
+H1 = 64  # number of neurons in the 1st hidden layer
+H2 = 64  # number of neurons in the 2nd hidden layer
+BATCH_SIZE = 32  # Typically chosen between 1 and a few hundreds, e.g. B = 32 is a good default value, with values above 10 taking advantage of the speed-up of matrix-matrix products over matrix-vector products. (from Bengio's 2012 paper)
 MEMORY_CAPACITY = 100000  # 2000
 GAMMA = 0.99  # Discount Factor
-LEARNING_RATE = 0.001 # default Adam optimizer learning rate value
-UPDATE_TARGET_STEPS = 1000 # update target network rate every given timesteps
+LEARNING_RATE = 0.001  # default Adam optimizer learning rate value
+UPDATE_TARGET_STEPS = 1000  # update target network rate every given timesteps
 EPSILON_START = 1.  # Initial value of epsilon in epsilon-greedy during training
 EPSILON_END = 0.1  # Final value of epsilon in epsilon-greedy during training
-EXPLORATION_STEPS = 10000 # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
-EPSILON_TEST = 0.05 # 0.05 # FINAL_EPSILON # epsilon value during testing after training is done
+EXPLORATION_STEPS = 10000  # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
+EPSILON_TEST = 0.05  # 0.05 # FINAL_EPSILON # epsilon value during testing after training is done
+
 
 # -------------------- MODEL -------------------------
 
@@ -48,18 +48,18 @@ class Model(object):
         self.q_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
         self.target_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
 
-        self.dummy_processing(input_size, output_size) # prevent training freeze
+        self.dummy_processing(input_size, output_size)  # prevent training freeze
 
     @staticmethod
     def build_model(input_size, output_size, layers, lr):
         model = Sequential()  # Sequential() creates the foundation of the layers.
 
-        model.add(Dense(layers[0], activation='relu', input_dim=input_size)) # add input to 1st hidden layer
+        model.add(Dense(layers[0], activation='relu', input_dim=input_size))  # add input to 1st hidden layer
 
         for layer in layers[1:]:
-            model.add(Dense(layer, activation='relu')) # add successive hidden layers
+            model.add(Dense(layer, activation='relu'))  # add successive hidden layers
 
-        model.add(Dense(output_size, activation='linear')) # Output layer
+        model.add(Dense(output_size, activation='linear'))  # Output layer
         model.compile(loss='mse', optimizer=Adam(lr=lr))  # Adam optimizer for stochastic gradient descent
 
         return model
@@ -154,20 +154,21 @@ class Model(object):
             (i.e., the weights have the same distribution along each dimension).
             Credit: https://gist.github.com/jkleint/eb6dc49c861a1c21b612b568dd188668
         """
-        weights = self.q_network.get_weights() # Get weights
-        weights = [np.random.permutation(w.flat).reshape(w.shape) for w in weights] # Randomize
+        weights = self.q_network.get_weights()  # Get weights
+        weights = [np.random.permutation(w.flat).reshape(w.shape) for w in weights]  # Randomize
 
         # Apply to networks
         self.q_network.set_weights(weights)
         self.target_network.set_weights(weights)
+
 
 # -------------------- MEMORY --------------------------
 
 class Memory(object):  # sample stored as (s, a, r, s_, done)
 
     def __init__(self, capacity):
-        self.capacity = capacity # max capacity of container
-        self.samples = deque(maxlen=capacity) # container of experiences (queue)
+        self.capacity = capacity  # max capacity of container
+        self.samples = deque(maxlen=capacity)  # container of experiences (queue)
 
         # TODO : verify it is a random seed for each instance
         random.seed()
@@ -206,13 +207,14 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
         """
         return len(self.samples)
 
+
 # -------------------- DQN AGENT -----------------------
 
 class DQN(object):
-
     def __init__(self, input_size, action_size, id=-1, training=True, random_agent=False, ratio_train=1, brain_file="",
                  layers=(H1, H2), mem_capacity=MEMORY_CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, lr=LEARNING_RATE,
-                 update_target_steps=UPDATE_TARGET_STEPS, eps_start=EPSILON_START, eps_end=EPSILON_END, eps_test=EPSILON_TEST,
+                 update_target_steps=UPDATE_TARGET_STEPS, eps_start=EPSILON_START, eps_end=EPSILON_END,
+                 eps_test=EPSILON_TEST,
                  exploration_steps=EXPLORATION_STEPS, use_double_dqn=True, use_prioritized_experience_replay=False):
 
         # TODO : verify it is a random seed for each instance
@@ -267,7 +269,7 @@ class DQN(object):
         # Record new experience every timestep
         self.collect_experiences = True
 
-        self.training = True # init training flag
+        self.training = True  # init training flag
         if not training:
             self.stop_training()
 
@@ -348,8 +350,9 @@ class DQN(object):
             Main training function of DQN agent
         """
         # Training
-        if self.training and len(self.memory.samples) >= self.batch_size: # and self.update_counter % self.ratio_train == 0:
-            self.replay() # replay from memory
+        if self.training and len(
+                self.memory.samples) >= self.batch_size:  # and self.update_counter % self.ratio_train == 0:
+            self.replay()  # replay from memory
             self.update_epsilon()
             self.training_it += 1  # increment training iterations counter
 
@@ -466,10 +469,10 @@ class DQN(object):
             Also create the /brain_files/{sim_id}/ directory if it doesn't exist
         """
         model_file = dir
-        model_file += Util.getTimeString() # timestring
+        model_file += Util.getTimeString()  # timestring
         model_file += '_' + suffix
         # model_file += '_' + str(self.model.h1) + 'h1_' + str(self.model.h1) + 'h2' # NN architecture
-        model_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_' # timesteps
+        model_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_'  # timesteps
         model_file += 'model.h5'  # model file extension
 
         # Create the /brain_files/ directory if it doesn't exist
@@ -491,9 +494,9 @@ class DQN(object):
             Also create the /brain_files/{sim_id}/ directory if it doesn't exist
         """
         memory_file = dir
-        memory_file += Util.getTimeString() # timestring
+        memory_file += Util.getTimeString()  # timestring
         memory_file += '_' + suffix
-        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_' # timesteps
+        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_'  # timesteps
         memory_file += 'mem.csv'  # memory file extension
 
         # Create the /brain_files/ directory if it doesn't exist
@@ -509,18 +512,18 @@ class DQN(object):
 
         fo = open(memory_file, 'a')
         writer = csv.writer(fo)
-        writer.writerow(header) # write header
+        writer.writerow(header)  # write header
         for i in range(len(self.memory.samples)):
-
             state = Util.remove_blank(np.array2string(self.memory.samples[i][0])).replace(' ]', ']').replace('[ ', '[')
             action = str(self.memory.samples[i][1])
             reward = str(self.memory.samples[i][2])
-            next_state = Util.remove_blank(np.array2string(self.memory.samples[i][3])).replace(' ]', ']').replace('[ ', '[')
+            next_state = Util.remove_blank(np.array2string(self.memory.samples[i][3])).replace(' ]', ']').replace('[ ',
+                                                                                                                  '[')
             done = str(self.memory.samples[i][4])
             experience = (state, action, reward, next_state, done)
-            writer.writerow(experience) # write experience
+            writer.writerow(experience)  # write experience
 
-        fo.close() # close file properly
+        fo.close()  # close file properly
 
         self.dqn_print(msg="Save agent's memory" + " -> file: {}".format(memory_file))
 
@@ -724,5 +727,6 @@ class DQN(object):
                        "{: <35s}, ".format(msg) +
                        "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
                        "training_it: {:8.0f}, ".format(self.training_it) +
+                       "sim_t: {}, ".format(Global.get_sim_time()) +
                        "global_t: {}, ".format(Global.get_time()) +
                        "world_t: {}".format(Util.getTimeString2()))

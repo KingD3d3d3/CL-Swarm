@@ -31,7 +31,7 @@ except NameError as err:
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentGym(object):
-    def __init__(self, render=False, id=-1, num_agents=0, max_episodes=2000, config=None, env_name='', solved_score=100000, **kwargs):
+    def __init__(self, render=False, id=-1, num_agents=0, config=None, max_ep=2000, env_name='', solved_score=100000):
 
         # Agent's ID
         self.id = id
@@ -50,8 +50,8 @@ class AgentGym(object):
         self.num_agents = num_agents
 
         self.config = config # configuration file
-        self.solved_score = solved_score # average score need to reach for the problem to be solved
-        self.max_episodes = max_episodes
+        self.solved_score = solved_score # average score agent needs to reach to consider the problem solved
+        self.max_episodes = max_ep
 
         # ------------------ Variables to set at each simulation --------------------
 
@@ -148,7 +148,7 @@ class AgentGym(object):
 
             # Problem solved
             if average >= self.solved_score and len(self.scores) >= 100:  # need reach solved score and at least 100 episodes to terminate
-                print("agent: {:4.0f}, *** Solved after {} episodes ***".format(self.id, self.episodes))
+                print("agent: {:4.0f}, *** Solved after {} episodes *** reached solved score: {}".format(self.id, self.episodes, self.solved_score))
                 self.problem_done = True
                 self.problem_solved = True
                 return

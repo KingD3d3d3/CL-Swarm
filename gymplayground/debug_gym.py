@@ -30,7 +30,8 @@ header = (
     'score',
     'avg_score',
     'timesteps',
-    'tot_timesteps'
+    'tot_timesteps',
+    'sim_t'
 )
 
 
@@ -43,7 +44,7 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
         timesteps        : number of timesteps passed for the episode
         tot_timesteps   : total number of timesteps passed
     """
-    msg_event = (
+    msg_debug = (
         "sim_id: {:3.0f}, ".format(global_gym.sim_id) +
         "agent: {:3.0f}, ".format(agent.id) +
         "episode: {:5.0f}, ".format(episode) +
@@ -52,17 +53,20 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
         "timesteps: {:4.0f}, ".format(timesteps) +
         "tot_timesteps: {:8.0f}, ".format(tot_timesteps) +
         "training_it: {:8.0f}, ".format(agent.brain.training_it) +
+        "sim_t: {}, ".format(Global.get_sim_time()) +
         "global_t: {}, ".format(Global.get_time()) +
         "world_t: {}".format(Util.getTimeString2())
     )
 
+    sim_t = Global.get_sim_time_in_seconds()
     msg_csv = (
         agent.id,
         episode,
         score,
         avg_score,
         timesteps,
-        tot_timesteps
+        tot_timesteps,
+        sim_t
     )
 
     # Record data
@@ -71,13 +75,14 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
 
     # Print in debug mode
     if global_gym.debug and debug:
-        print(msg_event)
+        print(msg_debug)
 
 
 def xprint(color=PRINT_BLUE, msg=""):
     printColor(color=color, msg="sim_id: {:3.0f}, ".format(global_gym.sim_id) +
                                 "{: <35s}, ".format(msg) +
                                 "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
+                                "sim_t: {}, ".format(Global.get_sim_time()) +
                                 "global_t: {}, ".format(Global.get_time()) +
                                 "world_t: {}".format(Util.getTimeString2()))
 
@@ -87,7 +92,7 @@ def create_record_file(dir, suffix=""):
         Also create the directory if it doesn't exist
     """
     time_str = Util.getTimeString()
-    filename = dir + time_str + '_' + suffix + ".csv"
+    filename = dir + time_str + '_' + suffix + "_rec.csv"
 
     if not os.path.exists(os.path.dirname(filename)):
         try:

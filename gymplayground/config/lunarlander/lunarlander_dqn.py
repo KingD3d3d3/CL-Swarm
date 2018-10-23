@@ -13,6 +13,7 @@ hyperparams = {
     'batch_size': 32,
     'eps_start': 1.,
     'eps_end': 0.1,
+    'eps_test': 0.05,
     'exploration_steps': 1000,
     'gamma': 0.99,
     'lr': 0.001,

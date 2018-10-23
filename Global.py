@@ -28,3 +28,9 @@ def get_sim_time():
     h, m = divmod(m, 60)
     formated = "%dh %02dm %02ds" % (h, m, s)
     return formated
+def get_sim_time_in_seconds():
+    """
+        Return the time in seconds passed since the beginning of a simulation
+    """
+    elapsed_time = time.time() - sim_start_time
+    return elapsed_time

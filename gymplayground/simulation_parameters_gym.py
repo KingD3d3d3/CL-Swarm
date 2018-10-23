@@ -28,6 +28,8 @@ parser.add_argument('--training', help='train agent', default=True, type=Util.st
 parser.add_argument('--exploration', help='agent takes random action at the beginning (exploration)', default=True, type=Util.str2bool)
 parser.add_argument('--collect_experiences', help='append a new experience to memory', default=True, type=Util.str2bool)
 parser.add_argument('--max_ep', help='maximum number of episodes for 1 simulation', default=0, type=int)
+
+parser.add_argument('--solved_score', help='average score agent needs to reach to consider the problem solved', default=0, type=int)
 parser.add_argument('--multi_sim', help='multiple successive simulations', default=1, type=int)
 parser.add_argument('--random_agent', help='agent is taking random action', default=False, type=Util.str2bool)
 
@@ -64,7 +66,7 @@ def sim_suffix():
     # Suffix
     suffix = ''
     if args.load_all_weights:
-        suffix = 'loadfull'
+        suffix = 'loadall'
     elif args.load_h1h2_weights:
         suffix = 'loadh1h2'
     elif args.load_h1_weights:

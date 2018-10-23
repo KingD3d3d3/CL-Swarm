@@ -36,13 +36,13 @@ class TestbedGym(object):
         # Load config from file # assume path is cfg/<env>/<env>_<agent type>.  e.g. 'config/cartpole/cartpole_dqn'
         sys.path.append('config/' + sim_param.cfg.split('_')[0])
         config = importlib.import_module(sim_param.cfg)
-        ENV = config.environment['env_name']
+        env = config.environment['env_name']
         self.problem_config = config
 
         print("########################")
         print("#### CL Testbed Gym ####")
         print("########################")
-        print("Environment: {}\n".format(ENV))
+        print("Environment: {}\n".format(env))
         # -------------------- Simulation Parameters ----------------------
 
         self.render = sim_param.render
@@ -54,10 +54,17 @@ class TestbedGym(object):
         self.exploration = sim_param.exploration
         self.collect_experiences = sim_param.collect_experiences
 
+        # Max number of episodes
         if sim_param.max_ep:
             self.max_ep = sim_param.max_ep
         else:
             self.max_ep = config.environment['max_ep']
+
+        # Average score agent needs to reach to consider the problem solved
+        if sim_param.solved_score:
+            self.solved_score = sim_param.solved_score
+        else:
+            self.solved_score = config.environment['solved_score']
 
         self.load_model = sim_param.load_model
         self.load_all_weights = sim_param.load_all_weights
@@ -81,7 +88,7 @@ class TestbedGym(object):
         self.sim_dir = ''
         self.simlogs_dir = ''
         self.brain_dir = ''
-        self.env_name = ENV  # e.g. "CartPole_v0"
+        self.env_name = env  # e.g. "CartPole_v0"
 
         # global_gym.debug = sim_param.debug == 'True'
         global_gym.record = sim_param.record
@@ -96,8 +103,7 @@ class TestbedGym(object):
         self.sim_count = 0 # count number of simulation
 
         # Create the agents
-        self.agents = [AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config, max_episodes=self.max_ep,
-                     **config.environment)
+        self.agents = [AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config, max_ep=self.max_ep, solved_score=self.solved_score, env_name=env)
             for i in range(self.num_agents)]
 
     def setup_simulations(self, sim_id=1, file_to_load=''):
