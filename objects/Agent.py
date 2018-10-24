@@ -1,17 +1,11 @@
 
 import random
-import sys
-
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (vec2, pi)
-from enum import Enum
 from pygame.locals import *
-import time
 import os
 import errno
-import csv
-import pandas as pd
 import numpy as np
 try:
     # Running in PyCharm
@@ -41,7 +35,7 @@ class Agent(object):
         self.screen = screen
         self.world = world
 
-        self.id = random.randint(0, sys.maxint)
+        self.id = random.randint(0, 1000000)
         self.radius = radius
         self.body = self.world.CreateDynamicBody(
             position=(x, y), userData=self, angle=angle)

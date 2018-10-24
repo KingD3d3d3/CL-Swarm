@@ -29,7 +29,7 @@ class Wall(object):
             shapes=polygonShape(box=(width, height)),  # (half_width, half_height)
             userData=self
         )
-        self.id = random.randint(0, sys.maxint)
+        self.id = random.randint(0, 1000000)
         self.color = color
 
     def draw(self):

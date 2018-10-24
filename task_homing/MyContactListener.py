@@ -83,8 +83,8 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
-            agent.collisionColor()
-            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("StaticCircle", obstacle.id))
+            agent.collision_color()
+            debug_homing.print_event(agent=agent, event_message="collision {}: {}".format("StaticCircle", obstacle.id))
 
             return
 
@@ -99,8 +99,8 @@ class MyContactListener(contactListener):
             agent.lastObstacleCollide = obstacle
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
-            agent.collisionColor()
-            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("StaticCircle", obstacle.id))
+            agent.collision_color()
+            debug_homing.print_event(agent=agent, event_message="collision {}: {}".format("StaticCircle", obstacle.id))
 
             return
 
@@ -116,7 +116,7 @@ class MyContactListener(contactListener):
                 agent.startTimestepObstacleCollision = Global.sim_timesteps  # update based on elapsed time
 
                 # Keep colors
-                agent.collisionColor()
+                agent.collision_color()
 
                 return True  # was too short for collision, so return True
 
@@ -132,7 +132,7 @@ class MyContactListener(contactListener):
             obstacle = objectB
             agent.lastObstacleCollide = obstacle
 
-            agent.endCollisionColor()
+            agent.end_collision_color()
             agent.startTimestepObstacleCollision = Global.sim_timesteps  # Start counting
             return
 
@@ -141,7 +141,7 @@ class MyContactListener(contactListener):
             obstacle = objectA
             agent.lastObstacleCollide = obstacle
 
-            agent.endCollisionColor()
+            agent.end_collision_color()
             agent.startTimestepObstacleCollision = Global.sim_timesteps  # Start counting
             return
 
@@ -166,9 +166,9 @@ class MyContactListener(contactListener):
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
 
-            agent.collisionColor()
+            agent.collision_color()
 
-            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("Wall", wall.id))
+            debug_homing.print_event(agent=agent, event_message="collision {}: {}".format("Wall", wall.id))
 
             return
 
@@ -184,9 +184,9 @@ class MyContactListener(contactListener):
             agent.t2GCollisionCount += 1
             agent.collisionCount += 1
 
-            agent.collisionColor()
+            agent.collision_color()
 
-            debug_homing.printEvent(agent=agent, event_message="collision {}: {}".format("Wall", wall.id))
+            debug_homing.print_event(agent=agent, event_message="collision {}: {}".format("Wall", wall.id))
 
             return
 
@@ -200,7 +200,7 @@ class MyContactListener(contactListener):
             wall = objectB
             agent.lastObstacleCollide = wall
 
-            agent.endCollisionColor()
+            agent.end_collision_color()
             return
 
         if isinstance(objectA, Wall) and isinstance(objectB, AgentHoming):
@@ -208,7 +208,7 @@ class MyContactListener(contactListener):
             wall = objectA
             agent.lastObstacleCollide = wall
 
-            agent.endCollisionColor()
+            agent.end_collision_color()
             return
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -230,17 +230,17 @@ class MyContactListener(contactListener):
             # Agent A
             agentA.t2GAgentCollisionCount += 1
             agentA.agentCollisionCount += 1
-            agentA.collisionColor()
+            agentA.collision_color()
             agentA.lastObstacleCollide = agentB
 
             # Agent B
             agentB.t2GAgentCollisionCount += 1
             agentB.agentCollisionCount += 1
-            agentB.collisionColor()
+            agentB.collision_color()
             agentB.lastObstacleCollide = agentA
 
-            debug_homing.printEvent(agent=agentA, event_message="collision {}: {}".format("Agent", agentB.id))
-            debug_homing.printEvent(agent=agentB, event_message="collision {}: {}".format("Agent", agentA.id))
+            debug_homing.print_event(agent=agentA, event_message="collision {}: {}".format("Agent", agentB.id))
+            debug_homing.print_event(agent=agentB, event_message="collision {}: {}".format("Agent", agentA.id))
 
             return
 
@@ -262,8 +262,8 @@ class MyContactListener(contactListener):
             agentB.startTimestepAgentCollision[idA] = Global.sim_timesteps  # update based on elapsed time
 
             # Keep colors
-            agentA.collisionColor()
-            agentB.collisionColor()
+            agentA.collision_color()
+            agentB.collision_color()
 
             return True  # was too short for collision, so return True
 
@@ -281,8 +281,8 @@ class MyContactListener(contactListener):
             idA = agentA.id
             idB = agentB.id
 
-            agentA.endCollisionColor()
-            agentB.endCollisionColor()
+            agentA.end_collision_color()
+            agentB.end_collision_color()
 
             agentA.startTimestepAgentCollision[idB] = Global.sim_timesteps  # Start counting
             agentB.startTimestepAgentCollision[idA] = Global.sim_timesteps  # Start counting

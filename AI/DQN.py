@@ -340,9 +340,9 @@ class DQN(object):
 
     def record(self, sample):
         """
-            Add sample to memory during training
+            Add sample to memory
         """
-        if self.training and self.collect_experiences:
+        if self.collect_experiences: # self.training
             self.memory.push(sample)
 
     def train(self):

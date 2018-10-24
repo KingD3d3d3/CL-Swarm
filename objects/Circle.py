@@ -42,7 +42,7 @@ class Circle(object):
 class StaticCircle(object):
     def __init__(self, screen=None, world=None, x=0, y=0, radius=1):
         self.screen = screen
-        self.id = random.randint(0, sys.maxint)
+        self.id = random.randint(0, 1000000)
 
         self.radius = radius
         self.body = world.CreateStaticBody(

@@ -11,12 +11,12 @@ try:
     # Running in PyCharm
     from Setup import *
     import Util
-    import debug_homing
+    import task_homing.debug_homing as debug_homing
     from res.print_colors import *
-    import global_homing
+    import task_homing.global_homing as global_homing
     import res.print_colors as PrintColor
-    from EnvironmentHoming import EnvironmentHoming
-    from simulation_parameters import *
+    from task_homing.EnvironmentHoming import EnvironmentHoming
+    from task_homing.simulation_parameters import *
     import Global
 except NameError as err:
     print(err, "--> our error message")
@@ -28,9 +28,9 @@ except NameError as err:
     logger.info("Running from command line -> Import libraries as package")
     from ..Setup import *
     from .. import Util
-    import debug_homing
+    import task_homing.debug_homing
     from ..res.print_colors import *
-    import global_homing
+    import task_homing.global_homing
     from ..res import print_colors as PrintColor
     from .EnvironmentHoming import EnvironmentHoming
     from .simulation_parameters import *
@@ -128,11 +128,11 @@ class TestbedHoming(object):
         self.ls_dir = self.simulation_dir + "ls_files/" + str(global_homing.simulation_id) + "/"
 
         # Setup agents
-        self.setup_agents(h1, h2)
+        self.setup_agents()
 
         debug_homing.xprint(msg='sim_id: {}, Setup complete, Start simulation'.format(sim_id))
 
-    def setup_agents(self, h1=-1, h2=-1):
+    def setup_agents(self):
         """
             Setup agents
         """
@@ -142,7 +142,7 @@ class TestbedHoming(object):
         for agent in self.environment.agents:
 
             # Setup agent's location and brain
-            agent.setup(training=self.training, random_agent=self.random_agent, h1=h1, h2=h2)
+            agent.setup(training=self.training, random_agent=self.random_agent)
 
             if self.file_to_load != "":
                 debug_homing.xprint(msg='sim_id: {}, Loadind File Setup'.format(global_homing.simulation_id))
@@ -197,6 +197,7 @@ class TestbedHoming(object):
         """
             Check and handle the event queue
         """
+
         if not self.can_handle_events:
             return
 
@@ -312,12 +313,12 @@ class TestbedHoming(object):
         for k in range(self.environment.numAgents):
             count += self.environment.agents[k].collisionCount
         self.collision_count = count
-
-        # Find the highest learning score (at least after a certain period of time)
-        if Global.sim_timesteps >= 10000: # 1000
-            ls = self.environment.agents[0].learning_score()
-            if self.best_ls < ls:
-                self.best_ls = ls
+        #
+        # # Find the highest learning score (at least after a certain period of time)
+        # if Global.sim_timesteps >= 10000: # 1000
+        #     ls = self.environment.agents[0].learning_score()
+        #     if self.best_ls < ls:
+        #         self.best_ls = ls
 
         # Keep track of learning scores over time
         if self.record_ls:
@@ -344,25 +345,25 @@ class TestbedHoming(object):
                 it = str(training_it) + 'it_'
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
 
+        # # # ----------------------------------------------------------------------------------
+        # # TODO code to be deleted
+        # if self.environment.agents[0].training_it() >= 10000 and self.environment.agents[0].learning_score() >= 0.084:
+        #     printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+        #                    "{:>25s}".format(
+        #                        "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
+        #                    ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
+        #                    ", t: {}".format(Global.get_time()))
+        #     self.running = False
+        #     self.environment.agents[0].save_brain(dir=self.brain_dir)
+        #     self.end_simulation()
+        #
+        #     printColor(color=PRINT_RED, msg="BRUTE FORCE EXIT")
+        #
+        #     # End the game !
+        #     pygame.quit()
+        #     exit()
+        #     sys.exit()
         # # ----------------------------------------------------------------------------------
-        # TODO code to be deleted
-        if self.environment.agents[0].training_it() >= 10000 and self.environment.agents[0].learning_score() >= 0.084:
-            printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
-                           "{:>25s}".format(
-                               "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
-                           ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
-                           ", t: {}".format(Global.get_time()))
-            self.running = False
-            self.environment.agents[0].save_brain(dir=self.brain_dir)
-            self.end_simulation()
-
-            printColor(color=PRINT_RED, msg="BRUTE FORCE EXIT")
-
-            # End the game !
-            pygame.quit()
-            exit()
-            sys.exit()
-        # ----------------------------------------------------------------------------------
 
 
         # Reached max number of training timesteps

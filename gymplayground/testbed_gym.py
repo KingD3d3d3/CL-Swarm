@@ -1,7 +1,5 @@
 import time
 import importlib
-import os
-import errno
 import csv
 try:
     # Running in PyCharm

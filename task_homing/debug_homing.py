@@ -3,7 +3,7 @@ import sys
 
 try:
     # Running in PyCharm
-    import global_homing
+    import task_homing.global_homing as global_homing
     from res.print_colors import *
     import Util
     import Global
@@ -15,7 +15,7 @@ except NameError as err:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("Running from command line -> Import libraries as package")
-    import global_homing
+    import task_homing.global_homing as global_homing
     from ..res.print_colors import *
     from .. import Util
     from .. import Global
@@ -34,7 +34,7 @@ header = ("agent",
 
 dico_event = {}
 
-def printEvent(color="", agent=None, event_message=""):
+def print_event(color="", agent=None, event_message=""):
     """
         Agent           : agent ID
         Event           : event's message
@@ -48,7 +48,7 @@ def printEvent(color="", agent=None, event_message=""):
         LS              : learning score of the agent (average of rewards in sliding window)
         t       : time passed (since beginning of simulation)
     """
-    global_homing.event_count += 1  # increment the event counter
+    # global_homing.event_count += 1  # increment the event counter
 
     # Don't print in non-debug mode
     if not global_homing.debug:
@@ -56,27 +56,16 @@ def printEvent(color="", agent=None, event_message=""):
 
     msg = ("SimID: {:3.0f}, ".format(global_homing.simulation_id) +
            "Agent: {:3.0f}, ".format(agent.id) +
-           "{:>25s}".format(event_message) +  # 28
-           ", tmstp: {:10.0f}, "
-           "training_it: {:10.0f}, "
-           "GR: {:5.0f}, "
-           "tmstp2G : {:8.0f}, "
-           "Col2G: {:3.0f}, Col: {:5.0f}, "
-           "AgentCol2G: {:3.0f}, AgentCol: {:5.0f}, "
-           "LS: {:3.4f}, "
-           "event_count: {:5.0f}, "
-           "t: {}"
-           .format(
-               Global.sim_timesteps,
-               agent.training_it(),
-               agent.goalReachedCount,
-               agent.elapsedTimestep,
-               agent.t2GCollisionCount, agent.collisionCount,
-               agent.t2GAgentCollisionCount, agent.agentCollisionCount,
-               agent.learning_score(),
-               global_homing.event_count,
-               Global.get_time()
-           )
+           "{:>25s}".format(event_message) +
+           ", tmstp: {:10.0f}, ".format(Global.sim_timesteps) +
+           "training_it: {:10.0f}, ".format(agent.training_it()) +
+           "GR: {:5.0f}, ".format(agent.goalReachedCount) +
+           "tmstp2G : {:8.0f}, ".format(agent.elapsedTimestep) +
+           "Col2G: {:3.0f}, Col: {:5.0f}, ".format(agent.t2GCollisionCount, agent.collisionCount) +
+           "AgentCol2G: {:3.0f}, AgentCol: {:5.0f}, ".format(agent.t2GAgentCollisionCount, agent.agentCollisionCount) +
+           # "LS: {:3.4f}, "
+           # "event_count: {:5.0f}, "
+           "t: {}".format(Global.get_time())
            )
 
     msg_csv = (agent.id,
@@ -88,7 +77,7 @@ def printEvent(color="", agent=None, event_message=""):
                agent.collisionCount,
                agent.t2GAgentCollisionCount,
                agent.agentCollisionCount,
-               agent.learning_score()
+               # agent.learning_score()
                )
 
     # Record data
