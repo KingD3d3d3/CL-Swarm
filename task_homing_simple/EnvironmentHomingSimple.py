@@ -1,24 +1,12 @@
 
 
-import random
-import argparse
 import pygame
 # Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (world, vec2)
 from pygame.locals import *
-# import matplotlib.pyplot as plt
-import time
-import os
-import errno
-import csv
-import numpy as np
-import sys
-import datetime
-import gc
-import matplotlib.pyplot as plt
 try:
     # Running in PyCharm
-    from AgentHomingSimple import AgentHomingSimple
+    from task_homing_simple.AgentHomingSimple import AgentHomingSimple
     import res.colors as Color
     from objects.Border import Border
     from objects.Circle import StaticCircle
@@ -26,9 +14,9 @@ try:
     from Setup import *
     from Util import worldToPixels, pixelsToWorld
     import Util
-    import debug_homing_simple
+    import task_homing_simple.debug_homing_simple as debug_homing_simple
     from res.print_colors import *
-    import global_homing_simple
+    import task_homing_simple.global_homing_simple as global_homing_simple
     import res.print_colors as PrintColor
     import Global
 except NameError as err:
@@ -46,9 +34,9 @@ except NameError as err:
     from ..Setup import *
     from ..Util import worldToPixels, pixelsToWorld
     from .. import Util
-    import debug_homing_simple
+    from . import debug_homing_simple
     from ..res.print_colors import *
-    import global_homing_simple
+    from . import global_homing_simple
     from ..res import print_colors as PrintColor
     from .. import Global
 
@@ -65,7 +53,7 @@ class EnvironmentHomingSimple(object):
 
         pygame.init()
 
-        self.deltaTime = 1.0 / TARGET_FPS  # 0.016666
+        self.delta_time = 1.0 / TARGET_FPS  # 0.016666
         self.fps = TARGET_FPS
         self.accumulator = 0
 
@@ -148,14 +136,26 @@ class EnvironmentHomingSimple(object):
 
     def update(self):
         """
-            Call agent's update
+            Environment main
+        """
+        self.draw()
+        self.before_step()
+        self.fps_physic_step()
+        self.after_step()
+
+    def before_step(self):
+        """
+            Call agent's before_step
         """
         for j in range(len(self.agents)):
-            self.agents[j].update()
+            self.agents[j].before_step()
 
-        # # TODO quick test with static agent in the middle of environment
-        # self.agents[1].body.position = vec2(32, 18)
-        # self.agents[1].remainStatic()
+    def after_step(self):
+        """
+            Call agent's after_step
+        """
+        for j in range(len(self.agents)):
+            self.agents[j].after_step()
 
     def fps_physic_step(self):
         """
@@ -163,7 +163,7 @@ class EnvironmentHomingSimple(object):
         """
         # With rendering
         if self.render:
-            self.deltaTime = self.clock.tick(TARGET_FPS) / 1000.0
+            self.delta_time = self.clock.tick(TARGET_FPS) / 1000.0
             self.fps = self.clock.get_fps()
 
             # Fixed your timestep
@@ -174,16 +174,14 @@ class EnvironmentHomingSimple(object):
                     Faster machine e.g. render at 120fps -> step the physics one every 2 frames
                     Slower machine e.g. render at 30fps -> run the physics twice
                 """
-                self.accumulator += self.deltaTime
+                self.accumulator += self.delta_time
 
                 while self.accumulator >= PHYSICS_TIME_STEP:
-
                     # Physic step
                     self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
                     self.world.ClearForces()
 
                     self.accumulator -= PHYSICS_TIME_STEP
-
                 return
 
             # Frame dependent
@@ -191,16 +189,14 @@ class EnvironmentHomingSimple(object):
                 # Physic step
                 self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
                 self.world.ClearForces()
-
                 return
 
         # No rendering
         elif not self.render:
-            self.deltaTime = self.clock.tick() / 1000.0
+            self.delta_time = self.clock.tick() / 1000.0
             # self.fps = self.clock.get_fps()
 
             # Frame dependent -- Physic step
             self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
             self.world.ClearForces()
-
             return

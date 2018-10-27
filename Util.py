@@ -153,3 +153,5 @@ def remove_blank(s):
         Remove leading spaces, trailing spaces, successive spaces, newline characters and tab characters
     """
     return " ".join(s.split())
+
+MAX_DIST = np.sqrt((SCREEN_WIDTH/PPM)**2 + (SCREEN_HEIGHT/PPM)**2)

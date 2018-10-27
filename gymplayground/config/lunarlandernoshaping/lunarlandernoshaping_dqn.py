@@ -2,17 +2,17 @@
 # Algorithm: DQN
 
 environment = {
-    'env_name': 'CartPole-v0',
-    'solved_score': 195.0,
-    'max_ep': 5000
+    'env_name': 'LunarLanderNoShaping-v2',
+    'solved_score': 90.0,
+    'max_ep': 100000
 }
 
 hyperparams = {
-    'layers': (32, 32),
+    'layers': (64, 64),
     'mem_capacity': 100000,
     'batch_size': 32,
     'eps_start': 1.,
-    'eps_end': 0.01,
+    'eps_end': 0.1,
     'exploration_steps': 10000,
     'gamma': 0.99,
     'lr': 0.001,

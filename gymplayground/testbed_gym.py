@@ -88,9 +88,8 @@ class TestbedGym(object):
         self.brain_dir = ''
         self.env_name = env  # e.g. "CartPole_v0"
 
-        # global_gym.debug = sim_param.debug == 'True'
         global_gym.record = sim_param.record
-        if global_gym.record:
+        if global_gym.record or sim_param.save_model or sim_param.save_mem:
             self.suffix = sim_param_gym.sim_suffix()
             self.sim_dir = sim_param_gym.sim_dir()
             Util.create_dir(self.sim_dir) # create the directory
@@ -133,10 +132,10 @@ class TestbedGym(object):
             global_gym.simlogs_writer = csv.writer(global_gym.simlogs_fo)
             global_gym.simlogs_writer.writerow(debug_gym.header) # write header of the record file
 
-            # Brain directory
-            if self.save_model or self.save_mem:
-                self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
-                Util.create_dir(self.brain_dir)
+        # Brain directory
+        if self.save_model or self.save_mem:
+            self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
+            Util.create_dir(self.brain_dir)
 
         # Setup agents
         self.setup_agents()

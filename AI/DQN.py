@@ -30,9 +30,9 @@ GAMMA = 0.99  # Discount Factor
 LEARNING_RATE = 0.001  # default Adam optimizer learning rate value
 UPDATE_TARGET_STEPS = 1000  # update target network rate every given timesteps
 EPSILON_START = 1.  # Initial value of epsilon in epsilon-greedy during training
-EPSILON_END = 0.1  # Final value of epsilon in epsilon-greedy during training
+EPSILON_END = 0.01  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000  # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
-EPSILON_TEST = 0.05  # 0.05 # FINAL_EPSILON # epsilon value during testing after training is done
+EPSILON_TEST = 0 # epsilon value during testing after training is done
 
 
 # -------------------- MODEL -------------------------

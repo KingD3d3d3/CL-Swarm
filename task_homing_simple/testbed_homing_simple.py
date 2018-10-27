@@ -9,14 +9,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 try:
     # Running in PyCharm
+    from task_homing_simple.AgentHomingSimple import AgentHomingSimple
     from Setup import *
     import Util
-    import debug_homing_simple
     from res.print_colors import *
-    import global_homing_simple
+    import task_homing_simple.global_homing_simple as global_homing_simple
+    import task_homing_simple.debug_homing_simple as debug_homing_simple
     import res.print_colors as PrintColor
-    from EnvironmentHomingSimple import EnvironmentHomingSimple
-    from simulation_parameters import *
+    from task_homing_simple.EnvironmentHomingSimple import EnvironmentHomingSimple
+    from task_homing_simple.simulation_parameters import *
     import Global
 except NameError as err:
     print(err, "--> our error message")
@@ -26,11 +27,12 @@ except NameError as err:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("Running from command line -> Import libraries as package")
+    from .AgentHomingSimple import AgentHomingSimple
     from ..Setup import *
     from .. import Util
-    import debug_homing_simple
+    from . import debug_homing_simple
+    from . import global_homing_simple
     from ..res.print_colors import *
-    import global_homing_simple
     from ..res import print_colors as PrintColor
     from .EnvironmentHomingSimple import EnvironmentHomingSimple
     from .simulation_parameters import *
@@ -282,9 +284,9 @@ class TestbedHomingSimple(object):
                 # If we don't call that during pause, clock.tick will compute time spend during pause
                 # thus timer is counting during simulation pause -> we want to avoid that !
                 if self.render:
-                    self.environment.deltaTime = self.environment.clock.tick(TARGET_FPS) / 1000.0
+                    self.environment.delta_time = self.environment.clock.tick(TARGET_FPS) / 1000.0
                 else:
-                    self.environment.deltaTime = self.environment.clock.tick() / 1000.0
+                    self.environment.delta_time = self.environment.clock.tick() / 1000.0
                 continue
 
             self.simulation_logic()
@@ -293,103 +295,102 @@ class TestbedHomingSimple(object):
             if not self.running:
                 break
 
-            # Update environment
             self.environment.update()
-            self.environment.fps_physic_step()
-            self.environment.draw()
 
             # Step counter
             Global.sim_timesteps += 1
 
             # Time counter
-            global_homing_simple.timer += self.environment.deltaTime
+            global_homing_simple.timer += self.environment.delta_time
 
     def simulation_logic(self):
-        """
-            Simulation logic
-        """
-        # Total number of goal reached
-        count = 0
-        for j in range(self.environment.numAgents):
-            count += self.environment.agents[j].goalReachedCount
-        self.goal_reached_count = count
-
-        # Keep track of learning scores over time
-        if self.record_ls:
-            ls = self.environment.agents[0].learning_score()  # learning score of agent 0
-            self.learning_scores.append(ls)  # appending the learning score
-
+        pass
+        # """
+        #     Simulation logic
+        # """
+        # # Total number of goal reached
+        # count = 0
+        # for j in range(self.environment.numAgents):
+        #     count += self.environment.agents[j].goalReachedCount
+        # self.goal_reached_count = count
+        #
+        # # Keep track of learning scores over time
+        # if self.record_ls:
+        #     ls = self.environment.agents[0].learning_score()  # learning score of agent 0
+        #     self.learning_scores.append(ls)  # appending the learning score
+        #
         # Save neural networks model frequently
         if global_homing_simple.record and self.save_network_freq != -1:
             if Global.sim_timesteps != 0 and Global.sim_timesteps % self.save_network_freq == 0:
                 self.environment.agents[0].save_model(dir=self.brain_dir, suffix=self.suffix)
-
+        #
         # Save memory frequently
         if global_homing_simple.record and self.save_memory_freq != -1:
             if Global.sim_timesteps != 0 and Global.sim_timesteps % self.save_memory_freq == 0:
-                self.environment.agents[0].save_mem(dir=self.brain_dir, suffix=self.suffix)
+                self.environment.agents[0].save_memory(dir=self.brain_dir, suffix=self.suffix)
 
-                if self.wait_learning_score_and_save_model != -1:
-                    print("highest ls", testbed.best_ls)
-
-        # Save neural networks model frequently based on training iterations
-        if global_homing_simple.record and self.save_network_freq_training_it != -1:
-            training_it = self.environment.agents[0].training_it()
-            if training_it != 0 and training_it >= self.start_save_nn_from_it and training_it % self.save_network_freq_training_it == 0:
-                it = str(training_it) + 'it_'
-                self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
-
-        # Reached max number of training timesteps
-        if self.max_training_it != -1 and self.environment.agents[0].training_it() >= self.max_training_it:
-
-            # Find the highest learning score
-            ls = self.environment.agents[0].learning_score()
-            if self.best_ls < ls:
-                self.best_ls = ls
-            # Reach LS to find master
-            if self.wait_learning_score_and_save_model != -1:
-                self.wait_reach_ls_and_save()
-                return
-
-            printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
-                           "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
-                           ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
-                           ", t: {}".format(Global.get_time()))
-            self.running = False
-
-            return
-
-        # Reached max number of timesteps
-        if self.max_timesteps != -1 and Global.sim_timesteps >= self.max_timesteps:
-            self.running = False
+                # if self.wait_learning_score_and_save_model != -1:
+                #     print("highest ls", testbed.best_ls)
+        #
+        # # Save neural networks model frequently based on training iterations
+        # if global_homing_simple.record and self.save_network_freq_training_it != -1:
+        #     training_it = self.environment.agents[0].training_it()
+        #     if training_it != 0 and training_it >= self.start_save_nn_from_it and training_it % self.save_network_freq_training_it == 0:
+        #         it = str(training_it) + 'it_'
+        #         self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
+        #
+        # # Reached max number of training timesteps
+        # if self.max_training_it != -1 and self.environment.agents[0].training_it() >= self.max_training_it:
+        #
+        #     # Find the highest learning score
+        #     ls = self.environment.agents[0].learning_score()
+        #     if self.best_ls < ls:
+        #         self.best_ls = ls
+        #     # Reach LS to find master
+        #     if self.wait_learning_score_and_save_model != -1:
+        #         self.wait_reach_ls_and_save()
+        #         return
+        #
+        #     printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+        #                    "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
+        #                    ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
+        #                    ", t: {}".format(Global.get_time()))
+        #     self.running = False
+        #
+        #     return
+        #
+        # # Reached max number of timesteps
+        # if self.max_timesteps != -1 and Global.sim_timesteps >= self.max_timesteps:
+        #     self.running = False
 
 
 
 
     def wait_reach_ls_and_save(self):
-        # Wait to reach specified learning score
-        if self.wait_learning_score_and_save_model != -1:
-
-            # Reached learning score
-            if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
-
-                printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
-                               "{:>25s}".format(
-                                   "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
-                               ", training_it: {:10.0f}".format(self.environment.agents[0].training_it()) +
-                               ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
-                               ", t: {}".format(Global.get_time()))
-                self.running = False
-                self.environment.agents[0].save_brain(dir=self.brain_dir)
-
-            # Not reached yet
-            else:
-                self.running = True
-
-                # Reset brain every 150000 training it
-                if self.environment.agents[0].training_it() != 0 \
-                        and self.environment.agents[0].training_it() % 150000 == 0:
-                    self.environment.agents[0].reset_brain()
+        pass
+    #     # Wait to reach specified learning score
+    #     if self.wait_learning_score_and_save_model != -1:
+    #
+    #         # Reached learning score
+    #         if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
+    #
+    #             printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+    #                            "{:>25s}".format(
+    #                                "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
+    #                            ", training_it: {:10.0f}".format(self.environment.agents[0].training_it()) +
+    #                            ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
+    #                            ", t: {}".format(Global.get_time()))
+    #             self.running = False
+    #             self.environment.agents[0].save_brain(dir=self.brain_dir)
+    #
+    #         # Not reached yet
+    #         else:
+    #             self.running = True
+    #
+    #             # Reset brain every 150000 training it
+    #             if self.environment.agents[0].training_it() != 0 \
+    #                     and self.environment.agents[0].training_it() % 150000 == 0:
+    #                 self.environment.agents[0].reset_brain()
 
     def end_simulation(self):
         """

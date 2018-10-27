@@ -39,7 +39,7 @@ def printEvent(color="", agent=None, event_message=""):
         LS              : learning score of the agent (average of rewards in sliding window)
         t       : time passed (since beginning of simulation)
     """
-    global_homing_simple.event_count += 1  # increment the event counter
+    # global_homing_simple.event_count += 1  # increment the event counter
 
     # Don't print in non-debug mode
     if not global_homing_simple.debug:
@@ -48,30 +48,31 @@ def printEvent(color="", agent=None, event_message=""):
     msg = ("SimID: {:3.0f}, ".format(global_homing_simple.simulation_id) +
            "Agent: {:3.0f}, ".format(agent.id) +
            "{:>25s}".format(event_message) +  # 28
-           ", tmstp: {:10.0f}, "
-           "training_it: {:10.0f}, "
-           "GR: {:5.0f}, "
-           "tmstp2G : {:8.0f}, "
-           "LS: {:3.4f}, "
-           "event_count: {:5.0f}, "
-           "t: {}"
-           .format(
-               Global.sim_timesteps,
-               agent.training_it(),
-               agent.goalReachedCount,
-               agent.elapsedTimestep,
-               agent.learning_score(),
-               global_homing_simple.event_count,
-               Global.get_time()
+           ", tmstp: {:10.0f}, ".format(Global.sim_timesteps) +
+           "training_it: {:10.0f}, ".format(agent.training_it()) +
+           "GR: {:5.0f}, ".format(agent.goal_reached_count) +
+           "tmstp2G : {:8.0f}, ".format(agent.elapsed_timestep) +
+           # "LS: {:3.4f}, "
+           # "event_count: {:5.0f}, ".format() +
+           "t: {}".format(Global.get_time())
            )
-           )
+           # .format(
+           #     Global.sim_timesteps,
+           #     agent.training_it(),
+           #     agent.goal_reached_count,
+           #     agent.elapsed_timestep,
+           #     # agent.learning_score(),
+           #     global_homing_simple.event_count,
+           #     Global.get_time()
+           # )
+
 
     msg_csv = (agent.id,
                event_message,
                Global.sim_timesteps,
-               agent.goalReachedCount,
-               agent.elapsedTimestep,
-               agent.learning_score()
+               agent.goal_reached_count,
+               agent.elapsed_timestep,
+               # agent.learning_score()
                )
 
     # Record data
