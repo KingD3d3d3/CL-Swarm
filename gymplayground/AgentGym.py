@@ -106,6 +106,7 @@ class AgentGym(object):
                 self.score = 0
                 self.timesteps = 0
                 self.episode_inited = True
+                self.episode_done = False
 
             # -------------------------- An episode --------------------------
             if self.render:
@@ -126,6 +127,7 @@ class AgentGym(object):
             if done:  # either game over or reached maximum timesteps of episode
                 self.episodes += 1
                 self.scores.append(self.score)
+                self.episode_done = True
             else:
                 return
             # -----------------------------------------------------------------

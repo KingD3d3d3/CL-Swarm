@@ -78,8 +78,8 @@ class TestbedGym(object):
 
         self.save_model = sim_param.save_model
         self.save_mem = sim_param.save_mem
-        self.save_network_freq_ep = sim_param.save_network_freq_ep
-        self.save_memory_freq_ep = sim_param.save_memory_freq_ep
+        self.save_model_freq_ep = sim_param.save_model_freq_ep
+        self.save_mem_freq_ep = sim_param.save_mem_freq_ep
 
         # Directory for saving files
         self.suffix = ''
@@ -88,8 +88,10 @@ class TestbedGym(object):
         self.brain_dir = ''
         self.env_name = env  # e.g. "CartPole_v0"
 
+        # Directory for saving events, model files or memory files
         global_gym.record = sim_param.record
-        if global_gym.record or sim_param.save_model or sim_param.save_mem:
+        if global_gym.record or sim_param.save_model or \
+                sim_param.save_mem or sim_param.save_model_freq_ep or sim_param.save_mem_freq_ep:
             self.suffix = sim_param_gym.sim_suffix()
             self.sim_dir = sim_param_gym.sim_dir()
             Util.create_dir(self.sim_dir) # create the directory
@@ -122,7 +124,6 @@ class TestbedGym(object):
         # Record simulation
         self.simlogs_dir = self.sim_dir + "sim_logs/"
         if global_gym.record:
-
             debug_gym.xprint(msg="Start recording".format(sim_id))
 
             # CSV event file
@@ -133,7 +134,7 @@ class TestbedGym(object):
             global_gym.simlogs_writer.writerow(debug_gym.header) # write header of the record file
 
         # Brain directory
-        if self.save_model or self.save_mem:
+        if self.save_model or self.save_mem or self.save_model_freq_ep or self.save_mem_freq_ep:
             self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
             Util.create_dir(self.brain_dir)
 
@@ -224,22 +225,17 @@ class TestbedGym(object):
         """
             Simulation logic
         """
-        # # Save neural networks model frequently
-        # if global_gym.record and self.save_network_freq:
-        #     if Global.timestep != 0 and Global.timestep % self.save_network_freq == 0:
-        #         self.agents[0].save_model(dir=self.brain_dir, suffix=self.suffix)
+        # Save neural networks model frequently based on episode count
+        if self.save_model_freq_ep:
+            if self.agents[0].episode_done and \
+                    self.agents[0].episodes and self.agents[0].episodes % self.save_model_freq_ep == 0:
+                suffix = self.env_name + '_' + str(self.agents[0].episodes) + 'ep'
+                self.agents[0].brain.save_model(dir=self.brain_dir, suffix=suffix)
 
         # # Save memory frequently
         # if global_gym.record and self.save_memory_freq:
         #     if Global.timestep != 0 and Global.timestep % self.save_memory_freq == 0:
         #         self.agents[0].save_mem(dir=self.brain_dir, suffix=self.suffix)
-
-        # # Save neural networks model frequently based on training iterations
-        # if global_gym.record and self.save_network_freq_training_it:
-        #     training_it = self.agents[0].training_it()
-        #     if training_it != 0 and training_it >= self.start_save_nn_from_it and training_it % self.save_network_freq_training_it == 0:
-        #         it = str(training_it) + 'it_'
-        #         self.environment.agents[0].save_model(dir=self.brain_dir, suffix=it + self.suffix)
 
         # End simulation when all agents had done the problem
         for agent in self.agents:

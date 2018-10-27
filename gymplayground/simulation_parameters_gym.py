@@ -47,8 +47,8 @@ parser.add_argument('--load_h1out_weights', help='load h1 output weights of neur
 parser.add_argument('--load_mem', help='load defined number of experiences to agent', default=0, type=int)
 parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
 
-parser.add_argument('--save_network_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)
-parser.add_argument('--save_memory_freq_ep', help='save memory every defined episodes', default=0, type=int)
+parser.add_argument('--save_model_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)
+parser.add_argument('--save_mem_freq_ep', help='save memory every defined episodes', default=0, type=int)
 
 parser.add_argument('--suffix', help='custom suffix to add', default='')
 parser.add_argument('--dir_name', help='directory name to load NN files (to run in parallel universe)', default='')

@@ -470,10 +470,10 @@ class DQN(object):
         """
         model_file = dir
         model_file += Util.getTimeString()  # timestring
-        model_file += '_' + suffix
         # model_file += '_' + str(self.model.h1) + 'h1_' + str(self.model.h1) + 'h2' # NN architecture
-        model_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_'  # timesteps
-        model_file += 'model.h5'  # model file extension
+        model_file += '_' + suffix
+        model_file += '_' + str(Global.sim_timesteps) + 'tmstp' # timesteps
+        model_file += '_' + 'model.h5'  # model file extension
 
         # Create the /brain_files/ directory if it doesn't exist
         if not os.path.exists(os.path.dirname(dir)):
@@ -496,8 +496,8 @@ class DQN(object):
         memory_file = dir
         memory_file += Util.getTimeString()  # timestring
         memory_file += '_' + suffix
-        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp' + '_'  # timesteps
-        memory_file += 'mem.csv'  # memory file extension
+        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp' # timesteps
+        memory_file += '_' + 'mem.csv'  # memory file extension
 
         # Create the /brain_files/ directory if it doesn't exist
         if not os.path.exists(os.path.dirname(dir)):
