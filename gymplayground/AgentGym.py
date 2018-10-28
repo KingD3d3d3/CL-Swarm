@@ -138,8 +138,8 @@ class AgentGym(object):
             self.episode_inited = False # re-initiate the environment for the next episode
             self.tot_timesteps += self.timesteps # increment total number of timesteps of all episodes
 
-            # Record event (every timestep)
-            if global_gym.record:
+            # Record event (every episode)
+            if global_gym.record: #and self.episodes % 10 == 0: # TODO every 10 episodes, to be changed to 1 episode
                 debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=average,
                                       timesteps=self.timesteps, tot_timesteps=self.tot_timesteps, record=True, debug=False)
 
