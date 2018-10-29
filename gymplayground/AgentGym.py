@@ -63,7 +63,6 @@ class AgentGym(object):
         self.problem_solved = False # problem is solved Flag
         self.episode_inited = False # at the beginning of an episode we need to rest environment
         self.episode_done = False
-        self.average = 0 # calculate average of last 100 episodes's score
         self.tot_timesteps = 0 # total number of timesteps of all episodes passed during 1 simulation
 
         # Need to be initialized because they are property
@@ -87,7 +86,6 @@ class AgentGym(object):
         self.problem_solved = False
         self.episode_inited = False
         self.episode_done = False
-        self.average = 0
         self.tot_timesteps = 0
 
         self.state = None

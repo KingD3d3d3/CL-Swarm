@@ -97,6 +97,9 @@ class TestbedGym(object):
             Util.create_dir(self.sim_dir) # create the directory
             print("Record directory: {}".format(sim_param_gym.sim_dir()))
 
+        # Print event only in debug mode
+        global_gym.debug = sim_param.debug
+
         # Simulation running flag
         self.running = True
         self.sim_count = 0 # count number of simulation
@@ -277,12 +280,12 @@ class TestbedGym(object):
 
         global_gym.reset_simulation_global()  # Reset global variables
 
-    def save_summary(self):
+    def save_summary(self, suffix=''):
         """
             Simulation summary (completion time, number of simulations, etc)
         """
         timestr = time.strftime('%Y%m%d_%H%M%S')
-        file = open(self.sim_dir + 'summary_' + timestr + '.txt', 'w')
+        file = open(self.sim_dir + suffix + 'summary_' + timestr + '.txt', 'w')
         file.write("--------------------------\n")
         file.write("*** Summary of testbed ***\n")
         file.write("--------------------------\n\n")
