@@ -17,6 +17,5 @@ hyperparams = {
     'gamma': 0.99,
     'lr': 0.001,
     'update_target_steps': 1000,
-    'use_double_dqn': True,
-    'use_prioritized_experience_replay': False
+    'use_double_dqn': True
 }
