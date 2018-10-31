@@ -4,7 +4,7 @@ from pygame.locals import *
 import random, sys
 
 try:
-    from Util import worldToPixels
+    from Util import world_to_pixels
     from Setup import *
     import res.colors as Color
 except NameError as err:
@@ -14,7 +14,7 @@ except NameError as err:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("Running from command line -> Import libraries as package")
-    from ..Util import worldToPixels
+    from ..Util import world_to_pixels
     from ..Setup import *
     from ..res import colors as Color
 
@@ -35,8 +35,8 @@ class Circle(object):
         pygame.draw.circle(self.screen, self.color, [int(x) for x in position], int(self.radius * PPM))
 
         current_forward_normal = self.body.GetWorldVector((0, 1))
-        pygame.draw.line(self.screen, Color.White, worldToPixels(self.body.worldCenter),
-                         worldToPixels(self.body.worldCenter + current_forward_normal * self.radius))
+        pygame.draw.line(self.screen, Color.White, world_to_pixels(self.body.worldCenter),
+                         world_to_pixels(self.body.worldCenter + current_forward_normal * self.radius))
 
 
 class StaticCircle(object):

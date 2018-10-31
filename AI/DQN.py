@@ -32,7 +32,7 @@ UPDATE_TARGET_STEPS = 1000  # update target network rate every given timesteps
 EPSILON_START = 1.  # Initial value of epsilon in epsilon-greedy during training
 EPSILON_END = 0.01  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000  # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
-EPSILON_TEST = 0 # epsilon value during testing after training is done
+EPSILON_TEST = 0  # epsilon value during testing after training is done
 
 
 # -------------------- MODEL -------------------------
@@ -333,6 +333,7 @@ class DQN(object):
 
         # Epsilon greedy
         if np.random.rand() < self.eps:
+            # print('choose random !')
             return np.random.randint(0, self.action_size)
 
         action_values = self.model.predict(state)
@@ -342,7 +343,7 @@ class DQN(object):
         """
             Add sample to memory
         """
-        if self.collect_experiences: # self.training
+        if self.collect_experiences:  # self.training
             self.memory.push(sample)
 
     def train(self):
@@ -469,10 +470,10 @@ class DQN(object):
             Also create the /brain_files/{sim_id}/ directory if it doesn't exist
         """
         model_file = dir
-        model_file += Util.getTimeString()  # timestring
+        model_file += Util.get_time_string()  # timestring
         # model_file += '_' + str(self.model.h1) + 'h1_' + str(self.model.h1) + 'h2' # NN architecture
         model_file += '_' + suffix
-        model_file += '_' + str(Global.sim_timesteps) + 'tmstp' # timesteps
+        model_file += '_' + str(Global.sim_timesteps) + 'tmstp'  # timesteps
         model_file += '_' + 'model.h5'  # model file extension
 
         # Create the /brain_files/ directory if it doesn't exist
@@ -494,9 +495,9 @@ class DQN(object):
             Also create the /brain_files/{sim_id}/ directory if it doesn't exist
         """
         memory_file = dir
-        memory_file += Util.getTimeString()  # timestring
+        memory_file += Util.get_time_string()  # timestring
         memory_file += '_' + suffix
-        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp' # timesteps
+        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp'  # timesteps
         memory_file += '_' + 'mem.csv'  # memory file extension
 
         # Create the /brain_files/ directory if it doesn't exist
@@ -536,7 +537,7 @@ class DQN(object):
 
         self.dqn_print(msg="Load full model (nn and optimizer)" + " <- file: {}".format(model_file))
 
-        # printColor(color=PRINT_RED, msg="Load model not working anymore !!??")
+        # print_color(color=PRINT_RED, msg="Load model not working anymore !!??")
 
     def load_full_weights(self, model_file):
         """
@@ -722,11 +723,11 @@ class DQN(object):
         self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
 
     def dqn_print(self, msg=""):
-        printColor(color=PRINT_CYAN,
-                   msg="agent: {:4.0f}, ".format(self.id) +
-                       "{: <35s}, ".format(msg) +
-                       "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
-                       "training_it: {:8.0f}, ".format(self.training_it) +
-                       "sim_t: {}, ".format(Global.get_sim_time()) +
-                       "global_t: {}, ".format(Global.get_time()) +
-                       "world_t: {}".format(Util.getTimeString2()))
+        print_color(color=PRINT_CYAN,
+                    msg="agent: {:4.0f}, ".format(self.id) +
+                        "{: <35s}, ".format(msg) +
+                        "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
+                        "training_it: {:8.0f}, ".format(self.training_it) +
+                        "sim_t: {}, ".format(Global.get_sim_time()) +
+                        "global_t: {}, ".format(Global.get_time()) +
+                        "world_t: {}".format(Util.get_time_string2()))

@@ -8,7 +8,7 @@ import sys
 from Box2D.b2 import (polygonShape)
 
 try:
-    from Util import worldToPixels
+    from Util import world_to_pixels
     from Setup import *
     import res.colors as Color
 except NameError as err:
@@ -18,7 +18,7 @@ except NameError as err:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info("Running from command line -> Import libraries as package")
-    from ..Util import worldToPixels
+    from ..Util import world_to_pixels
     from ..Setup import *
     from ..res import colors as Color
 
@@ -38,8 +38,8 @@ class Box(object):
 
         p = self.body.GetWorldPoint(localPoint=(0, self.height))  # upper point of the box
         forward = self.body.GetWorldVector((0, 1))  # transform.forward of this box
-        pygame.draw.line(self.screen, Color.White, worldToPixels(vec2(p)),
-                         worldToPixels(vec2(p) + forward))
+        pygame.draw.line(self.screen, Color.White, world_to_pixels(vec2(p)),
+                         world_to_pixels(vec2(p) + forward))
 
 
 class StaticBox(object):

@@ -25,7 +25,7 @@ try:
     from AI.DQN import DQN
     from objects.Agent import Agent
     from Setup import *
-    from Util import worldToPixels, pixelsToWorld
+    from Util import world_to_pixels, pixels_to_world
     import Util
     import res.print_colors as PrintColor
     import task_homing_simple.debug_homing_simple as debug_homing_simple
@@ -43,7 +43,7 @@ except NameError as err:
     from ..AI.DQN import DQN
     from ..objects.Agent import Agent
     from ..Setup import *
-    from ..Util import worldToPixels, pixelsToWorld
+    from ..Util import world_to_pixels, pixels_to_world
     from .. import Util
     from ..res import print_colors as PrintColor
     import task_homing_simple.debug_homing_simple as debug_homing_simple
@@ -164,10 +164,10 @@ class AgentHomingSimple(Agent):
         self.distance = self.distance_goal()
 
         # Initial orientation : start by looking at goal 1
-        toGoal = Util.normalize(pixelsToWorld(self.goals[0]) - start_pos)
+        toGoal = Util.normalize(pixels_to_world(self.goals[0]) - start_pos)
         forward = vec2(0, 1)
         angleDeg = Util.angle(forward, toGoal)
-        angle = Util.degToRad(angleDeg)
+        angle = Util.deg_to_rad(angleDeg)
         angle = -angle
         self.body.angle = angle
         self.orientation = self.orientation_goal()
@@ -254,7 +254,7 @@ class AgentHomingSimple(Agent):
             self.body.linearVelocity = forward_vec * speed
         else:
             # Kill velocity
-            impulse = -self.getForwardVelocity() * self.body.mass * (2. / 3.)
+            impulse = -self.get_forward_velocity() * self.body.mass * (2. / 3.)
             self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill forward
 
     def orientation_goal(self):
@@ -321,7 +321,7 @@ class AgentHomingSimple(Agent):
         """
         # Select action
         self.action = self.brain.select_action(self.state)
-        self.updateFriction()
+        self.update_friction()
         self.update_drive(Action(self.action))
 
     def after_step(self):
@@ -431,10 +431,10 @@ class AgentHomingSimple(Agent):
         #
         #         # Select action using AI
         #         action = self.update_brain(self.reward, observation)
-        #         self.updateFriction()
+        #         self.update_friction()
         #         self.update_drive(Action(action))
-        #         # self.updateManualDrive()
-        #         # self.remainStatic()
+        #         # self.update_manual_drive()
+        #         # self.remain_static()
         #
         #         # Calculate agent's distance to the goal
         #         self.distance = self.distance_goal()

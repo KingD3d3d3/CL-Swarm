@@ -38,16 +38,19 @@ def evaluate(t_bed):
     if t_bed.env_name == 'LunarLander-v2':
         success = t_bed.agents[0].env.env.sucessful_landing_count # number of successful landing (between the 2 flags)
         t_bed.agents[0].env.env.sucessful_landing_count = 0 # reset successful landing counter
+        print('successful landing  {}'.format(success))
         return success
 
     elif t_bed.env_name == 'MountainCar-v0': # average timesteps over the last 100 episodes
         score = t_bed.agents[0].scores
         avg_tmstp = sum(score) / len(score)
-        return -avg_tmstp
+        print('average minus timestep {}'.format(avg_tmstp))
+        return avg_tmstp
 
     elif t_bed.env_name == 'CartPole-v0': # average timesteps over the last 100 episodes
         score = t_bed.agents[0].scores
         avg_tmstp = sum(score) / len(score)
+        print('average timestep {}'.format(avg_tmstp))
         return avg_tmstp
 
     else:
@@ -58,13 +61,13 @@ if __name__ == '__main__':
     # Import simulation parameters
     param = sim_param_gym.args
 
-    param.debug = False
+    param.debug = True
     param.render = False
     param.training = False
     param.max_ep = 100
     param.load_all_weights = True
     param.collect_experiences = False
-    param.solved_score = 100000
+    param.solved_score = 100000 # just a high unreachable number so that the agent will play specified nums of episodes
 
     dir_name = param.dir_name # Input directory
     dir_name = os.path.abspath(dir_name) + '/'
@@ -89,7 +92,7 @@ if __name__ == '__main__':
 
         if glob.glob(curr_dir + "*.h5"):
             # create csv file
-            filename = curr_dir + Util.getTimeString() + "_" + str(param.max_ep) + "ep" + "_eval.csv"
+            filename = curr_dir + Util.get_time_string() + "_" + str(param.max_ep) + "ep" + "_eval.csv"
             print('csv file: {}'.format(filename))
             fo = open(filename, 'a')
             writer = csv.writer(fo)

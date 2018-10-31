@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
         if glob.glob(curr_dir + "*.h5"):
             # create csv file
-            filename = curr_dir + Util.getTimeString() + "_" + args.max_timesteps + "tmstp" + "_score.csv"
+            filename = curr_dir + Util.get_time_string() + "_" + args.max_timesteps + "tmstp" + "_score.csv"
             print('csv file: {}'.format(filename))
             fo = open(filename, 'a')
             writer = csv.writer(fo)

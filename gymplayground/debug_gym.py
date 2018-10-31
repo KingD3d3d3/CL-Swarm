@@ -55,7 +55,7 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
         "training_it: {:8.0f}, ".format(agent.brain.training_it) +
         "sim_t: {}, ".format(Global.get_sim_time()) +
         "global_t: {}, ".format(Global.get_time()) +
-        "world_t: {}".format(Util.getTimeString2())
+        "world_t: {}".format(Util.get_time_string2())
     )
 
     sim_t = Global.get_sim_time_in_seconds()
@@ -79,19 +79,19 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
 
 
 def xprint(color=PRINT_BLUE, msg=""):
-    printColor(color=color, msg="sim_id: {:3.0f}, ".format(global_gym.sim_id) +
+    print_color(color=color, msg="sim_id: {:3.0f}, ".format(global_gym.sim_id) +
                                 "{: <35s}, ".format(msg) +
                                 "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
                                 "sim_t: {}, ".format(Global.get_sim_time()) +
                                 "global_t: {}, ".format(Global.get_time()) +
-                                "world_t: {}".format(Util.getTimeString2()))
+                                "world_t: {}".format(Util.get_time_string2()))
 
 def create_record_file(dir, suffix=""):
     """
         Create record CSV file and return it
         Also create the directory if it doesn't exist
     """
-    time_str = Util.getTimeString()
+    time_str = Util.get_time_string()
     filename = dir + time_str + '_' + suffix + "_rec.csv"
 
     if not os.path.exists(os.path.dirname(filename)):

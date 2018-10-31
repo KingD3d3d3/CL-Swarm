@@ -351,7 +351,7 @@ class TestbedHomingSimple(object):
         #         self.wait_reach_ls_and_save()
         #         return
         #
-        #     printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+        #     print_color(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
         #                    "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
         #                    ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
         #                    ", t: {}".format(Global.get_time()))
@@ -374,7 +374,7 @@ class TestbedHomingSimple(object):
     #         # Reached learning score
     #         if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
     #
-    #             printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+    #             print_color(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
     #                            "{:>25s}".format(
     #                                "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
     #                            ", training_it: {:10.0f}".format(self.environment.agents[0].training_it()) +

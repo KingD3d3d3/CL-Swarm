@@ -13,7 +13,7 @@ try:
     from AI.DQN import DQN
     from objects.Agent import Agent
     from Setup import *
-    from Util import worldToPixels, pixelsToWorld
+    from Util import world_to_pixels, pixels_to_world
     import Util
     from task_homing.RayCastCallback import RayCastCallback
     import res.print_colors as PrintColor
@@ -32,7 +32,7 @@ except NameError as err:
     from ..AI.DQN import DQN
     from ..objects.Agent import Agent
     from ..Setup import *
-    from ..Util import worldToPixels, pixelsToWorld
+    from ..Util import world_to_pixels, pixels_to_world
     from .. import Util
     from task_homing.RayCastCallback import RayCastCallback
     from ..res import print_colors as PrintColor
@@ -173,10 +173,10 @@ class AgentHoming(Agent):
         self.body.position = start_pos
 
         # Set agent's orientation : Start by looking at goal 1
-        toGoal = Util.normalize(pixelsToWorld(self.goals[0]) - start_pos)
+        toGoal = Util.normalize(pixels_to_world(self.goals[0]) - start_pos)
         forward = vec2(0, 1)
         angleDeg = Util.angle(forward, toGoal)
-        angle = Util.degToRad(angleDeg)
+        angle = Util.deg_to_rad(angleDeg)
         angle = -angle
         self.body.angle = angle
 
@@ -248,7 +248,7 @@ class AgentHoming(Agent):
                 ray_color = self.raycastDiagonalColor
             else:
                 ray_color = self.raycastStraightColor
-            pygame.draw.line(self.screen, ray_color, worldToPixels(p1), worldToPixels(p2))
+            pygame.draw.line(self.screen, ray_color, world_to_pixels(p1), world_to_pixels(p2))
 
     def read_sensors(self):
 
@@ -266,7 +266,7 @@ class AgentHoming(Agent):
                 self.sensors[i] = self.raycast_length  # default value is raycastLength
 
     def normalize_sensors_value(self, val):
-        return Util.minMaxNormalization_m1_1(val, _min=0.0, _max=self.raycast_length)
+        return Util.min_max_normalization_m1_1(val, _min=0.0, _max=self.raycast_length)
 
     def update_drive(self, action):
         """
@@ -298,7 +298,7 @@ class AgentHoming(Agent):
             self.body.linearVelocity = forward_vec * speed
         else:
             # Kill velocity
-            impulse = -self.getForwardVelocity() * self.body.mass * (2. / 3.)
+            impulse = -self.get_forward_velocity() * self.body.mass * (2. / 3.)
             self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill forward
 
     def orientation_goal(self):
@@ -406,7 +406,7 @@ class AgentHoming(Agent):
 
         # Act in the environment
         self.action = self.brain.select_action(self.state)
-        self.updateFriction()
+        self.update_friction()
         self.update_drive(Action(self.action))
 
         # Initialization done after agents perform its first action

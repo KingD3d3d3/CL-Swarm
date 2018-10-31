@@ -24,7 +24,7 @@ simlogs_fo = None  # file object to open file for recording
 header_write = False # Write header of record file only once at the beginning of each simulation
 simlogs_writer = None  # writer object to record events
 sim_event_count = 0
-timestr = Util.getTimeString()
+timestr = Util.get_time_string()
 
 def reset_simulation_global():
     global timer
@@ -40,14 +40,14 @@ def reset_simulation_global():
     simlogs_fo = None  # file object to open file for recording
     simlogs_writer = None  # writer object to record events
     event_count = 0
-    timestr = Util.getTimeString()
+    timestr = Util.get_time_string()
 
 def fileCreate(dir, suffix="", extension=".csv"):
     """
         Create record csv file
         Also create the directory if it doesn't exist
     """
-    time_str = Util.getTimeString()
+    time_str = Util.get_time_string()
     filename = dir + suffix + '_' + time_str + extension
 
     if not os.path.exists(os.path.dirname(filename)):

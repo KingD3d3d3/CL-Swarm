@@ -23,7 +23,7 @@ simlogs_fo = None  # file object to open file for recording
 header_write = False # Write header of record file only once at the beginning of each simulation
 simlogs_writer = None  # writer object to record events
 sim_event_count = 0
-timestr = Util.getTimeString()
+timestr = Util.get_time_string()
 
 def reset_simulation_global():
     global header_write
@@ -37,5 +37,5 @@ def reset_simulation_global():
     simlogs_fo = None  # file object to open file for recording
     simlogs_writer = None  # writer object to record events
     sim_event_count = 0
-    timestr = Util.getTimeString()
+    timestr = Util.get_time_string()
     Global.sim_start_time = time.time()

@@ -20,22 +20,22 @@ except NameError as err:
     from .Setup import *
 
 
-def PrintFPS(screen, font, text, color=(255, 0, 0, 255)):  # red
+def print_fps(screen, font, text, color=(255, 0, 0, 255)):  # red
     """
         Draw fps text at the top left
     """
     screen.blit(font.render(
         text, True, color), (10, 3))
 
-def worldToPixels(vector):
+def world_to_pixels(vector):
     return vector.x * PPM, SCREEN_HEIGHT - vector.y * PPM
 
 # Python 2 code with tuple unpacking
-# def pixelsToWorld((a, b)):
+# def pixels_to_world((a, b)):
 #     return vec2(a / PPM, (SCREEN_HEIGHT - b) / PPM)
 
 # Python 3 version
-def pixelsToWorld(p):
+def pixels_to_world(p):
     return vec2(p[0] / PPM, (SCREEN_HEIGHT - p[1]) / PPM)
 
 def normalize(vector):
@@ -47,11 +47,11 @@ def normalize(vector):
     return vec2(vector.x * invLength, vector.y * invLength)
 
 
-def degToRad(degree):
+def deg_to_rad(degree):
     return degree * (math.pi / 180.0)
 
 
-def radToDeg(radian):
+def rad_to_deg(radian):
     return radian * (180.0 / math.pi)
 
 
@@ -71,11 +71,11 @@ def angle(vec1, vec2):
         vec1.x * vec2.x + vec1.y * vec2.y)
     return ang
 
-def megaSlowFunction():
+def mega_slow_function():
     for i in range(500000):
         a = math.sqrt(9123456)
 
-def minMaxNormalization(x, _min, _max, new_min, new_max):
+def min_max_normalization(x, _min, _max, new_min, new_max):
     """
         Normalize input x to new range [new_min, new_max]
         Using MinMax normalization
@@ -85,25 +85,25 @@ def minMaxNormalization(x, _min, _max, new_min, new_max):
     else:
         return (((x - _min) / (_max - _min)) * (new_max - new_min)) + new_min
 
-def minMaxNormalization_0_1(x, _min, _max):
+def min_max_normalization_0_1(x, _min, _max):
     """
         Normalize input x to range [0,1]
         Using MinMax normalization
     """
-    return minMaxNormalization(x, _min, _max, 0., 1.)
+    return min_max_normalization(x, _min, _max, 0., 1.)
 
-def minMaxNormalization_m1_1(x, _min, _max):
+def min_max_normalization_m1_1(x, _min, _max):
     """
         Normalize input x to range [-1,1]
         Using MinMax normalization and scaling
     """
-    return minMaxNormalization(x, _min, _max, -1., 1.)
+    return min_max_normalization(x, _min, _max, -1., 1.)
 
-def getTimeString():
+def get_time_string():
     now = datetime.now()
     return now.strftime("%Y%m%d_%H%M%S_%f")
 
-def getTimeString2():
+def get_time_string2():
     """
         Human readable format
     """

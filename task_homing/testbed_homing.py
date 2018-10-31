@@ -348,7 +348,7 @@ class TestbedHoming(object):
         # # # ----------------------------------------------------------------------------------
         # # TODO code to be deleted
         # if self.environment.agents[0].training_it() >= 10000 and self.environment.agents[0].learning_score() >= 0.084:
-        #     printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+        #     print_color(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
         #                    "{:>25s}".format(
         #                        "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
         #                    ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
@@ -357,7 +357,7 @@ class TestbedHoming(object):
         #     self.environment.agents[0].save_brain(dir=self.brain_dir)
         #     self.end_simulation()
         #
-        #     printColor(color=PRINT_RED, msg="BRUTE FORCE EXIT")
+        #     print_color(color=PRINT_RED, msg="BRUTE FORCE EXIT")
         #
         #     # End the game !
         #     pygame.quit()
@@ -379,7 +379,7 @@ class TestbedHoming(object):
                 self.wait_reach_ls_and_save()
                 return
 
-            printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+            print_color(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                            "{:>25s}".format("Reached {} training iterations".format(self.max_training_it)) +
                            ", tmstp: {:10.0f}".format(Global.sim_timesteps) +
                            ", t: {}".format(Global.get_time()))
@@ -399,7 +399,7 @@ class TestbedHoming(object):
             # Reached learning score
             if self.environment.agents[0].learning_score() >= self.wait_learning_score_and_save_model:
 
-                printColor(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
+                print_color(msg="Agent: {:3.0f}, ".format(self.environment.agents[0].id) +
                                "{:>25s}".format(
                                    "Reached {} learning score".format(self.environment.agents[0].learning_score())) +
                                ", tmstp: {:10.0f}".format(Global.sim_timesteps) +

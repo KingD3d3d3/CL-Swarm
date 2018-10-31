@@ -26,7 +26,7 @@ try:
     from objects.Box import StaticBox
     from Setup import *
     from MyContactListener import MyContactListener
-    from Util import worldToPixels, pixelsToWorld
+    from Util import world_to_pixels, pixels_to_world
     import Util
     import debug_homing
     from res.print_colors import *
@@ -47,7 +47,7 @@ except NameError as err:
     from ..res import colors as Color
     from .MyContactListener import MyContactListener
     from ..Setup import *
-    from ..Util import worldToPixels, pixelsToWorld
+    from ..Util import world_to_pixels, pixels_to_world
     from .. import Util
     import debug_homing
     from ..res.print_colors import *
@@ -85,7 +85,7 @@ class EnvironmentHoming(object):
         goal1 = (100, 100)
         goal2 = (SCREEN_WIDTH - goal1[0], SCREEN_HEIGHT - goal1[1])  # 1180, 620
         self.goals_pixels = [goal1, goal2]
-        goal1_vec = pixelsToWorld(goal1)  # b2Vec2(5,31)
+        goal1_vec = pixels_to_world(goal1)  # b2Vec2(5,31)
         goal2_vec = vec2(SCREEN_WIDTH / PPM - goal1_vec.x, SCREEN_HEIGHT / PPM - goal1_vec.y)  # b2Vec2(59,5)
         self.goals_vec = [goal1_vec, goal2_vec]
 
@@ -99,12 +99,12 @@ class EnvironmentHoming(object):
         self.numAgents = num_agents  # total numbers of agents in the simulation
         self.agents = []
         for j in range(num_agents):
-            start_pos = pixelsToWorld(self.goals_pixels[1])  # start from goal 2
+            start_pos = pixels_to_world(self.goals_pixels[1])  # start from goal 2
 
-            toGoal = Util.normalize(pixelsToWorld(self.goals_pixels[0]) - start_pos)
+            toGoal = Util.normalize(pixels_to_world(self.goals_pixels[0]) - start_pos)
             forward = vec2(0, 1)
             angleDeg = Util.angle(forward, toGoal)
-            angle = Util.degToRad(angleDeg)
+            angle = Util.deg_to_rad(angleDeg)
             angle = -angle  # start by looking at goal1
             a = AgentHoming(screen=self.screen, world=self.world, x=start_pos.x, y=start_pos.y, angle=angle,
                             radius=1.5, id=j, goals=self.goals_vec, numAgents=num_agents)
@@ -183,7 +183,7 @@ class EnvironmentHoming(object):
         self.border.draw()
 
         # Show FPS
-        Util.PrintFPS(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+        Util.print_fps(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
 
         # Flip the screen
         pygame.display.flip()

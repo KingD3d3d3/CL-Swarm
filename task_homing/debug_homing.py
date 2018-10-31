@@ -108,6 +108,6 @@ def print_event(color="", agent=None, event_message=""):
 
 
 def xprint(color=PRINT_BLUE, msg=""):
-    printColor(color=color, msg="{: <37s}".format(msg) +
+    print_color(color=color, msg="{: <37s}".format(msg) +
                                 ", tmstp: {:10.0f}, t: {}".format(Global.sim_timesteps, Global.get_time()) +
-                                ", world_t: {}".format(Util.getTimeString2()))
+                                ", world_t: {}".format(Util.get_time_string2()))

@@ -9,7 +9,7 @@ PRINT_RESET   = "\033[0;0m"
 PRINT_BOLD    = "\033[;1m"
 PRINT_REVERSE = "\033[;7m"
 
-def printColor(color=PRINT_BLUE, msg=""):
+def print_color(color=PRINT_BLUE, msg=""):
     sys.stdout.write(color)
     print(msg)
     sys.stdout.write(PRINT_RESET)

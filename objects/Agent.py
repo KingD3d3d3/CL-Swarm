@@ -11,9 +11,9 @@ try:
     # Running in PyCharm
     import res.colors as Color
     from Setup import *
-    from Util import worldToPixels
+    from Util import world_to_pixels
     import Util
-    from res.print_colors import printColor
+    from res.print_colors import print_color
     import Global
 except NameError as err:
     print(err, "--> our error message")
@@ -24,10 +24,10 @@ except NameError as err:
     logger.info("Running from command line -> Import libraries as package")
     from ..res import colors as Color
     from ..Setup import *
-    from ..Util import worldToPixels
+    from ..Util import world_to_pixels
     from .. import Util
     from .. import Global
-    from ..res.print_colors import printColor
+    from ..res.print_colors import print_color
 
 
 class Agent(object):
@@ -58,28 +58,28 @@ class Agent(object):
         self.training = True
         self.random_agent = False
 
-    def getLateralVelocity(self):
+    def get_lateral_velocity(self):
         currentRightNormal = self.body.GetWorldVector(vec2(1, 0))
         return currentRightNormal.dot(self.body.linearVelocity) * currentRightNormal
 
-    def getForwardVelocity(self):
+    def get_forward_velocity(self):
         currentForwardNormal = self.body.GetWorldVector(vec2(0, 1))
         return currentForwardNormal.dot(self.body.linearVelocity) * currentForwardNormal
 
-    def updateFriction(self):
-        impulse = self.body.mass * -self.getLateralVelocity()
+    def update_friction(self):
+        impulse = self.body.mass * -self.get_lateral_velocity()
         self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill lateral velocity
         self.body.ApplyAngularImpulse(0.8 * self.body.inertia * - self.body.angularVelocity,
                                       True)  # kill angular velocity #0.1 #0.3
 
         # Stop the forever roll
-        currentForwardNormal = self.getForwardVelocity()
+        currentForwardNormal = self.get_forward_velocity()
         currentForwardSpeed = currentForwardNormal.Normalize()
         dragForceMagnitude = -50 * currentForwardSpeed  # -10
         self.body.ApplyForce(dragForceMagnitude * currentForwardNormal, self.body.worldCenter, True)
 
-    def remainStatic(self):
-        self.updateFriction()
+    def remain_static(self):
+        self.update_friction()
         speed = 0
 
         forward_vec = self.body.GetWorldVector((0, 1))
@@ -95,7 +95,7 @@ class Agent(object):
             print('training FLAG wasnt the same')
             self.stop_training()
 
-    def updateManualDrive(self):
+    def update_manual_drive(self):
         speed = self.speed
         move = True
 
@@ -115,7 +115,7 @@ class Agent(object):
         if move:
             self.body.linearVelocity = forward_vec * speed
         else:
-            impulse = -self.getForwardVelocity() * self.body.mass * (2. / 3.)
+            impulse = -self.get_forward_velocity() * self.body.mass * (2. / 3.)
             self.body.ApplyLinearImpulse(impulse, self.body.worldCenter, True)  # kill forward
 
     def draw(self):
@@ -124,8 +124,8 @@ class Agent(object):
         pygame.draw.circle(self.screen, self.color, [int(x) for x in position], int(self.radius * PPM))
 
         current_forward_normal = self.body.GetWorldVector((0, 1))
-        pygame.draw.line(self.screen, Color.White, worldToPixels(self.body.worldCenter),
-                         worldToPixels(self.body.worldCenter + current_forward_normal * self.radius))
+        pygame.draw.line(self.screen, Color.White, world_to_pixels(self.body.worldCenter),
+                         world_to_pixels(self.body.worldCenter + current_forward_normal * self.radius))
 
     def learning_score(self):
         """
@@ -148,7 +148,7 @@ class Agent(object):
             Also create the /brain_files/ directory if it doesn't exist
         """
 
-        timestr = Util.getTimeString()
+        timestr = Util.get_time_string()
         directory = dir
         timestep = "_" + str(Global.sim_timesteps) + "tmstp"
         suffix = "_" + suffix
@@ -168,7 +168,7 @@ class Agent(object):
             Save Agent's memory (experiences) in csv file
             Also create the /brain_files/ directory if it doesn't exist
         """
-        timestr = Util.getTimeString()
+        timestr = Util.get_time_string()
         directory = dir
         timestep = "_" + str(Global.sim_timesteps) + "tmstp"
         suffix = "_" + suffix
@@ -370,14 +370,14 @@ class Agent(object):
         global prev_turned_angle
 
         if go_print_Turn:
-            myAngle = Util.radToDeg(self.body.angle % (2 * pi))
+            myAngle = Util.rad_to_deg(self.body.angle % (2 * pi))
             turned_angle = myAngle - prev_angle
             print('bodyAngle: {}, prev_angle: {}, angle turned : {}'.format(myAngle,
                                                                             prev_angle,
                                                                             turned_angle))
             go_print_Turn = False
 
-        myAngle = Util.radToDeg(self.body.angle % (2 * pi))
+        myAngle = Util.rad_to_deg(self.body.angle % (2 * pi))
         turned_angle = myAngle - prev_angle
         if not (prev_turned_angle - 0.1 <= turned_angle <= prev_turned_angle or
                 prev_turned_angle <= turned_angle <= prev_turned_angle + 0.1):
@@ -390,7 +390,7 @@ class Agent(object):
         if key[K_LEFT]:  # Turn Left
             if moveTicker == 0:
                 self.body.angularVelocity = angle
-                prev_angle = Util.radToDeg(self.body.angle % (2 * pi))
+                prev_angle = Util.rad_to_deg(self.body.angle % (2 * pi))
                 print('left pressed')
                 go_print_Turn = True
             moveTicker += 1
@@ -401,7 +401,7 @@ class Agent(object):
         if key[K_RIGHT]:  # Turn Right
             if moveTicker == 0:
                 self.body.angularVelocity = -angle
-                prev_angle = Util.radToDeg(self.body.angle % (2 * pi))
+                prev_angle = Util.rad_to_deg(self.body.angle % (2 * pi))
                 print('right pressed')
                 go_print_Turn = True
             moveTicker += 1

@@ -37,6 +37,7 @@ class AgentGym(object):
         self.id = id
 
         self.env = gym.make(env_name)  # create Gym environment
+        # self.env.seed(0)
         self.render = render
 
         # Call env.render() at the beginning before to predict or train neural network (dummy NN processing to avoid the freeze)
