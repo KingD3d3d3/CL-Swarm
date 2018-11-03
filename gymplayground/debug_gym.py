@@ -80,11 +80,12 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
 
 def xprint(color=PRINT_BLUE, msg=""):
     print_color(color=color, msg="sim_id: {:3.0f}, ".format(global_gym.sim_id) +
-                                "{: <35s}, ".format(msg) +
-                                "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
-                                "sim_t: {}, ".format(Global.get_sim_time()) +
-                                "global_t: {}, ".format(Global.get_time()) +
-                                "world_t: {}".format(Util.get_time_string2()))
+                                 "{: <35s}, ".format(msg) +
+                                 # "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
+                                 "sim_t: {}, ".format(Global.get_sim_time()) +
+                                 "global_t: {}, ".format(Global.get_time()) +
+                                 "world_t: {}".format(Util.get_time_string2()))
+
 
 def create_record_file(dir, suffix=""):
     """

@@ -155,3 +155,10 @@ def remove_blank(s):
     return " ".join(s.split())
 
 MAX_DIST = np.sqrt((SCREEN_WIDTH/PPM)**2 + (SCREEN_HEIGHT/PPM)**2)
+
+
+def str_to_int(x):
+    if x == 'None':
+        return None
+    else:
+        return int(x)

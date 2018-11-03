@@ -33,7 +33,9 @@ parser.add_argument('--solved_score', help='average score agent needs to reach t
 parser.add_argument('--multi_sim', help='multiple successive simulations', default=1, type=int)
 parser.add_argument('--random_agent', help='agent is taking random action', default=False, type=Util.str2bool)
 
-# Load weights
+# File to load
+parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
+# Load weights from file
 parser.add_argument('--load_model',  help='load model to agent', default=False, type=Util.str2bool)
 parser.add_argument('--load_all_weights', help='load full weights of neural networks', default=False, type=Util.str2bool)
 parser.add_argument('--load_h1h2_weights', help='load hidden layer 1 and 2 weights of neural networks', default=False, type=Util.str2bool)
@@ -42,11 +44,17 @@ parser.add_argument('--load_h2_weights', help='load h2 weights of neural network
 parser.add_argument('--load_out_weights', help='load output weights of neural networks', default=False, type=Util.str2bool)
 parser.add_argument('--load_h2out_weights', help='load h2 output weights of neural networks', default=False, type=Util.str2bool)
 parser.add_argument('--load_h1out_weights', help='load h1 output weights of neural networks', default=False, type=Util.str2bool)
-
-# Load experiences
+# Load experiences from file
 parser.add_argument('--load_mem', help='load defined number of experiences to agent', default=0, type=int)
-parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
 
+# Collaborative Learning
+parser.add_argument('--cl_param_exchange_all_weights', help='CL param exchange with all weights', default=False, type=Util.str2bool)
+parser.add_argument('--cl_experience_exchange', help='CL experience exchange', default=0, type=int)
+parser.add_argument('--exchange_knowledge_freq', help='frequencies of episodes for knowledge exchange between agents', default=0, type=int)
+
+parser.add_argument('--seed', help='starting seed offset', default='None', type=Util.str_to_int)
+
+# Saving
 parser.add_argument('--save_model_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)
 parser.add_argument('--save_mem_freq_ep', help='save memory every defined episodes', default=0, type=int)
 

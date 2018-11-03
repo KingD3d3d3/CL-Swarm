@@ -150,7 +150,7 @@ class Agent(object):
 
         timestr = Util.get_time_string()
         directory = dir
-        timestep = "_" + str(Global.sim_timesteps) + "tmstp"
+        # timestep = "_" + str(Global.sim_timesteps) + "tmstp"
         suffix = "_" + suffix
         network_model = directory + timestr + timestep + suffix + "_model.h5"  # neural network model file
 
@@ -170,7 +170,7 @@ class Agent(object):
         """
         timestr = Util.get_time_string()
         directory = dir
-        timestep = "_" + str(Global.sim_timesteps) + "tmstp"
+        # timestep = "_" + str(Global.sim_timesteps) + "tmstp"
         suffix = "_" + suffix
         memory_file = directory + timestr + timestep + suffix + "_memory.csv"  # neural network model file
 

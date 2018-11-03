@@ -32,7 +32,7 @@ def reset_simulation_global():
     global sim_event_count
     global timestr
 
-    Global.sim_timesteps = 0  # timesteps passed since beginning of simulation
+    # Global.sim_timesteps = 0  # timesteps passed since beginning of simulation
     header_write = False # Write header of record file only once at the beginning of each simulation
     simlogs_fo = None  # file object to open file for recording
     simlogs_writer = None  # writer object to record events

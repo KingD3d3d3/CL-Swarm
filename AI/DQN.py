@@ -100,6 +100,10 @@ class Model(object):
         """
         self.target_network.set_weights(self.q_network.get_weights())
 
+    def set_weights(self, weights):
+        self.q_network.set_weights(weights)
+        self.target_network.set_weights(weights)
+
     def set_weights_by_layer(self, weights, layer_num):
         """
             Set 1 layer weights of Q-Network and Target-Network
@@ -166,13 +170,15 @@ class Model(object):
 
 class Memory(object):  # sample stored as (s, a, r, s_, done)
 
-    def __init__(self, capacity):
+    def __init__(self, capacity, seed=None):
         self.capacity = capacity  # max capacity of container
         self.samples = deque(maxlen=capacity)  # container of experiences (queue)
 
         # TODO : verify it is a random seed for each instance
-        random.seed()
-        np.random.seed()
+        if seed is not None:
+            random.seed(seed)
+        else:
+            random.seed()
 
     def push(self, sample):
         """
@@ -203,7 +209,7 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
 
     def size(self):
         """
-            Return actual size of the container
+            Return current size of the container
         """
         return len(self.samples)
 
@@ -215,11 +221,15 @@ class DQN(object):
                  layers=(H1, H2), mem_capacity=MEMORY_CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, lr=LEARNING_RATE,
                  update_target_steps=UPDATE_TARGET_STEPS, eps_start=EPSILON_START, eps_end=EPSILON_END,
                  eps_test=EPSILON_TEST,
-                 exploration_steps=EXPLORATION_STEPS, use_double_dqn=True, use_prioritized_experience_replay=False):
+                 exploration_steps=EXPLORATION_STEPS, use_double_dqn=True, use_prioritized_experience_replay=False,
+                 seed=None):
 
         # TODO : verify it is a random seed for each instance
-        random.seed()
-        np.random.seed()
+        if seed is not None:
+            np.random.seed(seed)
+        else:
+            np.random.seed()
+        self.seed = seed
 
         # Agent's ID
         self.id = id
@@ -250,7 +260,7 @@ class DQN(object):
         self.model = Model(input_size=input_size, output_size=action_size, layers=layers, lr=lr)
 
         # Create the memory Experience Replay
-        self.memory = Memory(mem_capacity)
+        self.memory = Memory(capacity=mem_capacity, seed=seed)
 
         # File to be used when saving the model
         self.model_file = brain_file
@@ -290,6 +300,7 @@ class DQN(object):
         print("Training: {}".format(self.training))
         print("Random agent: {}".format(self.random_agent))
         print("Ratio update: {}".format(self.ratio_train))
+        print("Seed: {}".format(self.seed))
 
         print("\n----------------")
         print("Hyperparameters\n")
@@ -473,7 +484,7 @@ class DQN(object):
         model_file += Util.get_time_string()  # timestring
         # model_file += '_' + str(self.model.h1) + 'h1_' + str(self.model.h1) + 'h2' # NN architecture
         model_file += '_' + suffix
-        model_file += '_' + str(Global.sim_timesteps) + 'tmstp'  # timesteps
+        model_file += '_' + str(self.update_counter) + 'tmstp'  # timesteps
         model_file += '_' + 'model.h5'  # model file extension
 
         # Create the /brain_files/ directory if it doesn't exist
@@ -497,7 +508,7 @@ class DQN(object):
         memory_file = dir
         memory_file += Util.get_time_string()  # timestring
         memory_file += '_' + suffix
-        memory_file += '_' + str(Global.sim_timesteps) + 'tmstp'  # timesteps
+        memory_file += '_' + str(self.update_counter) + 'tmstp'  # timesteps
         memory_file += '_' + 'mem.csv'  # memory file extension
 
         # Create the /brain_files/ directory if it doesn't exist
@@ -726,7 +737,7 @@ class DQN(object):
         print_color(color=PRINT_CYAN,
                     msg="agent: {:4.0f}, ".format(self.id) +
                         "{: <35s}, ".format(msg) +
-                        "sim_tmstp: {:8.0f}, ".format(Global.sim_timesteps) +
+                        "update_tmstp: {:8.0f}, ".format(self.update_counter) +
                         "training_it: {:8.0f}, ".format(self.training_it) +
                         "sim_t: {}, ".format(Global.get_sim_time()) +
                         "global_t: {}, ".format(Global.get_time()) +

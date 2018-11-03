@@ -81,6 +81,11 @@ class TestbedGym(object):
         self.save_model_freq_ep = sim_param.save_model_freq_ep
         self.save_mem_freq_ep = sim_param.save_mem_freq_ep
 
+        # Collaborative Learning
+        self.cl_param_exchange_all_weights = sim_param.cl_param_exchange_all_weights
+        self.cl_experience_exchange = sim_param.cl_experience_exchange
+        self.exchange_knowledge_freq = sim_param.exchange_knowledge_freq
+
         # Directory for saving files
         self.suffix = ''
         self.sim_dir = ''
@@ -105,10 +110,13 @@ class TestbedGym(object):
         self.sim_count = 0 # count number of simulation
 
         # Create the agents
-        self.agents = [AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config, max_ep=self.max_ep, solved_score=self.solved_score, env_name=env)
+        self.agents = [AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config, max_ep=self.max_ep,
+                                solved_score=self.solved_score, env_name=env, seed=sim_param.seed + i)
             for i in range(self.num_agents)]
+        for agent in self.agents:
+            agent.agents = self.agents # list of agents
 
-    def setup_simulations(self, sim_id=1, file_to_load=''):
+    def setup_simulations(self, sim_id=0, file_to_load=''):
         """
             Setup simulation
         """
@@ -202,6 +210,14 @@ class TestbedGym(object):
             if not self.collect_experiences:
                 agent.brain.stop_collect_experiences()
 
+            # Collaborative Learning
+            if self.cl_param_exchange_all_weights:
+                agent.cl_param_exchange_all_weights = self.cl_param_exchange_all_weights
+            if self.cl_experience_exchange:
+                agent.cl_experience_exchange = self.cl_experience_exchange
+            if self.exchange_knowledge_freq:
+                agent.exchange_knowledge_freq = self.exchange_knowledge_freq
+
     def run_simulation(self):
         """"
             Main
@@ -221,7 +237,7 @@ class TestbedGym(object):
                 agent.update()
 
             # Step counter
-            Global.sim_timesteps += 1
+            # Global.sim_timesteps += 1
             Global.timesteps += 1
 
     def simulation_logic(self):
@@ -319,7 +335,7 @@ if __name__ == '__main__':
 
     # Iterate over successive simulations
     multi_sim = param.multi_sim
-    for s in range(1, multi_sim + 1):
+    for s in range(multi_sim):
         testbed.setup_simulations(s)
         testbed.run_simulation()
         testbed.end_simulation()

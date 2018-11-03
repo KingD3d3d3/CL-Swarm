@@ -27,17 +27,21 @@ except NameError as err:
     from . import global_gym
     from .. import Global
 
-
+COLLABORATION = False
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentGym(object):
-    def __init__(self, render=False, id=-1, num_agents=0, config=None, max_ep=2000, env_name='', solved_score=100000):
+    def __init__(self, render=False, id=-1, num_agents=0, config=None, max_ep=2000, env_name='', solved_score=100000,
+                 seed=None):
 
         # Agent's ID
         self.id = id
 
         self.env = gym.make(env_name)  # create Gym environment
-        # self.env.seed(0)
+        if seed is not None:
+            self.env.seed(seed)
+        self.seed = seed
+
         self.render = render
 
         # Call env.render() at the beginning before to predict or train neural network (dummy NN processing to avoid the freeze)
@@ -47,12 +51,15 @@ class AgentGym(object):
         self.input_size = self.env.observation_space.shape[0]
         self.action_size = self.env.action_space.n
 
-        # Number of agents
+        # List of agents
         self.num_agents = num_agents
+        self.agents = [self]
 
         self.config = config # configuration file
         self.solved_score = solved_score # average score agent needs to reach to consider the problem solved
         self.max_episodes = max_ep
+
+        self.best_agent = False # flag that indicates if it is the best agent according to average scores
 
         # ------------------ Variables to set at each simulation --------------------
 
@@ -60,6 +67,7 @@ class AgentGym(object):
 
         self.episodes = 0 # number of episodes during current simulation
         self.scores = deque(maxlen=100) # keep total scores of last 100 episodes
+        self.average_score = 0
         self.problem_done = False # when problem is done, the simulation end
         self.problem_solved = False # problem is solved Flag
         self.episode_inited = False # at the beginning of an episode we need to rest environment
@@ -71,6 +79,11 @@ class AgentGym(object):
         self.score = 0 # keep score of 1 episode
         self.timesteps = 0 # count number of timesteps during 1 episode
 
+        # Collaborative Learning
+        self.cl_param_exchange_all_weights = False
+        self.cl_experience_exchange = 0
+        self.exchange_knowledge_freq = 0
+
     def setup(self, training=True, random_agent=False):
 
         if random_agent:
@@ -79,10 +92,11 @@ class AgentGym(object):
 
         # Create agent's brain
         self.brain = DQN(input_size=self.input_size, action_size=self.action_size, id=self.id, brain_file="",
-                         training=training, random_agent=random_agent, **self.config.hyperparams)
+                         training=training, random_agent=random_agent, **self.config.hyperparams, seed=self.seed)
 
         self.episodes = 0
         self.scores = deque(maxlen=100)
+        self.average_score = 0
         self.problem_done = False
         self.problem_solved = False
         self.episode_inited = False
@@ -101,6 +115,14 @@ class AgentGym(object):
         if not self.problem_done:
 
             if not self.episode_inited:
+
+                # Synchronize episodes between agents
+                if not self.synchronized_episodes():
+                    return
+
+                if COLLABORATION:
+                    self.collaborative_learning()
+
                 self.state = self.brain.preprocess(self.env.reset())  # initial state
                 self.score = 0
                 self.timesteps = 0
@@ -132,23 +154,23 @@ class AgentGym(object):
             # -----------------------------------------------------------------
 
             # Calculate average over the last episodes
-            average = sum(self.scores) / len(self.scores)
+            self.average_score = sum(self.scores) / len(self.scores)
 
             self.episode_inited = False # re-initiate the environment for the next episode
             self.tot_timesteps += self.timesteps # increment total number of timesteps of all episodes
 
             # Record event (every episode)
-            if global_gym.record: #and self.episodes % 10 == 0: # TODO every 10 episodes, to be changed to 1 episode
-                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=average,
+            if global_gym.record: # and self.episodes % 10 == 0: # TODO every 10 episodes, to be changed to 1 episode
+                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=self.average_score,
                                       timesteps=self.timesteps, tot_timesteps=self.tot_timesteps, record=True, debug=False)
 
             # Periodically print current average of reward
             if self.episodes % 10 == 0:
-                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=average,
+                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=self.average_score,
                                       timesteps=self.timesteps, tot_timesteps=self.tot_timesteps, record=False, debug=True)
 
             # Problem solved
-            if average >= self.solved_score and len(self.scores) >= 100:  # need reach solved score and at least 100 episodes to terminate
+            if self.average_score >= self.solved_score and len(self.scores) >= 100:  # need reach solved score and at least 100 episodes to terminate
                 print("agent: {:4.0f}, *** Solved after {} episodes *** reached solved score: {}".format(self.id, self.episodes, self.solved_score))
                 self.problem_done = True
                 self.problem_solved = True
@@ -161,3 +183,44 @@ class AgentGym(object):
                 self.problem_done = True
                 return
             # --------------------------------------------------------------------------------------------------------------
+
+
+
+    def synchronized_episodes(self):
+        """
+            True if episodes are synchronized between agents, else False
+        """
+        for a in self.agents:
+            if self != a:
+                if a.episodes != self.episodes:
+                    return False
+        return True
+
+    def collaborative_learning(self):
+        """
+            Decentralized Collaborative Learning
+        """
+        # Frequency of communication between both agents
+        if not (self.episodes and self.episodes % self.exchange_knowledge_freq == 0):
+            return
+
+        # Part I - Find the best agent
+        for agent in self.agents:
+            if self != agent: # skip myself
+                if self.average_score < agent.average_score or agent.best_agent: # best agent
+                # if self.average_score > agent.average_score or agent.best_agent: # worst agent
+                    self.best_agent = False
+                    break
+                else:
+                    self.best_agent = True
+
+        # Part II - Exchange knowledge
+        if self.best_agent:
+            for agent in self.agents:
+                if self != agent: # skip myself
+                    print("agent: {} gives knowledge to agent: {}".format(self.id, agent.id))
+                    # if self.cl_param_exchange_all_weights:
+                    agent.brain.model.set_weights(self.brain.model.q_network.get_weights())
+
+            self.best_agent = False # reset
+
