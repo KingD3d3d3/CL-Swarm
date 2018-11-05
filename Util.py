@@ -46,19 +46,16 @@ def normalize(vector):
         invLength = 1.0 / length
     return vec2(vector.x * invLength, vector.y * invLength)
 
-
 def deg_to_rad(degree):
     return degree * (math.pi / 180.0)
-
 
 def rad_to_deg(radian):
     return radian * (180.0 / math.pi)
 
-
 def angle(vec1, vec2):
     """
         Computes the angle between a and b, and returns the angle in degrees.
-        pytorch vector angle implementation
+        Kivy vector angle implementation
         -> Vector(100, 0).angle((0, 100))
             -90.0
         -> Vector(87, 23).angle((-77, 10))
@@ -70,6 +67,36 @@ def angle(vec1, vec2):
         vec1.x * vec2.y - vec1.y * vec2.x,
         vec1.x * vec2.x + vec1.y * vec2.y)
     return ang
+
+def angle_v2(vec1, vec2):
+    """
+        Counterclock-wise (angle augmente dans le sens trigonometrique direct)
+
+        Computes the angle between a and b, and returns the angle in degrees.
+        Kivy vector angle implementation
+        -> Vector(100, 0).angle((0, 100))
+            -90.0
+        -> Vector(87, 23).angle((-77, 10))
+            -157.7920283010705
+        -> Vector(0, 1).angle((1, 0))
+            90.0
+    """
+    ang = (180 / math.pi) * math.atan2(
+        vec1.x * vec2.y - vec1.y * vec2.x,
+        vec1.x * vec2.x + vec1.y * vec2.y)
+    return ang
+
+def rotate(vec, angle):
+    """
+        Rotate the vector with an angle in degrees.
+        -> v = Vector(100, 0)
+        -> v.rotate(45)
+        [70.71067811865476, 70.71067811865474]
+    """
+    angle = math.radians(angle)
+    return vec2(
+        (vec.x * math.cos(angle)) - (vec.y * math.sin(angle)),
+        (vec.y * math.cos(angle)) + (vec.x * math.sin(angle)))
 
 def mega_slow_function():
     for i in range(500000):

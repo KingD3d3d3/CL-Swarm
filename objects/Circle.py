@@ -40,7 +40,7 @@ class Circle(object):
 
 
 class StaticCircle(object):
-    def __init__(self, screen=None, world=None, x=0, y=0, radius=1):
+    def __init__(self, screen=None, world=None, x=0, y=0, radius=1, color=Color.Lime):
         self.screen = screen
         self.id = random.randint(0, 1000000)
 
@@ -49,7 +49,7 @@ class StaticCircle(object):
             position=(x, y), userData=self)
         self.fixture = self.body.CreateCircleFixture(
             radius=radius, density=1, friction=0, restitution=0)  #density=1, friction=0.3)
-        self.color = Color.Lime
+        self.color = color
 
     def draw(self):
         position = self.body.transform * self.fixture.shape.pos * PPM
