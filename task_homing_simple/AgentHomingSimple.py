@@ -433,7 +433,7 @@ class AgentHomingSimple(Agent):
         #         action = self.update_brain(self.reward, observation)
         #         self.update_friction()
         #         self.update_drive(Action(action))
-        #         # self.update_manual_drive()
+        #         # self.update_drive_manual()
         #         # self.remain_static()
         #
         #         # Calculate agent's distance to the goal

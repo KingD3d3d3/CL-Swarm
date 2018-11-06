@@ -75,11 +75,11 @@ def angle_v2(vec1, vec2):
         Computes the angle between a and b, and returns the angle in degrees.
         Kivy vector angle implementation
         -> Vector(100, 0).angle((0, 100))
-            -90.0
-        -> Vector(87, 23).angle((-77, 10))
-            -157.7920283010705
-        -> Vector(0, 1).angle((1, 0))
             90.0
+        -> Vector(87, 23).angle((-77, 10))
+            157.7920283010705
+        -> Vector(0, 1).angle((1, 0))
+            -90.0
     """
     ang = (180 / math.pi) * math.atan2(
         vec1.x * vec2.y - vec1.y * vec2.x,

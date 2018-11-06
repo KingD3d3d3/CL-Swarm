@@ -39,7 +39,7 @@ except NameError as err:
 
 class EnvironmentRace(object):
 
-    def __init__(self, render=False, fixed_ur_timestep=False, num_agents=1, solved_score=100000):
+    def __init__(self, render=False, fixed_ur_timestep=False, num_agents=1, solved_score=100000, seed=None):
 
         self.render = render
         self.fixed_ur_timestep = fixed_ur_timestep
@@ -71,8 +71,7 @@ class EnvironmentRace(object):
             self.race = RaceCircleV2(screen=self.screen, world=self.world)
 
         self.agent = AgentRace(screen=self.screen, world=self.world,
-                               x=30, y=30, radius=1.25, solved_score=solved_score, env=env)
-
+                               x=30, y=30, radius=1.25, solved_score=solved_score, env=env, seed=seed)
 
     def draw(self):
         """

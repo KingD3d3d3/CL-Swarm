@@ -89,7 +89,7 @@ class TestbedRace(object):
 
 
         # Create environment
-        self.environment = EnvironmentRace(render=self.render, solved_score=self.solved_score)
+        self.environment = EnvironmentRace(render=self.render, solved_score=self.solved_score, seed=sim_param.seed)
 
         # Simulation running flag
         self.running = True

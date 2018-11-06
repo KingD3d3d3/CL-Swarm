@@ -1,6 +1,6 @@
 
 
-SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720 #1280, 720  # 640, 480
+SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720 # 1440, 1280
 # 1280 / PPM , 720 / PPM -> 64 , 36
 
 # Box2D deals with meters, but we want to display pixels,
