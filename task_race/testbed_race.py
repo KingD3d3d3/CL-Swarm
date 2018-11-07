@@ -1,59 +1,52 @@
 
-
 import pygame
 from pygame.locals import *
-import os
-import errno
-import csv
-import numpy as np
-import matplotlib.pyplot as plt
-try:
-    # Running in PyCharm
-    from Setup import *
-    import Util
-    from res.print_colors import *
-    import res.print_colors as PrintColor
-    from task_race.EnvironmentRace import EnvironmentRace
-    import task_race.simulation_parameters_race as sim_param_race
-    import Global
-except NameError as err:
-    print(err, "--> our error message")
-    # Running in command line
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("Running from command line -> Import libraries as package")
-    from ..Setup import *
-    from .. import Util
-    from .. import Global
-    import task_race.simulation_parameters_race as sim_param_race
-    from task_race.EnvironmentRace import EnvironmentRace
+import time
+import importlib
+import Util
+from res.print_colors import *
+import task_race.simulation_parameters_race as sim_param_race
+import Global
+from task_race.AgentRace import AgentRace
 
 class TestbedRace(object):
 
-    def __init__(self, sim_param=None, sim_dir="./simulation_data/default/", sim_suffix=""):
+    def __init__(self, sim_param=None):
 
         self.sim_param = sim_param
+
+        # Load config from file # assume path is cfg/<env>/<env>_<agent type>.  e.g. 'config/cartpole/cartpole_dqn'
+        sys.path.append('config/' + sim_param.cfg.split('_')[0])
+        config = importlib.import_module(sim_param.cfg)
+        env = config.environment['env_name']
+        self.problem_config = config
+
+        print("########################")
+        print("#### Testbed Race ######")
+        print("########################")
+        print("Environment: {}\n".format(env))
         # -------------------- Simulation Parameters ----------------------
 
         self.render = sim_param.render
         self.can_handle_events = sim_param.render
+        self.num_agents = sim_param.num_agents
 
         self.training = sim_param.training
         self.random_agent = sim_param.random_agent
         self.exploration = sim_param.exploration
         self.collect_experiences = sim_param.collect_experiences
 
-        self.num_agents = sim_param.num_agents
-
         # Max number of episodes
         if sim_param.max_ep:
             self.max_ep = sim_param.max_ep
+        else:
+            self.max_ep = config.environment['max_ep']
 
-        # Average score agent needs to reach to consider the problem solved
-        if sim_param.solved_score:
-            self.solved_score = sim_param.solved_score
+        # Average timestep agent needs to reach to consider the problem solved
+        if sim_param.solved_timesteps:
+            self.solved_timesteps = sim_param.solved_timesteps
+        else:
+            self.solved_timesteps = config.environment['solved_timesteps']
 
         self.load_model = sim_param.load_model
         self.load_all_weights = sim_param.load_all_weights
@@ -77,7 +70,7 @@ class TestbedRace(object):
         self.sim_dir = ''
         self.simlogs_dir = ''
         self.brain_dir = ''
-        self.env_name = 'race'  # e.g. "CartPole_v0"
+        self.env_name = env  # e.g. "CartPole_v0"
 
         # Directory for saving events, model files or memory files
         if sim_param.save_model or \
@@ -87,20 +80,29 @@ class TestbedRace(object):
             Util.create_dir(self.sim_dir)  # create the directory
             print("Record directory: {}".format(sim_param_race.sim_dir()))
 
-
-        # Create environment
-        self.environment = EnvironmentRace(render=self.render, solved_score=self.solved_score, seed=sim_param.seed)
-
         # Simulation running flag
         self.running = True
         self.sim_count = 0 # count number of simulation
         self.pause = False
 
-    def setup_simulation(self, sim_id=0, file_to_load=''):
+        # Create the agents
+        # self.agents = [
+        #     AgentRace(render=sim_param.render, id=i, num_agents=self.num_agents,
+        #               config=config, max_ep=self.max_ep, solved_timesteps=self.solved_timesteps,
+        #               env_name=env, seed=sim_param.seed + i) for i in range(1)]
+        self.agents = [AgentRace(render=sim_param.render, id=0, num_agents=self.num_agents, config=config, max_ep=self.max_ep,
+                     solved_timesteps=self.solved_timesteps, env_name=env, seed=sim_param.seed)]
+        for agent in self.agents:
+            agent.agents = self.agents  # list of agents
 
+    def setup_simulations(self, sim_id=0, file_to_load=''):
+        """
+            Setup simulation
+        """
         # Variables
-        self.running = True
         self.pause = False
+        self.sim_count += 1
+        self.running = True
 
         if file_to_load:
             self.file_to_load = file_to_load
@@ -120,52 +122,55 @@ class TestbedRace(object):
         """
             Setup agent
         """
-        agent = self.environment.agent
-        agent.setup(training=self.training)
-        if not self.exploration:
-            agent.brain.stop_exploring()
+        for agent in self.agents:
 
-        # Load model to agent
-        if self.load_model:
-            agent.brain.load_model(self.file_to_load)
+            # Setup agent's location and brain
+            agent.setup(training=self.training, random_agent=self.random_agent)
 
-        # Load full weights to agent
-        if self.load_all_weights:
-            agent.brain.load_full_weights(self.file_to_load)
+            if not self.exploration:
+                agent.brain.stop_exploring()
 
-        # Load 1st hidden layer weights to agent
-        if self.load_h1_weights:
-            agent.brain.load_h1_weights(self.file_to_load)
+            # Load model to agent
+            if self.load_model:
+                agent.brain.load_model(self.file_to_load)
 
-        # Load 1st and 2nd hidden layer weights to agent
-        if self.load_h1h2_weights:
-            agent.brain.load_h1h2_weights(self.file_to_load)
+            # Load full weights to agent
+            if self.load_all_weights:
+                agent.brain.load_full_weights(self.file_to_load)
 
-        # ----------------------------------------------------
-        # Load h2 weights to agent
-        if self.load_h2_weights:
-            agent.brain.load_h2_weights(self.file_to_load)
+            # Load 1st hidden layer weights to agent
+            if self.load_h1_weights:
+                agent.brain.load_h1_weights(self.file_to_load)
 
-        # Load output weights to agent
-        if self.load_out_weights:
-            agent.brain.load_out_weights(self.file_to_load)
+            # Load 1st and 2nd hidden layer weights to agent
+            if self.load_h1h2_weights:
+                agent.brain.load_h1h2_weights(self.file_to_load)
 
-        # Load h2 output weights to agent
-        if self.load_h2out_weights:
-            agent.brain.load_h2out_weights(self.file_to_load)
+            # ----------------------------------------------------
+            # Load h2 weights to agent
+            if self.load_h2_weights:
+                agent.brain.load_h2_weights(self.file_to_load)
 
-        # Load h1 output weights to agent
-        if self.load_h1out_weights:
-            agent.brain.load_h1out_weights(self.file_to_load)
-        # ----------------------------------------------------
+            # Load output weights to agent
+            if self.load_out_weights:
+                agent.brain.load_out_weights(self.file_to_load)
 
-        # Load memory to agent
-        if self.load_mem:
-            agent.brain.load_mem(self.file_to_load, self.load_mem)
+            # Load h2 output weights to agent
+            if self.load_h2out_weights:
+                agent.brain.load_h2out_weights(self.file_to_load)
 
-        # Collect experiences
-        if not self.collect_experiences:
-            agent.brain.stop_collect_experiences()
+            # Load h1 output weights to agent
+            if self.load_h1out_weights:
+                agent.brain.load_h1out_weights(self.file_to_load)
+            # ----------------------------------------------------
+
+            # Load memory to agent
+            if self.load_mem:
+                agent.brain.load_mem(self.file_to_load, self.load_mem)
+
+            # Collect experiences
+            if not self.collect_experiences:
+                agent.brain.stop_collect_experiences()
 
 
     def handle_events(self):
@@ -206,24 +211,40 @@ class TestbedRace(object):
                 # If we don't call that during pause, clock.tick will compute time spend during pause
                 # thus timer is counting during simulation pause -> we want to avoid that !
                 if self.render:
-                    self.environment.delta_time = self.environment.clock.tick(TARGET_FPS) / 1000.0
+                    for agent in self.agents:
+                        agent.env.delta_time = agent.env.clock.tick(60.0) / 1000.0
                 else:
-                    self.environment.delta_time = self.environment.clock.tick() / 1000.0
+                    for agent in self.agents:
+                        agent.env.delta_time = agent.env.clock.tick() / 1000.0
                 continue
 
             self.simulation_logic()
 
-            # Stop simulation if we reach termination condition
-            if not self.running:
-                break
+            # Update agents
+            for agent in self.agents:
+                agent.update()
 
-            self.environment.update()
+            # Step counter
+            # Global.sim_timesteps += 1
+            Global.timesteps += 1
 
     def simulation_logic(self):
-        if self.environment.agent.problem_done:
+        """
+            Simulation logic
+        """
+        # Save neural networks model frequently based on episode count
+        if self.save_model_freq_ep:
+            if self.agents[0].episode_done and \
+                    self.agents[0].episodes and self.agents[0].episodes % self.save_model_freq_ep == 0:
+                suffix = self.env_name + '_' + str(self.agents[0].episodes) + 'ep'
+                self.agents[0].brain.save_model(dir=self.brain_dir, suffix=suffix)
+
+        # End simulation when all agents had done the problem
+        for agent in self.agents:
+            if not agent.problem_done:
+                self.running = True
+                break # break the loop at the first active agent
             self.running = False
-        else:
-            self.running = True
 
     def end_simulation(self):
         """
@@ -231,22 +252,51 @@ class TestbedRace(object):
         """
         print('Exit')
 
+        # Close environment
+        for agent in self.agents:
+            agent.env.close()
+
         # Save model or memory experiences of agents
         if self.save_model or self.save_mem:
 
-            suffix = self.env_name + '_end'
+            for agent in self.agents:
+                suffix = self.env_name + '_end'
 
-            # Solved problem suffix
-            if self.environment.agent.problem_solved:
-                suffix += '_solved' + str(
-                    self.environment.agent.episodes) + 'ep'  # add number of episodes it took to solve the problem
+                # Solved problem suffix
+                if agent.problem_solved:
+                    suffix += '_solved' + str(agent.episodes) + 'ep'  # add number of episodes it took to solve the problem
 
-            if self.save_model:
-                self.environment.agent.brain.save_model(dir=self.brain_dir, suffix=suffix)  # save model
+                if self.save_model:
+                    agent.brain.save_model(dir=self.brain_dir, suffix=suffix)  # save model
 
-            if self.save_mem:
-                self.environment.agent.brain.save_mem(dir=self.brain_dir, suffix=suffix)  # save memory of experiences
+                if self.save_mem:
+                    agent.brain.save_mem(dir=self.brain_dir, suffix=suffix) # save memory of experiences
 
+    def save_summary(self, suffix=''):
+        """
+            Simulation summary (completion time, number of simulations, etc)
+        """
+        timestr = time.strftime('%Y%m%d_%H%M%S')
+        file = open(self.sim_dir + suffix + 'summary_' + timestr + '.txt', 'w')
+        file.write("--------------------------\n")
+        file.write("*** Summary of testbed ***\n")
+        file.write("--------------------------\n\n")
+        file.write("Number of simulations: {}\n".format(self.sim_count) +
+                   "Total simulations time: {}\n".format(Global.get_time()) +
+                   "Total simulations timesteps: {}\n\n".format(Global.timesteps))
+
+        file.write("---------------------\n")
+        file.write("Testbed configuration\n")
+        file.write("---------------------\n\n")
+        file.write("Simulation parameters: {}\n\n".format(self.sim_param))
+
+        file.write("--------------------------\n")
+        file.write("Problem configuration file\n")
+        file.write("--------------------------\n\n")
+        file.write("Environment: {}\n".format(self.problem_config.environment))
+        file.write("Hyperparameters: {}\n".format(self.problem_config.hyperparams))
+
+        file.close()
 
 if __name__ == '__main__':
 
@@ -258,7 +308,21 @@ if __name__ == '__main__':
 
     # -------------------- Simulation ----------------------
 
+    # Iterate over successive simulations
+    multi_sim = param.multi_sim
+    for s in range(multi_sim):
+        testbed.setup_simulations(s)
+        testbed.run_simulation()
+        testbed.end_simulation()
 
-    testbed.setup_simulation()
-    testbed.run_simulation()
-    testbed.end_simulation()
+    # -------------------------------------------------------
+
+    print("\n_______________________")
+    print("All simulation finished\n"
+          "Number of simulations: {}\n".format(testbed.sim_count) +
+          "Total simulations time: {}\n".format(Global.get_time()) +
+          "Total simulations timesteps: {}".format(Global.timesteps))
+
+    # Simulation summary (completion time, number of simulation, etc)
+    if param.record:
+        testbed.save_summary()

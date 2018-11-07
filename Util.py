@@ -19,6 +19,11 @@ except NameError as err:
     logger.info("Running from command line -> Import libraries as package")
     from .Setup import *
 
+def world_to_pixels(vector, screen_height, ppm):
+    return vector.x * ppm, screen_height - vector.y * ppm
+
+def pixels_to_world(p, screen_height, ppm):
+    return vec2(p[0] / ppm, (screen_height - p[1]) / ppm)
 
 def print_fps(screen, font, text, color=(255, 0, 0, 255)):  # red
     """
@@ -26,17 +31,6 @@ def print_fps(screen, font, text, color=(255, 0, 0, 255)):  # red
     """
     screen.blit(font.render(
         text, True, color), (10, 3))
-
-def world_to_pixels(vector):
-    return vector.x * PPM, SCREEN_HEIGHT - vector.y * PPM
-
-# Python 2 code with tuple unpacking
-# def pixels_to_world((a, b)):
-#     return vec2(a / PPM, (SCREEN_HEIGHT - b) / PPM)
-
-# Python 3 version
-def pixels_to_world(p):
-    return vec2(p[0] / PPM, (SCREEN_HEIGHT - p[1]) / PPM)
 
 def normalize(vector):
     length = vector.length
@@ -52,8 +46,10 @@ def deg_to_rad(degree):
 def rad_to_deg(radian):
     return radian * (180.0 / math.pi)
 
-def angle(vec1, vec2):
+def angle_indirect(vec1, vec2):
     """
+        Clock-wise (angle augmente dans le sens trigonometrique indirect)
+
         Computes the angle between a and b, and returns the angle in degrees.
         Kivy vector angle implementation
         -> Vector(100, 0).angle((0, 100))
@@ -68,7 +64,7 @@ def angle(vec1, vec2):
         vec1.x * vec2.x + vec1.y * vec2.y)
     return ang
 
-def angle_v2(vec1, vec2):
+def angle_direct(vec1, vec2):
     """
         Counterclock-wise (angle augmente dans le sens trigonometrique direct)
 
@@ -88,7 +84,7 @@ def angle_v2(vec1, vec2):
 
 def rotate(vec, angle):
     """
-        Rotate the vector with an angle in degrees.
+        Rotate the vector with an angle_indirect in degrees.
         -> v = Vector(100, 0)
         -> v.rotate(45)
         [70.71067811865476, 70.71067811865474]
@@ -100,9 +96,9 @@ def rotate(vec, angle):
 
 def mega_slow_function():
     for i in range(500000):
-        a = math.sqrt(9123456)
+        math.sqrt(9123456)
 
-def min_max_normalization(x, _min, _max, new_min, new_max):
+def min_max_normalization(val, _min, _max, new_min, new_max):
     """
         Normalize input x to new range [new_min, new_max]
         Using MinMax normalization
@@ -110,21 +106,21 @@ def min_max_normalization(x, _min, _max, new_min, new_max):
     if _min == _max:
         return (new_min + new_max) / 2
     else:
-        return (((x - _min) / (_max - _min)) * (new_max - new_min)) + new_min
+        return (((val - _min) / (_max - _min)) * (new_max - new_min)) + new_min
 
-def min_max_normalization_0_1(x, _min, _max):
+def min_max_normalization_0_1(val, _min, _max):
     """
         Normalize input x to range [0,1]
         Using MinMax normalization
     """
-    return min_max_normalization(x, _min, _max, 0., 1.)
+    return min_max_normalization(val, _min, _max, 0., 1.)
 
-def min_max_normalization_m1_1(x, _min, _max):
+def min_max_normalization_m1_1(val, _min, _max):
     """
         Normalize input x to range [-1,1]
         Using MinMax normalization and scaling
     """
-    return min_max_normalization(x, _min, _max, -1., 1.)
+    return min_max_normalization(val, _min, _max, -1., 1.)
 
 def get_time_string():
     now = datetime.now()
@@ -181,7 +177,7 @@ def remove_blank(s):
     """
     return " ".join(s.split())
 
-MAX_DIST = np.sqrt((SCREEN_WIDTH/PPM)**2 + (SCREEN_HEIGHT/PPM)**2)
+# MAX_DIST = np.sqrt((SCREEN_WIDTH/PPM)**2 + (SCREEN_HEIGHT/PPM)**2)
 
 
 def str_to_int(x):

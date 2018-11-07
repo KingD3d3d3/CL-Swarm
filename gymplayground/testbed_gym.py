@@ -162,7 +162,7 @@ class TestbedGym(object):
 
         for agent in self.agents:
 
-            # Setup agent's location and brain
+            # Setup agent's and brain
             agent.setup(training=self.training, random_agent=self.random_agent)
 
             if not self.exploration:

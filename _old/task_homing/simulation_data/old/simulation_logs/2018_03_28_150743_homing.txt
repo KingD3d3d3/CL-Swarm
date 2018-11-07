@@ -1,0 +1,19 @@
+Agent:   0,                 facing goal: 1, t2G:      5.021, tmstp2G :        185, GR:     0, t:      5.038, tmstp:        186
+Agent:   0,         reverse facing goal: 1, t2G:      5.543, tmstp2G :        215, GR:     0, t:      5.560, tmstp:        216
+Agent:   0,                 facing goal: 1, t2G:      5.578, tmstp2G :        217, GR:     0, t:      5.598, tmstp:        218
+Agent:   0,         reverse facing goal: 1, t2G:      5.598, tmstp2G :        218, GR:     0, t:      5.619, tmstp:        219
+Agent:   0,                 facing goal: 1, t2G:      5.842, tmstp2G :        231, GR:     0, t:      5.861, tmstp:        232
+Agent:   0,         reverse facing goal: 1, t2G:      5.898, tmstp2G :        234, GR:     0, t:      5.921, tmstp:        235
+Agent:   0,                 facing goal: 1, t2G:      6.301, tmstp2G :        257, GR:     0, t:      6.319, tmstp:        258
+Agent:   0,         reverse facing goal: 1, t2G:      6.388, tmstp2G :        262, GR:     0, t:      6.407, tmstp:        263
+Agent:   0,                 facing goal: 1, t2G:      6.407, tmstp2G :        263, GR:     0, t:      6.424, tmstp:        264
+Agent:   0,         reverse facing goal: 1, t2G:      6.475, tmstp2G :        267, GR:     0, t:      6.492, tmstp:        268
+Agent:   0,                 facing goal: 1, t2G:      6.492, tmstp2G :        268, GR:     0, t:      6.508, tmstp:        269
+Agent:   0,         reverse facing goal: 1, t2G:      6.582, tmstp2G :        273, GR:     0, t:      6.604, tmstp:        274
+Agent:   0,                 facing goal: 1, t2G:      6.621, tmstp2G :        275, GR:     0, t:      6.640, tmstp:        276
+Agent:   0,                reached goal: 1, t2G:     10.016, tmstp2G :        445, GR:     1, t:     10.016, tmstp:        445
+Agent:   0,         reverse facing goal: 2, t2G:      0.000, tmstp2G :          0, GR:     1, t:     10.032, tmstp:        446
+Agent:   0,              collision Wall: 3, t2G:      0.541, tmstp2G :         28, GR:     1, t:     10.557, tmstp:        473
+Agent:   0,                 facing goal: 2, t2G:      0.825, tmstp2G :         43, GR:     1, t:     10.859, tmstp:        489
+Agent:   0,              collision Wall: 3, t2G:      0.975, tmstp2G :         51, GR:     1, t:     10.991, tmstp:        496
+Agent:   0,              collision Wall: 3, t2G:      1.060, tmstp2G :         56, GR:     1, t:     11.076, tmstp:        501

@@ -1,18 +1,7 @@
 
 import argparse
 import time
-try:
-    # Running in PyCharm
-    import Util
-except NameError as err:
-    print(err, "--> our error message")
-    # Running in command line
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("Running from command line -> Import libraries as package")
-    from .. import Util
+import Util
 
 # -------------------- Simulation Parameters ----------------------
 
@@ -29,7 +18,7 @@ parser.add_argument('--exploration', help='agent takes random action at the begi
 parser.add_argument('--collect_experiences', help='append a new experience to memory', default=True, type=Util.str2bool)
 parser.add_argument('--max_ep', help='maximum number of episodes for 1 simulation', default=0, type=int)
 
-parser.add_argument('--solved_score', help='average score agent needs to reach to consider the problem solved', default=0, type=int)
+parser.add_argument('--solved_timesteps', help='average score agent needs to reach to consider the problem solved', default=0, type=int)
 parser.add_argument('--multi_sim', help='multiple successive simulations', default=1, type=int)
 parser.add_argument('--random_agent', help='agent is taking random action', default=False, type=Util.str2bool)
 
@@ -47,11 +36,6 @@ parser.add_argument('--load_h1out_weights', help='load h1 output weights of neur
 # Load experiences from file
 parser.add_argument('--load_mem', help='load defined number of experiences to agent', default=0, type=int)
 
-# Collaborative Learning
-parser.add_argument('--cl_param_exchange_all_weights', help='CL param exchange with all weights', default=False, type=Util.str2bool)
-parser.add_argument('--cl_experience_exchange', help='CL experience exchange', default=0, type=int)
-parser.add_argument('--exchange_knowledge_freq', help='frequencies of episodes for knowledge exchange between agents', default=0, type=int)
-
 parser.add_argument('--seed', help='starting seed offset', default='None', type=Util.str_to_int)
 
 # Saving
@@ -61,8 +45,8 @@ parser.add_argument('--save_mem_freq_ep', help='save memory every defined episod
 parser.add_argument('--suffix', help='custom suffix to add', default='')
 parser.add_argument('--dir_name', help='directory name to load NN files (to run in parallel universe)', default='')
 
-# Gym problem to solve
-# parser.add_argument('--cfg', help='game environment and agent\'s hyperparameters config file', required=True)
+# Race problem to solve
+parser.add_argument('--cfg', help='game environment and agent\'s hyperparameters config file', required=True)
 
 # Parameter object
 args = parser.parse_args()
@@ -123,7 +107,7 @@ def sim_dir():
     multi_sim = args.multi_sim
 
     # Environment
-    env = 'race' #args.cfg.split('_')[0]
+    env = args.cfg.split('_')[0]
 
     # Number of trials
     max_ep = args.max_ep

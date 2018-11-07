@@ -1,0 +1,17 @@
+Agent:   0,                 facing goal: 1, time to goal:      4.775, timestep to goal :        181, goal reached count:     0, simulation time:      4.792, timestep :        182
+Agent:   0,         reverse facing goal: 1, time to goal:      4.792, timestep to goal :        182, goal reached count:     0, simulation time:      4.810, timestep :        183
+Agent:   0,                 facing goal: 1, time to goal:      4.810, timestep to goal :        183, goal reached count:     0, simulation time:      4.827, timestep :        184
+Agent:   0,         reverse facing goal: 1, time to goal:      5.078, timestep to goal :        198, goal reached count:     0, simulation time:      5.095, timestep :        199
+Agent:   0,                 facing goal: 1, time to goal:      5.095, timestep to goal :        199, goal reached count:     0, simulation time:      5.111, timestep :        200
+Agent:   0,      collision StaticCircle: 2, time to goal:      5.609, timestep to goal :        229, goal reached count:     0, simulation time:      5.609, timestep :        229
+Agent:   0,      collision StaticCircle: 2, time to goal:      5.774, timestep to goal :        239, goal reached count:     0, simulation time:      5.774, timestep :        239
+Agent:   0,      collision StaticCircle: 2, time to goal:      5.826, timestep to goal :        242, goal reached count:     0, simulation time:      5.826, timestep :        242
+Agent:   0,      collision StaticCircle: 2, time to goal:      5.879, timestep to goal :        245, goal reached count:     0, simulation time:      5.879, timestep :        245
+Agent:   0,      collision StaticCircle: 2, time to goal:      5.944, timestep to goal :        248, goal reached count:     0, simulation time:      5.944, timestep :        248
+Agent:   0,      collision StaticCircle: 2, time to goal:      5.977, timestep to goal :        250, goal reached count:     0, simulation time:      5.977, timestep :        250
+Agent:   0,         reverse facing goal: 1, time to goal:      7.035, timestep to goal :        307, goal reached count:     0, simulation time:      7.055, timestep :        308
+Agent:   0,                 facing goal: 1, time to goal:      7.082, timestep to goal :        309, goal reached count:     0, simulation time:      7.102, timestep :        310
+Agent:   0,         reverse facing goal: 1, time to goal:      7.146, timestep to goal :        312, goal reached count:     0, simulation time:      7.165, timestep :        313
+Agent:   0,                 facing goal: 1, time to goal:      7.995, timestep to goal :        358, goal reached count:     0, simulation time:      8.017, timestep :        359
+Agent:   0,         reverse facing goal: 1, time to goal:      8.017, timestep to goal :        359, goal reached count:     0, simulation time:      8.039, timestep :        360
+Agent:   0,              collision Wall: 0, time to goal:      8.858, timestep to goal :        402, goal reached count:     0, simulation time:      8.858, timestep :        402

@@ -5,6 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/gymplayground/simulation_data" />
       <excludeFolder url="file://$MODULE_DIR$/task_homing/simulation_data" />
       <excludeFolder url="file://$MODULE_DIR$/task_homing_simple/simulation_data" />
+      <excludeFolder url="file://$MODULE_DIR$/task_race/simulation_data" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.5.6 (/anaconda3/bin/python)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

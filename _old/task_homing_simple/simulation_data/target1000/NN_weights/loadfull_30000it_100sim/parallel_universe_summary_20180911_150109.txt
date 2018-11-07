@@ -1,0 +1,3 @@
+Number of simulations: 6000
+Total simulations time: 23h 06m 25s
+Total timesteps: 60000000
