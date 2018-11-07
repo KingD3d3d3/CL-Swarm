@@ -1,5 +1,4 @@
 
-
 # Basic colors
 Black = (0, 0, 0)
 LightBlack = (100, 100, 100)

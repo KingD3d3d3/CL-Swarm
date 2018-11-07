@@ -3,32 +3,13 @@ import glob
 import os
 import pandas as pd
 import csv
-import sys
 import re
-try:
-    # Running in PyCharm
-    from res.print_colors import *
-    import Global
-    from gymplayground.testbed_gym import TestbedGym
-    import gymplayground.debug_gym as debug_gym
-    import gymplayground.global_gym as global_gym
-    import Util
-    import gymplayground.simulation_parameters_gym as sim_param_gym
-except NameError as err:
-    print(err, "--> our error message")
-    # Running in command line
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("Running from command line -> Import libraries as package")
-    from ..res.print_colors import *
-    from .. import Global
-    from gymplayground.testbed_gym import TestbedGym
-    import gymplayground.debug_gym as debug_gym
-    import gymplayground.global_gym as global_gym
-    from .. import Util
-    import gymplayground.simulation_parameters_gym as sim_param_gym
+from res.print_colors import *
+import Global
+from gymplayground.testbed_gym import TestbedGym
+import gymplayground.debug_gym as debug_gym
+import Util
+import gymplayground.simulation_parameters_gym as sim_param_gym
 
 def evaluate(t_bed):
     """

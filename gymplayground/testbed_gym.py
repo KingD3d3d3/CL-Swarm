@@ -1,30 +1,14 @@
+
 import time
 import importlib
 import csv
-try:
-    # Running in PyCharm
-    from gymplayground.AgentGym import AgentGym
-    import Global
-    import gymplayground.simulation_parameters_gym as sim_param_gym
-    import gymplayground.debug_gym as debug_gym
-    import gymplayground.global_gym as global_gym
-    import Util
-    from res.print_colors import *
-except NameError as err:
-    print(err, "--> our error message")
-    # Running in command line
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("Running from command line -> Import libraries as package")
-    import gymplayground.simulation_parameters_gym as sim_param_gym
-    from .. import Global
-    from .AgentGym import AgentGym
-    from . import debug_gym
-    from . import global_gym
-    from ..res.print_colors import *
-    from .. import Util
+from gymplayground.AgentGym import AgentGym
+import Global
+import gymplayground.simulation_parameters_gym as sim_param_gym
+import gymplayground.debug_gym as debug_gym
+import gymplayground.global_gym as global_gym
+import Util
+from res.print_colors import *
 
 class TestbedGym(object):
     def __init__(self, sim_param=None):

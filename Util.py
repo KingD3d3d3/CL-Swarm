@@ -1,23 +1,11 @@
 
-# Box2D.b2 maps Box2D.b2Vec2 to vec2 (and so on)
 from Box2D.b2 import (vec2)
 import math
 import numpy as np
 import argparse
-
 import os
 import errno
 from datetime import datetime
-try:
-    from Setup import *
-except NameError as err:
-    print(err, "--> our error message")
-    # Running in command line
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("Running from command line -> Import libraries as package")
-    from .Setup import *
 
 def world_to_pixels(vector, screen_height, ppm):
     return vector.x * ppm, screen_height - vector.y * ppm

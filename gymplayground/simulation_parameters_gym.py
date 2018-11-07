@@ -1,18 +1,7 @@
 
 import argparse
 import time
-try:
-    # Running in PyCharm
-    import Util
-except NameError as err:
-    print(err, "--> our error message")
-    # Running in command line
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("Running from command line -> Import libraries as package")
-    from .. import Util
+import Util
 
 # -------------------- Simulation Parameters ----------------------
 

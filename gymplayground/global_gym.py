@@ -2,14 +2,8 @@
     Global variables that are mainly use in the debug_gym for logging simulation event
 """
 import time
-
-try:
-    import Util
-    import Global
-except NameError as err:
-    print(err, "--> our error message")
-    from .. import Util
-    from .. import Global
+import Util
+import Global
 
 # Global fixed
 record = False  # record flag, if yes record simulation's events in file

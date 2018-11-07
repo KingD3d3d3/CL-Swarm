@@ -1,3 +1,4 @@
+
 import numpy as np
 import random
 from collections import deque
@@ -10,16 +11,9 @@ import sklearn.utils
 from keras.optimizers import Adam
 import os
 import errno
-
-try:
-    from res.print_colors import *
-    import Global
-    import Util
-except NameError as err:
-    print(err, "--> our error message")
-    from ..res.print_colors import *
-    from .. import Global
-    from .. import Util
+import Global
+import Util
+from ..res.print_colors import *
 
 # DEFAULT HYPERPARAMETERS
 H1 = 64  # number of neurons in the 1st hidden layer

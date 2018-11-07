@@ -1,31 +1,9 @@
+
 import gym
 from collections import deque
-
-try:
-    # Running in PyCharm
-    import res.colors as Color
-    # from ..res import colors as Color
-    from AI.DQN import DQN
-    import Util
-    import res.print_colors as PrintColor
-    import gymplayground.debug_gym as debug_gym
-    import gymplayground.global_gym as global_gym
-    import Global
-except NameError as err:
-    print(err, "--> our error message")
-    # Running in command line
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    logger.info("Running from command line -> Import libraries as package")
-    from ..res import colors as Color
-    from ..AI.DQN import DQN
-    from .. import Util
-    from ..res import print_colors as PrintColor
-    from . import debug_gym
-    from . import global_gym
-    from .. import Global
+from AI.DQN import DQN
+import gymplayground.debug_gym as debug_gym
+import gymplayground.global_gym as global_gym
 
 COLLABORATION = False
 # ---------------------------------- Agent -----------------------------------------
