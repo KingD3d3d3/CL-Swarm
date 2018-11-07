@@ -19,13 +19,13 @@ RADIUS_OUTTER = SCREEN_WIDTH / PPM / 2                  # 18
 ROAD_WIDTH = 7                                          # 7
 RADIUS_INNER = (SCREEN_WIDTH / PPM / 2) - ROAD_WIDTH    # 11
 CENTER_POINT = vec2(X_MAX / 2, Y_MAX / 2)               # vec2(18, 18)
-S_POINT = vec2(CENTER_POINT.x + RADIUS_INNER, CENTER_POINT.y)  # point of angle 0 in inner circle
+S_POINT = vec2(CENTER_POINT.x - RADIUS_INNER, CENTER_POINT.y)  # point of angle 0 in inner circle
 
 # Goal Square
-M1 = vec2(np.cos(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.x, CENTER_POINT.y)
-M2 = vec2(X_MAX, CENTER_POINT.x)
-M3 = vec2(X_MAX, np.sin(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.y)
-M4 = vec2(np.cos(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.x, np.sin(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.y)
+M1 = vec2(-np.cos(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.x, CENTER_POINT.y)
+M2 = vec2(0, CENTER_POINT.x)
+M3 = vec2(0, np.sin(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.y)
+M4 = vec2(-np.cos(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.x, np.sin(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.y)
 
 class RaceMap(object):
     def __init__(self, screen=None, world=None):
@@ -84,10 +84,10 @@ class RaceMap(object):
                                   x=CENTER_POINT.x,
                                   y=CENTER_POINT.y,
                                   vertices=[
-                                      (np.cos(2 * np.pi / 12) * RADIUS_INNER, np.sin(2 * np.pi / 12) * RADIUS_INNER),
-                                      (np.cos(2 * np.pi / 12) * RADIUS_OUTTER, np.sin(2 * np.pi / 12) * RADIUS_OUTTER),
-                                      (np.cos(3 * np.pi / 12) * RADIUS_OUTTER, np.sin(3 * np.pi / 12) * RADIUS_OUTTER),
-                                      (np.cos(3 * np.pi / 12) * RADIUS_INNER, np.sin(3 * np.pi / 12) * RADIUS_INNER)
+                                      (-np.cos(2 * np.pi / 12) * RADIUS_INNER, np.sin(2 * np.pi / 12) * RADIUS_INNER),
+                                      (-np.cos(2 * np.pi / 12) * RADIUS_OUTTER, np.sin(2 * np.pi / 12) * RADIUS_OUTTER),
+                                      (-np.cos(3 * np.pi / 12) * RADIUS_OUTTER, np.sin(3 * np.pi / 12) * RADIUS_OUTTER),
+                                      (-np.cos(3 * np.pi / 12) * RADIUS_INNER, np.sin(3 * np.pi / 12) * RADIUS_INNER)
                                   ], )
 
     def render(self):
@@ -118,7 +118,7 @@ class RaceContactListener(contactListener):
             car.collision = True
             return
 
-class RaceCircleLeft(object):
+class RaceCircleRight(object):
 
     def __init__(self, display=False):
 
@@ -164,7 +164,7 @@ class RaceCircleLeft(object):
         self.timesteps = 0
         start_pos = vec2(CENTER_POINT.x, CENTER_POINT.y + RADIUS_INNER + (ROAD_WIDTH / 2))  # starting point
         self.car.body.position = start_pos
-        self.car.body.angle = Util.deg_to_rad(90)
+        self.car.body.angle = Util.deg_to_rad(-90)
         self.car.kill_motion() # reset car velocity
 
         # Orientation in lane
@@ -276,14 +276,14 @@ class RaceCircleLeft(object):
         pygame.display.flip()
 
     def gizmo(self):
-        pygame.draw.line(self.screen, Color.Magenta, world_to_pixels(CENTER_POINT, SCREEN_HEIGHT, PPM), world_to_pixels(S_POINT + vec2(ROAD_WIDTH, 0), SCREEN_HEIGHT, PPM))
+        pygame.draw.line(self.screen, Color.Magenta, world_to_pixels(CENTER_POINT, SCREEN_HEIGHT, PPM), world_to_pixels(S_POINT + vec2(-ROAD_WIDTH, 0), SCREEN_HEIGHT, PPM))
 
         theta = Util.angle_direct(Util.normalize(S_POINT - CENTER_POINT), Util.normalize(self.car.body.position - CENTER_POINT))
         theta = Util.deg_to_rad(theta)
-        h = vec2(RADIUS_INNER * np.cos(theta) + CENTER_POINT.x, RADIUS_INNER * np.sin(theta) + CENTER_POINT.y) # orthogonal projection
+        h = vec2(-RADIUS_INNER * np.cos(theta) + CENTER_POINT.x, -RADIUS_INNER * np.sin(theta) + CENTER_POINT.y) # orthogonal projection
         pygame.draw.line(self.screen, Color.Red, world_to_pixels(CENTER_POINT, SCREEN_HEIGHT, PPM), world_to_pixels(h, SCREEN_HEIGHT, PPM))
 
-        tangent = Util.rotate(Util.normalize(CENTER_POINT - h), -90.0) # tangent to the circle
+        tangent = Util.rotate(Util.normalize(CENTER_POINT - h), 90.0) # tangent to the circle
         pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(h, SCREEN_HEIGHT, PPM), world_to_pixels(h + tangent, SCREEN_HEIGHT, PPM))
 
     @property
@@ -293,11 +293,11 @@ class RaceCircleLeft(object):
         """
         theta = Util.angle_direct(Util.normalize(S_POINT - CENTER_POINT), Util.normalize(self.car.body.position - CENTER_POINT))
         theta = Util.deg_to_rad(theta)
-        h = vec2(RADIUS_INNER * np.cos(theta) + CENTER_POINT.x, RADIUS_INNER * np.sin(theta) + CENTER_POINT.y) # orthogonal projection
-        tangent = Util.rotate(Util.normalize(CENTER_POINT - h), -90.0) # tangent to the circle
+        h = vec2(-RADIUS_INNER * np.cos(theta) + CENTER_POINT.x, -RADIUS_INNER * np.sin(theta) + CENTER_POINT.y) # orthogonal projection
+        tangent = Util.rotate(Util.normalize(CENTER_POINT - h), 90.0) # tangent to the circle
 
         forward = Util.normalize(self.car.body.GetWorldVector((0, 1)))
-        orientation = Util.angle_indirect(forward, tangent) / 180.0
+        orientation = Util.angle_direct(forward, tangent) / 180.0
 
         return orientation
 
@@ -316,7 +316,7 @@ class RaceCircleLeft(object):
     @property
     def inside_goal(self):
         pos = self.car.body.position
-        if M1.x <= pos.x <= M2.x and M2.y <= pos.y <= M3.y:
+        if M2.x <= pos.x <= M1.x and M2.y <= pos.y <= M3.y:
             return True
         else:
             return False

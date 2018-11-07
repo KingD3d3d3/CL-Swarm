@@ -13,7 +13,7 @@ import os
 import errno
 import Global
 import Util
-from ..res.print_colors import *
+from res.print_colors import *
 
 # DEFAULT HYPERPARAMETERS
 H1 = 64  # number of neurons in the 1st hidden layer

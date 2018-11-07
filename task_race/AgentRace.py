@@ -2,6 +2,7 @@
 from collections import deque
 from AI.DQN import DQN
 from task_race.envs.racecircleleft import RaceCircleLeft
+from task_race.envs.racecircleright import RaceCircleRight
 import sys
 
 # ---------------------------------- Agent -----------------------------------------
@@ -15,7 +16,10 @@ class AgentRace(object):
         # create race environment
         if env_name == 'RaceCircleLeft':
             self.env = RaceCircleLeft(display=render)
+        elif env_name == 'RaceCircleRight':
+            self.env = RaceCircleRight(display=render)
         else:
+            print('cannot find environment: {}'.format(env_name))
             sys.exit()
 
         self.seed = seed
