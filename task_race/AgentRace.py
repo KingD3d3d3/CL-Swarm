@@ -3,6 +3,7 @@ from collections import deque
 from AI.DQN import DQN
 from task_race.envs.racecircleleft import RaceCircleLeft
 from task_race.envs.racecircleright import RaceCircleRight
+from task_race.envs.racecombined import RaceCombined
 import sys
 import task_race.debug_race as debug_race
 import task_race.global_race as global_race
@@ -20,6 +21,8 @@ class AgentRace(object):
             self.env = RaceCircleLeft(display=display, manual=manual)
         elif env_name == 'RaceCircleRight':
             self.env = RaceCircleRight(display=display, manual=manual)
+        elif env_name == 'RaceCombined':
+            self.env = RaceCombined(display=display, manual=manual)
         else:
             print('cannot find environment: {}'.format(env_name))
             sys.exit()
@@ -50,7 +53,7 @@ class AgentRace(object):
         self.episodes = 0 # number of episodes during current simulation
         # self.scores = deque(maxlen=100) # keep total scores of last 100 episodes
         # self.average_score = 0
-        self.tmstp_list_size = 50
+        self.tmstp_list_size = 100
         self.timesteps_list = deque(maxlen=self.tmstp_list_size)  # keep timesteps of last 20 episodes
         self.average_timestep = 0
         self.tot_timesteps = 0 # total number of timesteps of all episodes passed during 1 simulation

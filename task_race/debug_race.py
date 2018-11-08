@@ -28,7 +28,7 @@ def print_event(agent, episode, tmstp, avg_tmstp, d2g, tot_tmstp, record=False, 
         "agent: {:3.0f}, ".format(agent.id) +
         "episode: {:5.0f}, ".format(episode) +
         "tmstp: {:4.0f}, ".format(tmstp) +
-        "avg_tmstp: {:4.2f}, ".format(avg_tmstp) +
+        "avg_tmstp: {:6.2f}, ".format(avg_tmstp) +
         "d2g: {:3.0f}, ".format(d2g) +
         "tot_tmstp: {:8.0f}, ".format(tot_tmstp) +
         "training_it: {:8.0f}, ".format(agent.brain.training_it) +

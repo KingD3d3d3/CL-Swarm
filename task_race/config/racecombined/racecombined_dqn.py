@@ -1,8 +1,8 @@
 # Algorithm: DQN
 
 environment = {
-    'env_name': 'RaceCircleLeft',
-    'solved_timesteps': 135,
+    'env_name': 'RaceCombined',
+    'solved_timesteps': 300,
     'max_ep': 5000
 }
 
