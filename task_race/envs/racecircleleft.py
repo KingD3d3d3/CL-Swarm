@@ -3,8 +3,8 @@ from Box2D.b2 import (world, vec2, contactListener)
 from pygame.locals import *
 from task_race.envs.objects.geometric import *
 import numpy as np
-import Util
-from Util import world_to_pixels
+import res.Util as Util
+from res.Util import world_to_pixels
 from task_race.envs.objects.Car import Car, Action
 
 SCREEN_WIDTH, SCREEN_HEIGHT = 720, 720
@@ -120,11 +120,12 @@ class RaceContactListener(contactListener):
 
 class RaceCircleLeft(object):
 
-    def __init__(self, display=False):
+    def __init__(self, display=False, manual=False):
 
         # -------------------- Pygame Setup ----------------------
 
         self.display = display
+        self.manual = manual
         self.screen = None
         pygame.init()
         if self.display:
@@ -151,6 +152,7 @@ class RaceCircleLeft(object):
         self.orientation = None
         self.speed = None
         self.goal_reached = None
+        self.d2g = None # distance to goal
 
         self.input_size = 7
         self.action_size = 6
@@ -162,17 +164,22 @@ class RaceCircleLeft(object):
         self.goal_reached = False
         self.car.speed = 0.
         self.timesteps = 0
+
+        # Teleport car to initial position
         start_pos = vec2(CENTER_POINT.x, CENTER_POINT.y + RADIUS_INNER + (ROAD_WIDTH / 2))  # starting point
         self.car.body.position = start_pos
         self.car.body.angle = Util.deg_to_rad(90)
         self.car.kill_motion() # reset car velocity
+
+        # Distance to goal (debug purpose)
+        self.d2g = self.distance_goal
 
         # Orientation in lane
         self.orientation = self.orientation_lane
         observation.append(self.orientation_lane)
 
         # Distance in lane
-        distance_lane_norm = self.normalize_distance(self.distance_lane, _min=0.0, _max=ROAD_WIDTH - (self.car.radius * 2))
+        distance_lane_norm = self.normalize_distance(self.distance_lane, _min=self.car.radius, _max=ROAD_WIDTH - self.car.radius)
         observation.append(distance_lane_norm)
 
         # Speed
@@ -203,18 +210,25 @@ class RaceCircleLeft(object):
         observation = []
 
         self.car.update_friction()
-        self.car.update_drive(Action(action))
-        self.car.update_turn(Action(action))
+        if self.manual:
+            self.car.update_drive_manual()
+            self.car.update_turn_manual()
+        else: # select action using AI
+            self.car.update_drive(Action(action))
+            self.car.update_turn(Action(action))
 
         self.world_step()
         self.timesteps += 1
+
+        # Distance to goal (debug purpose)
+        self.d2g = self.distance_goal
 
         # Orientation in lane
         self.orientation = self.orientation_lane
         observation.append(self.orientation_lane)
 
         # Distance in lane
-        distance_lane_norm = self.normalize_distance(self.distance_lane, _min=0.0, _max=ROAD_WIDTH - (self.car.radius * 2))
+        distance_lane_norm = self.normalize_distance(self.distance_lane, _min=self.car.radius, _max=ROAD_WIDTH - self.car.radius)
         observation.append(distance_lane_norm)
 
         # Speed
@@ -225,7 +239,8 @@ class RaceCircleLeft(object):
 
         # Angular velocity of the car
         angular_vel = self.car.body.angularVelocity
-        angular_vel_norm = Util.min_max_normalization_m1_1(angular_vel, _min=-3.5, _max=3.5)
+        max_angular_vel = 3.5
+        angular_vel_norm = Util.min_max_normalization_m1_1(angular_vel, _min=-max_angular_vel, _max=max_angular_vel)
         observation.append(angular_vel_norm)
 
         # Sensor's value
@@ -303,7 +318,7 @@ class RaceCircleLeft(object):
 
     @property
     def distance_lane(self):
-        d = np.abs(Util.distance(self.car.body.position, CENTER_POINT) - (RADIUS_INNER + self.car.radius))
+        d = Util.distance(self.car.body.position, CENTER_POINT) - RADIUS_INNER
         return d
 
     @staticmethod
@@ -312,6 +327,21 @@ class RaceCircleLeft(object):
 
     def normalize_sensors_value(self, val):
         return Util.min_max_normalization_m1_1(val, _min=0.0, _max=self.car.raycast_length)
+
+    @property
+    def distance_goal(self):
+        theta = Util.angle_direct(Util.normalize(S_POINT - CENTER_POINT), Util.normalize(self.car.body.position - CENTER_POINT))
+        if theta < 0:
+            theta = 180.0 + (180.0 + theta)
+        theta = Util.deg_to_rad(theta)
+        phi = 2 * np.pi - theta
+        d2g = RADIUS_INNER * phi
+
+        if self.inside_goal:
+            return 0.
+
+        d2g = np.abs(d2g)
+        return d2g
 
     @property
     def inside_goal(self):
@@ -362,12 +392,12 @@ class Reward:
     COLLISION = -100.
 
     @classmethod
-    def reward_sensor(cls, val, max_length=3.):
+    def reward_sensor(cls, val, max_length):
         """
             Shaping reward on sensors
         """
         ok = 0.                 # no punishment
-        little = -1             # small punishment
+        little = -0.1             # small punishment
         worst = cls.COLLISION   # higher punishment
 
         min_length = 0.0

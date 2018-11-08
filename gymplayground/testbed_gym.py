@@ -7,7 +7,7 @@ import Global
 import gymplayground.simulation_parameters_gym as sim_param_gym
 import gymplayground.debug_gym as debug_gym
 import gymplayground.global_gym as global_gym
-import Util
+import res.Util as Util
 from res.print_colors import *
 
 class TestbedGym(object):

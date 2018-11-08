@@ -1,7 +1,7 @@
 
 import argparse
 import time
-import Util
+import res.Util as Util
 
 # -------------------- Simulation Parameters ----------------------
 

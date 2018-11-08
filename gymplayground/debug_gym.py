@@ -9,7 +9,7 @@ try:
     # Running in PyCharm
     import gymplayground.global_gym as global_gym
     from res.print_colors import *
-    import Util
+    import res.Util as Util
     import Global
 except NameError as err:
     print(err, "--> our error message")
@@ -21,7 +21,7 @@ except NameError as err:
     logger.info("Running from command line -> Import libraries as package")
     from . import global_gym
     from ..res.print_colors import *
-    from .. import Util
+    from ..res import Util as Util
     from .. import Global
 
 header = (

@@ -4,28 +4,30 @@ from AI.DQN import DQN
 from task_race.envs.racecircleleft import RaceCircleLeft
 from task_race.envs.racecircleright import RaceCircleRight
 import sys
+import task_race.debug_race as debug_race
+import task_race.global_race as global_race
 
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentRace(object):
-    def __init__(self, render=False, id=-1, num_agents=0, config=None, max_ep=5000, env_name='', solved_timesteps=120,
-                 seed=None):
+    def __init__(self, display=False, id=-1, num_agents=0, config=None, max_ep=5000, env_name='', solved_timesteps=120,
+                 seed=None, manual=False):
 
         self.id = id # agent's ID
 
         # create race environment
         if env_name == 'RaceCircleLeft':
-            self.env = RaceCircleLeft(display=render)
+            self.env = RaceCircleLeft(display=display, manual=manual)
         elif env_name == 'RaceCircleRight':
-            self.env = RaceCircleRight(display=render)
+            self.env = RaceCircleRight(display=display, manual=manual)
         else:
             print('cannot find environment: {}'.format(env_name))
             sys.exit()
 
         self.seed = seed
-        self.render = render
+        self.display = display
         # Call env.render() at the beginning before to predict or train neural network (dummy NN processing to avoid the freeze)
-        if render:
+        if display:
             self.env.render()
 
         self.input_size = self.env.input_size
@@ -46,9 +48,10 @@ class AgentRace(object):
         self.brain = None
 
         self.episodes = 0 # number of episodes during current simulation
-        self.scores = deque(maxlen=100) # keep total scores of last 100 episodes
-        self.average_score = 0
-        self.timesteps_list = deque(maxlen=20)  # keep timesteps of last 20 episodes
+        # self.scores = deque(maxlen=100) # keep total scores of last 100 episodes
+        # self.average_score = 0
+        self.tmstp_list_size = 50
+        self.timesteps_list = deque(maxlen=self.tmstp_list_size)  # keep timesteps of last 20 episodes
         self.average_timestep = 0
         self.tot_timesteps = 0 # total number of timesteps of all episodes passed during 1 simulation
         self.problem_done = False # when problem is done, the simulation end
@@ -72,18 +75,18 @@ class AgentRace(object):
                          training=training, random_agent=random_agent, **self.config.hyperparams, seed=self.seed)
 
         self.episodes = 0
-        self.scores = deque(maxlen=100)
-        self.average_score = 0
-        self.timesteps_list_size = 20
-        self.timesteps_list = deque(maxlen=self.timesteps_list_size)
+        # self.scores = deque(maxlen=100)
+        # self.average_score = 0
+        self.timesteps_list = deque(maxlen=self.tmstp_list_size)
         self.average_timestep = 0
         self.problem_done = False
         self.problem_solved = False
         self.episode_inited = False
         self.episode_done = False
         self.tot_timesteps = 0
+
         self.state = None
-        self.score = 0
+        # self.score = 0
         self.timesteps = 0
         self.best_average = self.env.max_episode_steps
 
@@ -97,13 +100,13 @@ class AgentRace(object):
             if not self.episode_inited:
 
                 self.state = self.brain.preprocess(self.env.reset())  # initial state
-                self.score = 0
+                # self.score = 0
                 self.timesteps = 0
                 self.episode_inited = True
                 self.episode_done = False
 
             # -------------------------- An episode --------------------------
-            if self.render:
+            if self.display:
                 self.env.render()
 
             action = self.brain.select_action(self.state)
@@ -115,12 +118,12 @@ class AgentRace(object):
 
             self.brain.train()
 
-            self.score += reward
+            # self.score += reward
             self.timesteps += 1
 
             if done:  # either game over or reached maximum timesteps of episode
                 self.episodes += 1
-                self.scores.append(self.score)
+                # self.scores.append(self.score)
                 self.episode_done = True
 
                 if not self.env.goal_reached:
@@ -131,27 +134,32 @@ class AgentRace(object):
             # -----------------------------------------------------------------
 
             # Calculate average over the last episodes
-            self.average_score = sum(self.scores) / len(self.scores)
+            # self.average_score = sum(self.scores) / len(self.scores)
             self.average_timestep = sum(self.timesteps_list) / len(self.timesteps_list)
 
             self.episode_inited = False # re-initiate the environment for the next episode
             self.tot_timesteps += self.timesteps # increment total number of timesteps of all episodes
 
             # Calculate best average
-            if self.average_timestep < self.best_average and len(self.timesteps_list) >= self.timesteps_list_size:
+            if self.average_timestep < self.best_average and len(self.timesteps_list) >= self.tmstp_list_size:
                 self.best_average = self.average_timestep
 
+            # Record event (every episode)
+            if global_race.record:
+                debug_race.print_event(agent=self, episode=self.episodes, tmstp=self.timesteps,
+                                       avg_tmstp=self.average_timestep, d2g=self.env.d2g, tot_tmstp=self.tot_timesteps,
+                                      record=True, debug=False)
+
             # Periodically print event
-            if self.episodes % 1 == 0:
-                print("episode: {:5.0f}, timesteps: {:3.0f}, tot_timestep: {:8.0f}, score: {:3.0f}, "
-                    "average_score: {:3.2f}, average_tmstp: {:3.2f}, best_avg: {:3.2f}"
-                        .format(self.episodes, self.timesteps, self.tot_timesteps,
-                                self.score, self.average_score, self.average_timestep, self.best_average))
+            if self.episodes % 10 == 0:
+                debug_race.print_event(agent=self, episode=self.episodes, tmstp=self.timesteps,
+                                       avg_tmstp=self.average_timestep, d2g=self.env.d2g, tot_tmstp=self.tot_timesteps,
+                                       record=False, debug=True)
 
             # Problem solved
-            if self.average_timestep <= self.solved_timesteps and len(self.timesteps_list) >= self.timesteps_list_size:  # last 20 run
+            if self.average_timestep <= self.solved_timesteps and len(self.timesteps_list) >= self.tmstp_list_size:  # last 20 run
                 print(
-                    "agent: {:4.0f}, *** Solved after {} episodes *** reached solved score timestep: {}".format(
+                    "agent: {:4.0f}, *** Solved after {} episodes *** reached solved timestep: {}".format(
                         self.id,
                         self.episodes,
                         self.solved_timesteps))

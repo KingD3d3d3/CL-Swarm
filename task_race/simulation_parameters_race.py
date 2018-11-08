@@ -1,13 +1,14 @@
 
 import argparse
 import time
-import Util
+import res.Util as Util
 
 # -------------------- Simulation Parameters ----------------------
 
 parser = argparse.ArgumentParser(description='Testbed Race')
-parser.add_argument('--render', help='render the simulation', default=True, type=Util.str2bool)
+parser.add_argument('--display', help='display the simulation', default=True, type=Util.str2bool)
 parser.add_argument('--debug', help='print simulation log', default=True, type=Util.str2bool)
+parser.add_argument('--manual', help='control manually the car', default=False, type=Util.str2bool)
 parser.add_argument('--record', help='record simulation log in file', default=False, type=Util.str2bool)
 parser.add_argument('--save_model', help='save agent model in file', default=False, type=Util.str2bool)
 parser.add_argument('--save_mem', help='save agent experiences in file', default=False, type=Util.str2bool)
@@ -18,7 +19,7 @@ parser.add_argument('--exploration', help='agent takes random action at the begi
 parser.add_argument('--collect_experiences', help='append a new experience to memory', default=True, type=Util.str2bool)
 parser.add_argument('--max_ep', help='maximum number of episodes for 1 simulation', default=0, type=int)
 
-parser.add_argument('--solved_timesteps', help='average score agent needs to reach to consider the problem solved', default=0, type=int)
+parser.add_argument('--solved_timesteps', help='average score agent needs to reach to consider the problem solved', default=-100000, type=int)
 parser.add_argument('--multi_sim', help='multiple successive simulations', default=1, type=int)
 parser.add_argument('--random_agent', help='agent is taking random action', default=False, type=Util.str2bool)
 

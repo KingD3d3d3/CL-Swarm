@@ -12,7 +12,7 @@ from keras.optimizers import Adam
 import os
 import errno
 import Global
-import Util
+import res.Util as Util
 from res.print_colors import *
 
 # DEFAULT HYPERPARAMETERS

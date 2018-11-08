@@ -8,7 +8,7 @@ from res.print_colors import *
 import Global
 from gymplayground.testbed_gym import TestbedGym
 import gymplayground.debug_gym as debug_gym
-import Util
+import res.Util as Util
 import gymplayground.simulation_parameters_gym as sim_param_gym
 
 def evaluate(t_bed):

@@ -93,6 +93,10 @@ def min_max_normalization(val, _min, _max, new_min, new_max):
     """
     if _min == _max:
         return (new_min + new_max) / 2
+    elif val <= _min:
+        return new_min
+    elif val >= _max:
+        return new_max
     else:
         return (((val - _min) / (_max - _min)) * (new_max - new_min)) + new_min
 
@@ -164,9 +168,6 @@ def remove_blank(s):
         Remove leading spaces, trailing spaces, successive spaces, newline characters and tab characters
     """
     return " ".join(s.split())
-
-# MAX_DIST = np.sqrt((SCREEN_WIDTH/PPM)**2 + (SCREEN_HEIGHT/PPM)**2)
-
 
 def str_to_int(x):
     if x == 'None':

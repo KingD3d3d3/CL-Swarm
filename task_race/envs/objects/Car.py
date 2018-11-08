@@ -6,7 +6,7 @@ from pygame.locals import *
 import numpy as np
 import res.colors as Color
 from Box2D import b2RayCastCallback
-from Util import world_to_pixels
+from res.Util import world_to_pixels
 
 class RayCastCallback(b2RayCastCallback):
     """
@@ -59,11 +59,11 @@ class Car(object):
         # Speed specs
         self.max_forward_speed = 100 # 50
         self.max_drive_force = 300 # can reach maximum speed in 2.833 s (0-100) # 180
-        self.turn_torque = 80  # achieved max_angular_velocity of 3.12 (~pi) rad/s in 2.5s
+        self.turn_torque = 72  # achieved max_angular_velocity of 3.13 (~pi) rad/s in 1.7s
         self.speed = 0.
 
         # Proximity Sensors
-        self.raycast_length = 3.0
+        self.raycast_length = 4.0
         self.raycastSafeColor = Color.Green
         self.raycastDangerColor = Color.Red
         front_middle = vec2(0, 1)

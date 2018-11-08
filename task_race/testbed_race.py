@@ -3,11 +3,14 @@ import pygame
 from pygame.locals import *
 import time
 import importlib
-import Util
+import res.Util as Util
 from res.print_colors import *
 import task_race.simulation_parameters_race as sim_param_race
 import Global
+import csv
 from task_race.AgentRace import AgentRace
+import task_race.debug_race as debug_race
+import task_race.global_race as global_race
 
 class TestbedRace(object):
 
@@ -27,8 +30,8 @@ class TestbedRace(object):
         print("Environment: {}\n".format(env))
         # -------------------- Simulation Parameters ----------------------
 
-        self.render = sim_param.render
-        self.can_handle_events = sim_param.render
+        self.display = sim_param.display
+        self.can_handle_events = sim_param.display
         self.num_agents = sim_param.num_agents
 
         self.training = sim_param.training
@@ -73,12 +76,16 @@ class TestbedRace(object):
         self.env_name = env  # e.g. "CartPole_v0"
 
         # Directory for saving events, model files or memory files
-        if sim_param.save_model or \
+        global_race.record = sim_param.record
+        if global_race.record or sim_param.save_model or \
                 sim_param.save_mem or sim_param.save_model_freq_ep or sim_param.save_mem_freq_ep:
             self.suffix = sim_param_race.sim_suffix()
             self.sim_dir = sim_param_race.sim_dir()
             Util.create_dir(self.sim_dir)  # create the directory
             print("Record directory: {}".format(sim_param_race.sim_dir()))
+
+        # Print event only in debug mode
+        global_race.debug = sim_param.debug
 
         # Simulation running flag
         self.running = True
@@ -87,11 +94,11 @@ class TestbedRace(object):
 
         # Create the agents
         # self.agents = [
-        #     AgentRace(render=sim_param.render, id=i, num_agents=self.num_agents,
+        #     AgentRace(display=sim_param.display, id=i, num_agents=self.num_agents,
         #               config=config, max_ep=self.max_ep, solved_timesteps=self.solved_timesteps,
         #               env_name=env, seed=sim_param.seed + i) for i in range(1)]
-        self.agents = [AgentRace(render=sim_param.render, id=0, num_agents=self.num_agents, config=config, max_ep=self.max_ep,
-                     solved_timesteps=self.solved_timesteps, env_name=env, seed=sim_param.seed)]
+        self.agents = [AgentRace(display=sim_param.display, id=0, num_agents=self.num_agents, config=config, max_ep=self.max_ep,
+                     solved_timesteps=self.solved_timesteps, env_name=env, seed=sim_param.seed, manual=sim_param.manual)]
         for agent in self.agents:
             agent.agents = self.agents  # list of agents
 
@@ -99,29 +106,48 @@ class TestbedRace(object):
         """
             Setup simulation
         """
+        # Set ID of simulation
+        global_race.sim_id = sim_id
+
+        debug_race.xprint(color=PRINT_GREEN, msg="Begin simulation")
+        debug_race.xprint(msg="Setup")
+
+        if file_to_load:
+            self.file_to_load = file_to_load
+
         # Variables
         self.pause = False
         self.sim_count += 1
         self.running = True
 
-        if file_to_load:
-            self.file_to_load = file_to_load
-
         # Record simulation
         self.simlogs_dir = self.sim_dir + "sim_logs/"
+        if global_race.record:
+            debug_race.xprint(msg="Start recording".format(sim_id))
+
+            # CSV event file
+            suffix = self.env_name + '_sim' + str(global_race.sim_id) + '_' + self.suffix
+            filename = debug_race.create_record_file(dir=self.simlogs_dir, suffix=suffix)
+            global_race.simlogs_fo = open(filename, 'a')
+            global_race.simlogs_writer = csv.writer(global_race.simlogs_fo)
+            global_race.simlogs_writer.writerow(debug_race.header)  # write header of the record file
 
         # Brain directory
         if self.save_model or self.save_mem or self.save_model_freq_ep or self.save_mem_freq_ep:
-            self.brain_dir = self.sim_dir + "brain_files/" + str(0) + "/"
+            self.brain_dir = self.sim_dir + "brain_files/" + str(global_race.sim_id) + "/"
             Util.create_dir(self.brain_dir)
 
         # Setup agents
         self.setup_agents()
 
+        debug_race.xprint(msg="Setup complete. Start simulation")
+
     def setup_agents(self):
         """
             Setup agent
         """
+        debug_race.xprint(msg="Setup agents")
+
         for agent in self.agents:
 
             # Setup agent's location and brain
@@ -210,7 +236,7 @@ class TestbedRace(object):
                 # clock.tick compute how many milliseconds have passed since the previous call.
                 # If we don't call that during pause, clock.tick will compute time spend during pause
                 # thus timer is counting during simulation pause -> we want to avoid that !
-                if self.render:
+                if self.display:
                     for agent in self.agents:
                         agent.env.delta_time = agent.env.clock.tick(60.0) / 1000.0
                 else:
@@ -225,7 +251,6 @@ class TestbedRace(object):
                 agent.update()
 
             # Step counter
-            # Global.sim_timesteps += 1
             Global.timesteps += 1
 
     def simulation_logic(self):
@@ -250,7 +275,7 @@ class TestbedRace(object):
         """
             Last function called before ending simulation
         """
-        print('Exit')
+        debug_race.xprint(msg="Exit simulation")
 
         # Close environment
         for agent in self.agents:
@@ -271,6 +296,13 @@ class TestbedRace(object):
 
                 if self.save_mem:
                     agent.brain.save_mem(dir=self.brain_dir, suffix=suffix) # save memory of experiences
+
+        # Close record file
+        if global_race.record:
+            global_race.simlogs_fo.close()  # close event file
+            debug_race.xprint(msg="Stop recording")
+
+            global_race.reset_simulation_global()  # Reset global variables
 
     def save_summary(self, suffix=''):
         """
