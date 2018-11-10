@@ -50,6 +50,8 @@ parser.add_argument('--dir_name', help='directory name to load NN files (to run 
 
 # Race problem to solve
 parser.add_argument('--cfg', help='game environment and agent\'s hyperparameters config file', required=True)
+parser.add_argument('--cfg2', help='2nd agent environment and hyperparameters config file', default='')
+parser.add_argument('--cfg3', help='3rd agent environment and hyperparameters config file', default='')
 
 # Parameter object
 args = parser.parse_args()
@@ -115,6 +117,10 @@ def sim_dir():
 
     # Environment
     env = args.cfg.split('_')[0]
+    if args.cfg2:
+        env += '_' + args.cfg2.split('_')[0]
+    if args.cfg3:
+        env += '_' + args.cfg3.split('_')[0]
 
     # Number of trials
     max_ep = args.max_ep

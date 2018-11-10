@@ -10,6 +10,7 @@ import res.Util as Util
 import Global
 
 header = (
+    'environment'
     'agent',
     'episode',
     'timesteps',
@@ -19,11 +20,12 @@ header = (
     'sim_t'
 )
 
-def print_event(agent, episode, tmstp, avg_tmstp, d2g, tot_tmstp, record=False, debug=True):
+def print_event(env, agent, episode, tmstp, avg_tmstp, d2g, tot_tmstp, record=False, debug=True):
     """
         Write doc
     """
     msg_debug = (
+        "env: {}, ".format(env) +
         "sim_id: {:3.0f}, ".format(global_race.sim_id) +
         "agent: {:3.0f}, ".format(agent.id) +
         "episode: {:5.0f}, ".format(episode) +
@@ -39,6 +41,7 @@ def print_event(agent, episode, tmstp, avg_tmstp, d2g, tot_tmstp, record=False, 
 
     sim_t = Global.get_sim_time_in_seconds()
     msg_csv = (
+        env,
         agent.id,
         episode,
         tmstp,

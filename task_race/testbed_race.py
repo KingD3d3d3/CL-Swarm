@@ -22,12 +22,29 @@ class TestbedRace(object):
         sys.path.append('config/' + sim_param.cfg.split('_')[0])
         config = importlib.import_module(sim_param.cfg)
         env = config.environment['env_name']
-        self.problem_config = config
+        self.config = config
+
+        # 2nd agent
+        env2 = None
+        self.config2 = None
+        if sim_param.cfg2:
+            sys.path.append('config/' + sim_param.cfg2.split('_')[0])
+            config2 = importlib.import_module(sim_param.cfg2)
+            env2 = config2.environment['env_name']
+            self.config2 = config2
+
+        # 3rd agent
+        env3 = None
+        self.config3 = None
+        if sim_param.cfg3:
+            sys.path.append('config/' + sim_param.cfg3.split('_')[0])
+            config3 = importlib.import_module(sim_param.cfg3)
+            env3 = config3.environment['env_name']
+            self.config3 = config3
 
         print("########################")
         print("#### Testbed Race ######")
         print("########################")
-        # print("Environment: {}\n".format(env))
         # -------------------- Simulation Parameters ----------------------
 
         self.display = sim_param.display
@@ -76,6 +93,12 @@ class TestbedRace(object):
         self.simlogs_dir = ''
         self.brain_dir = ''
         self.env_name = env  # e.g. "CartPole_v0"
+        self.env_name2 = None
+        self.env_name3 = None
+        if sim_param.cfg2:
+            self.env_name2 = env2
+        if sim_param.cfg3:
+            self.env_name3 = env3
 
         # Directory for saving events, model files or memory files
         global_race.record = sim_param.record
@@ -95,14 +118,22 @@ class TestbedRace(object):
         self.pause = False
 
         # Create the agents
-        # self.agents = [
-        #     AgentRace(display=sim_param.display, id=i, num_agents=self.num_agents,
-        #               config=config, max_ep=self.max_ep, solved_timesteps=self.solved_timesteps,
-        #               env_name=env, seed=sim_param.seed + i) for i in range(1)]
-        self.agents = [AgentRace(display=sim_param.display, id=0, num_agents=self.num_agents, config=config, max_ep=self.max_ep,
+        self.agents = [AgentRace(display=sim_param.display, id=0, num_agents=self.num_agents, config=self.config, max_ep=self.max_ep,
                      solved_timesteps=self.solved_timesteps, env_name=env, seed=sim_param.seed, manual=sim_param.manual)]
+        if sim_param.cfg2:
+            agent2 = AgentRace(display=sim_param.display, id=1, num_agents=self.num_agents, config=self.config2,
+                               max_ep=self.max_ep, env_name=env2,
+                               seed=sim_param.seed, manual=sim_param.manual)
+            self.agents.append(agent2)
+        if sim_param.cfg3:
+            agent3 = AgentRace(display=sim_param.display, id=2, num_agents=self.num_agents, config=self.config3,
+                               max_ep=self.max_ep, env_name=env3,
+                               seed=sim_param.seed, manual=sim_param.manual)
+            self.agents.append(agent3)
+
+        # Add reference to others agents to each agent
         for agent in self.agents:
-            agent.agents = self.agents  # list of agents
+            agent.agents = self.agents
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
@@ -112,6 +143,11 @@ class TestbedRace(object):
         global_race.sim_id = sim_id
 
         print("\nEnvironment: {}".format(self.env_name))
+        if self.env_name2:
+            print("Environment 2: {}".format(self.env_name2))
+        if self.env_name3:
+            print("Environment 3: {}".format(self.env_name3))
+
         debug_race.xprint(color=PRINT_GREEN, msg="Begin simulation")
         debug_race.xprint(msg="Setup")
 
@@ -255,6 +291,7 @@ class TestbedRace(object):
 
             # Update agents
             for agent in self.agents:
+                # print('agent: {}, world: {}'.format(agent.id, id(agent.env.world)))
                 agent.update()
 
             # Step counter
@@ -332,8 +369,8 @@ class TestbedRace(object):
         file.write("--------------------------\n")
         file.write("Problem configuration file\n")
         file.write("--------------------------\n\n")
-        file.write("Environment: {}\n".format(self.problem_config.environment))
-        file.write("Hyperparameters: {}\n".format(self.problem_config.hyperparams))
+        file.write("Environment: {}\n".format(self.config.environment))
+        file.write("Hyperparameters: {}\n".format(self.config.hyperparams))
 
         file.close()
 

@@ -26,6 +26,7 @@ class AgentRace(object):
         else:
             print('cannot find environment: {}'.format(env_name))
             sys.exit()
+        self.env_name = env_name
 
         self.seed = seed
         self.display = display
@@ -149,13 +150,13 @@ class AgentRace(object):
 
             # Record event (every episode)
             if global_race.record:
-                debug_race.print_event(agent=self, episode=self.episodes, tmstp=self.timesteps,
+                debug_race.print_event(env=self.env_name, agent=self, episode=self.episodes, tmstp=self.timesteps,
                                        avg_tmstp=self.average_timestep, d2g=self.env.d2g, tot_tmstp=self.tot_timesteps,
                                       record=True, debug=False)
 
             # Periodically print event
-            if self.episodes % 10 == 0:
-                debug_race.print_event(agent=self, episode=self.episodes, tmstp=self.timesteps,
+            if self.episodes % 1 == 0:
+                debug_race.print_event(env=self.env_name, agent=self, episode=self.episodes, tmstp=self.timesteps,
                                        avg_tmstp=self.average_timestep, d2g=self.env.d2g, tot_tmstp=self.tot_timesteps,
                                        record=False, debug=True)
 

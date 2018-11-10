@@ -127,14 +127,14 @@ class RaceCircleLeft(object):
         self.display = display
         self.manual = manual
         self.screen = None
-        pygame.init()
         if self.display:
+            pygame.init()
             self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
             pygame.display.set_caption('Environment Race Circle Right')
-        self.clock = pygame.time.Clock()
-        self.myfont = pygame.font.SysFont("monospace", 15)
-        self.delta_time = 1.0 / TARGET_FPS
-        self.fps = TARGET_FPS
+            self.clock = pygame.time.Clock()
+            self.myfont = pygame.font.SysFont("monospace", 15)
+            self.delta_time = 1.0 / TARGET_FPS
+            self.fps = TARGET_FPS
 
         # -------------------- Environment and PyBox2d World Setup ----------------------
 
@@ -275,8 +275,7 @@ class RaceCircleLeft(object):
             self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
             self.world.ClearForces()
         else:
-            self.delta_time = self.clock.tick() / 1000.0
-
+            # self.delta_time = self.clock.tick() / 1000.0
             self.world.Step(PHYSICS_TIME_STEP, VEL_ITERS, POS_ITERS)
             self.world.ClearForces()
 
