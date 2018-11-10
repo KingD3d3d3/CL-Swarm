@@ -27,7 +27,7 @@ class TestbedRace(object):
         print("########################")
         print("#### Testbed Race ######")
         print("########################")
-        print("Environment: {}\n".format(env))
+        # print("Environment: {}\n".format(env))
         # -------------------- Simulation Parameters ----------------------
 
         self.display = sim_param.display
@@ -60,8 +60,10 @@ class TestbedRace(object):
         self.load_h2out_weights = sim_param.load_h2out_weights
         self.load_h1out_weights = sim_param.load_h1out_weights
         self.load_mem = sim_param.load_mem
+        self.load_mem2 = sim_param.load_mem2
 
         self.file_to_load = sim_param.file_to_load
+        self.file_to_load2 = sim_param.file_to_load2
 
         self.save_model = sim_param.save_model
         self.save_mem = sim_param.save_mem
@@ -82,7 +84,7 @@ class TestbedRace(object):
             self.suffix = sim_param_race.sim_suffix()
             self.sim_dir = sim_param_race.sim_dir()
             Util.create_dir(self.sim_dir)  # create the directory
-            print("Record directory: {}".format(sim_param_race.sim_dir()))
+            print("\nRecord directory: {}".format(sim_param_race.sim_dir()))
 
         # Print event only in debug mode
         global_race.debug = sim_param.debug
@@ -109,6 +111,7 @@ class TestbedRace(object):
         # Set ID of simulation
         global_race.sim_id = sim_id
 
+        print("\nEnvironment: {}".format(self.env_name))
         debug_race.xprint(color=PRINT_GREEN, msg="Begin simulation")
         debug_race.xprint(msg="Setup")
 
@@ -193,6 +196,10 @@ class TestbedRace(object):
             # Load memory to agent
             if self.load_mem:
                 agent.brain.load_mem(self.file_to_load, self.load_mem)
+
+            # Load memory2 to agent
+            if self.load_mem2:
+                agent.brain.load_mem(self.file_to_load2, self.load_mem2)
 
             # Collect experiences
             if not self.collect_experiences:

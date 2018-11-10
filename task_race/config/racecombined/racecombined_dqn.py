@@ -2,7 +2,7 @@
 
 environment = {
     'env_name': 'RaceCombined',
-    'solved_timesteps': 300,
+    'solved_timesteps': 175,
     'max_ep': 5000
 }
 

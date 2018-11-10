@@ -25,6 +25,7 @@ parser.add_argument('--random_agent', help='agent is taking random action', defa
 
 # File to load
 parser.add_argument('--file_to_load', help='name of the file to load NN weights or memory', default='')
+parser.add_argument('--file_to_load2', help='name of the file to load NN weights or memory', default='')
 # Load weights from file
 parser.add_argument('--load_model',  help='load model to agent', default=False, type=Util.str2bool)
 parser.add_argument('--load_all_weights', help='load full weights of neural networks', default=False, type=Util.str2bool)
@@ -36,6 +37,7 @@ parser.add_argument('--load_h2out_weights', help='load h2 output weights of neur
 parser.add_argument('--load_h1out_weights', help='load h1 output weights of neural networks', default=False, type=Util.str2bool)
 # Load experiences from file
 parser.add_argument('--load_mem', help='load defined number of experiences to agent', default=0, type=int)
+parser.add_argument('--load_mem2', help='load defined number of experiences to agent', default=0, type=int)
 
 parser.add_argument('--seed', help='starting seed offset', default='None', type=Util.str_to_int)
 
@@ -78,6 +80,10 @@ def sim_suffix():
     # Load memory
     if args.load_mem:
         suffix += 'load' + str(args.load_mem) + 'xp'
+
+        # Load memory 2
+        if args.load_mem2:
+            suffix += '_load_mem2_' + str(args.load_mem2) + 'xp'
 
     # Normal case
     if not suffix:
