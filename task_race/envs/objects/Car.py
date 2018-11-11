@@ -1,8 +1,8 @@
 
 import pygame
+from pygame.locals import *
 from enum import Enum
 from Box2D.b2 import (vec2)
-from pygame.locals import *
 import numpy as np
 import res.colors as Color
 from Box2D import b2RayCastCallback

@@ -117,18 +117,26 @@ class TestbedRace(object):
         self.sim_count = 0 # count number of simulation
         self.pause = False
 
+        self.give_exp = sim_param.give_exp
         # Create the agents
-        self.agents = [AgentRace(display=sim_param.display, id=0, num_agents=self.num_agents, config=self.config, max_ep=self.max_ep,
-                     solved_timesteps=self.solved_timesteps, env_name=env, seed=sim_param.seed, manual=sim_param.manual)]
+        self.agents = []
+        for i in range(sim_param.num_agents):
+            if sim_param.seed:
+                seed = sim_param.seed + i
+            else:
+                seed = None
+            self.agents.append(AgentRace(display=sim_param.display, id=i, num_agents=self.num_agents, config=config,
+                                         max_ep=self.max_ep, solved_timesteps=self.solved_timesteps, env_name=env,
+                                         seed=seed, manual=sim_param.manual))
         if sim_param.cfg2:
             agent2 = AgentRace(display=sim_param.display, id=1, num_agents=self.num_agents, config=self.config2,
-                               max_ep=self.max_ep, env_name=env2,
-                               seed=sim_param.seed, manual=sim_param.manual)
+                               max_ep=self.max_ep, env_name=env2, solved_timesteps=self.solved_timesteps,
+                               seed=sim_param.seed, manual=sim_param.manual, give_exp=self.give_exp)
             self.agents.append(agent2)
         if sim_param.cfg3:
             agent3 = AgentRace(display=sim_param.display, id=2, num_agents=self.num_agents, config=self.config3,
-                               max_ep=self.max_ep, env_name=env3,
-                               seed=sim_param.seed, manual=sim_param.manual)
+                               max_ep=self.max_ep, env_name=env3, solved_timesteps=self.solved_timesteps,
+                               seed=sim_param.seed, manual=sim_param.manual, give_exp=self.give_exp)
             self.agents.append(agent3)
 
         # Add reference to others agents to each agent
@@ -371,6 +379,12 @@ class TestbedRace(object):
         file.write("--------------------------\n\n")
         file.write("Environment: {}\n".format(self.config.environment))
         file.write("Hyperparameters: {}\n".format(self.config.hyperparams))
+        if self.env_name2:
+            file.write("Environment 2: {}\n".format(self.config2.environment))
+            file.write("Hyperparameters 2: {}\n".format(self.config2.hyperparams))
+        if self.env_name3:
+            file.write("Environment 3: {}\n".format(self.config3.environment))
+            file.write("Hyperparameters 3: {}\n".format(self.config3.hyperparams))
 
         file.close()
 

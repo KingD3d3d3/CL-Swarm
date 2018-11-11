@@ -19,7 +19,7 @@ parser.add_argument('--exploration', help='agent takes random action at the begi
 parser.add_argument('--collect_experiences', help='append a new experience to memory', default=True, type=Util.str2bool)
 parser.add_argument('--max_ep', help='maximum number of episodes for 1 simulation', default=0, type=int)
 
-parser.add_argument('--solved_timesteps', help='average score agent needs to reach to consider the problem solved', default=-100000, type=int)
+parser.add_argument('--solved_timesteps', help='average score agent needs to reach to consider the problem solved', default=-1, type=int)
 parser.add_argument('--multi_sim', help='multiple successive simulations', default=1, type=int)
 parser.add_argument('--random_agent', help='agent is taking random action', default=False, type=Util.str2bool)
 
@@ -47,6 +47,9 @@ parser.add_argument('--save_mem_freq_ep', help='save memory every defined episod
 
 parser.add_argument('--suffix', help='custom suffix to add', default='')
 parser.add_argument('--dir_name', help='directory name to load NN files (to run in parallel universe)', default='')
+
+# Collaborative Learning
+parser.add_argument('--give_exp', help='CL agent 1 and agent 2 gives experiences to agent 0', default=False, type=Util.str2bool)
 
 # Race problem to solve
 parser.add_argument('--cfg', help='game environment and agent\'s hyperparameters config file', required=True)

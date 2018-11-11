@@ -7,12 +7,11 @@ from task_race.envs.racecombined import RaceCombined
 import sys
 import task_race.debug_race as debug_race
 import task_race.global_race as global_race
-
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentRace(object):
-    def __init__(self, display=False, id=-1, num_agents=0, config=None, max_ep=5000, env_name='', solved_timesteps=120,
-                 seed=None, manual=False):
+    def __init__(self, display=False, id=-1, num_agents=0, config=None, max_ep=5000, env_name='', solved_timesteps=-1,
+                 seed=None, manual=False, give_exp=False):
 
         self.id = id # agent's ID
 
@@ -47,13 +46,13 @@ class AgentRace(object):
 
         self.best_agent = False # flag that indicates if it is the best agent according to average scores
 
+        self.give_exp = give_exp
         # ------------------ Variables to set at each simulation --------------------
 
         self.brain = None
 
         self.episodes = 0 # number of episodes during current simulation
-        # self.scores = deque(maxlen=100) # keep total scores of last 100 episodes
-        # self.average_score = 0
+        # self.scores = deque(maxlen=100) # keep total scores of last 100
         self.tmstp_list_size = 100
         self.timesteps_list = deque(maxlen=self.tmstp_list_size)  # keep timesteps of last 20 episodes
         self.average_timestep = 0
@@ -63,10 +62,9 @@ class AgentRace(object):
         self.episode_inited = False # at the beginning of an episode we need to rest environment
         self.episode_done = False
         self.state = None
-        self.score = 0 # keep score of 1 episode
         self.timesteps = 0 # count number of timesteps during 1 episode
         self.best_average = self.env.max_episode_steps
-
+        self.experience = None
 
     def setup(self, training=True, random_agent=False):
 
@@ -79,8 +77,6 @@ class AgentRace(object):
                          training=training, random_agent=random_agent, **self.config.hyperparams, seed=self.seed)
 
         self.episodes = 0
-        # self.scores = deque(maxlen=100)
-        # self.average_score = 0
         self.timesteps_list = deque(maxlen=self.tmstp_list_size)
         self.average_timestep = 0
         self.problem_done = False
@@ -90,11 +86,12 @@ class AgentRace(object):
         self.tot_timesteps = 0
 
         self.state = None
-        # self.score = 0
         self.timesteps = 0
         self.best_average = self.env.max_episode_steps
+        self.experience = None
 
     def update(self):
+        # print('agent id: {}, i: {}, update: {}'.format(id(self), self.id, self.tot_timesteps))
         """
             Main function of the agent
         """
@@ -103,11 +100,15 @@ class AgentRace(object):
 
             if not self.episode_inited:
 
+                # Synchronize episodes between agents
+                if not self.synchronized_episodes():
+                    return
+
                 self.state = self.brain.preprocess(self.env.reset())  # initial state
-                # self.score = 0
                 self.timesteps = 0
                 self.episode_inited = True
                 self.episode_done = False
+                self.experience = None
 
             # -------------------------- An episode --------------------------
             if self.display:
@@ -116,18 +117,22 @@ class AgentRace(object):
             action = self.brain.select_action(self.state)
             observation, reward, done, info = self.env.step(action)
             next_state = self.brain.preprocess(observation)
+            self.experience = (self.state, action, reward, next_state, done)
 
-            self.brain.record((self.state, action, reward, next_state, done))
+            self.brain.record(self.experience)
             self.state = next_state
+
+            if self.give_exp:
+                agent0_id = 0
+                self.give_experience(agent0_id)
 
             self.brain.train()
 
-            # self.score += reward
             self.timesteps += 1
+            self.tot_timesteps += 1 # increment total number of timesteps of all episodes
 
             if done:  # either game over or reached maximum timesteps of episode
                 self.episodes += 1
-                # self.scores.append(self.score)
                 self.episode_done = True
 
                 if not self.env.goal_reached:
@@ -137,12 +142,11 @@ class AgentRace(object):
                 return
             # -----------------------------------------------------------------
 
+            self.episode_inited = False # re-initiate the environment for the next episode
+
             # Calculate average over the last episodes
-            # self.average_score = sum(self.scores) / len(self.scores)
             self.average_timestep = sum(self.timesteps_list) / len(self.timesteps_list)
 
-            self.episode_inited = False # re-initiate the environment for the next episode
-            self.tot_timesteps += self.timesteps # increment total number of timesteps of all episodes
 
             # Calculate best average
             if self.average_timestep < self.best_average and len(self.timesteps_list) >= self.tmstp_list_size:
@@ -155,7 +159,7 @@ class AgentRace(object):
                                       record=True, debug=False)
 
             # Periodically print event
-            if self.episodes % 1 == 0:
+            if self.episodes % 10 == 0:
                 debug_race.print_event(env=self.env_name, agent=self, episode=self.episodes, tmstp=self.timesteps,
                                        avg_tmstp=self.average_timestep, d2g=self.env.d2g, tot_tmstp=self.tot_timesteps,
                                        record=False, debug=True)
@@ -179,4 +183,24 @@ class AgentRace(object):
                 return
             # --------------------------------------------------------------------------------------------------------------
 
+    def synchronized_episodes(self):
+        """
+            True if episodes are synchronized between agents, else False
+        """
+        for a in self.agents:
+            if self != a:
+                if a.episodes != self.episodes:
+                    return False
+        return True
 
+    def give_experience(self, receiver):
+        """
+            TODO Write doc
+        """
+        if self.id == 0: # agent 0 doesn't give experience
+            return
+
+        # Part II - Exchange knowledge
+        if self.episode_inited: # currently running
+            # print("agent: {} gives experience to agent: {}".format(self.id, self.agents[receiver].id))
+            self.agents[receiver].brain.record(self.experience)  # push experience

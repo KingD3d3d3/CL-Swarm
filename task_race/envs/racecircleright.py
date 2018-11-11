@@ -1,6 +1,6 @@
 
+import pygame
 from Box2D.b2 import (world, vec2, contactListener)
-from pygame.locals import *
 from task_race.envs.objects.geometric import *
 import numpy as np
 import res.Util as Util
@@ -103,9 +103,8 @@ class RaceMap(object):
 
 class RaceContactListener(contactListener):
 
-    def __init__(self, env):
+    def __init__(self):
         contactListener.__init__(self)
-        self.env = env
 
     def BeginContact(self, contact):
         if isinstance(contact.fixtureA.body.userData, Car):
@@ -139,7 +138,7 @@ class RaceCircleRight(object):
         # -------------------- Environment and PyBox2d World Setup ----------------------
 
         # Create the world
-        self.world = world(gravity=(0, 0), doSleep=True, contactListener=RaceContactListener(self))
+        self.world = world(gravity=(0, 0), doSleep=True, contactListener=RaceContactListener())
 
         # Create physical objects
         self.car = Car(screen=self.screen, world=self.world, screen_height=SCREEN_HEIGHT, screen_width=SCREEN_WIDTH,
@@ -157,7 +156,14 @@ class RaceCircleRight(object):
         self.input_size = 7
         self.action_size = 6
 
+    def _destroy(self):
+        self.world.contactListener = None
+
     def reset(self):
+        self._destroy()
+        self.world.contactListener_keepref = RaceContactListener()
+        self.world.contactListener = self.world.contactListener_keepref
+
         observation = []
         self.prev_shaping = None
         self.car.collision = False

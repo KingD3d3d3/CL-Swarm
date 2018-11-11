@@ -25,7 +25,7 @@ def print_event(env, agent, episode, tmstp, avg_tmstp, d2g, tot_tmstp, record=Fa
         Write doc
     """
     msg_debug = (
-        "env: {}, ".format(env) +
+        "env: {:<15s}, ".format(env) +
         "sim_id: {:3.0f}, ".format(global_race.sim_id) +
         "agent: {:3.0f}, ".format(agent.id) +
         "episode: {:5.0f}, ".format(episode) +
