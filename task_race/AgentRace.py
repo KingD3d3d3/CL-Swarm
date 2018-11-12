@@ -200,6 +200,10 @@ class AgentRace(object):
         if self.id == 0: # agent 0 doesn't give experience
             return
 
+        # Frequency of communication between agents
+        if self.episodes > 250: # exceed max limit of time to give experiences # TODO make it parameter
+            return
+
         # Part II - Exchange knowledge
         if self.episode_inited: # currently running
             # print("agent: {} gives experience to agent: {}".format(self.id, self.agents[receiver].id))

@@ -10,7 +10,7 @@ import res.Util as Util
 import Global
 
 header = (
-    'environment'
+    'environment',
     'agent',
     'episode',
     'timesteps',
