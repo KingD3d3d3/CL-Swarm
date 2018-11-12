@@ -25,6 +25,7 @@ except NameError as err:
     from .. import Global
 
 header = (
+    'environment',
     'agent',
     'episode',
     'score',
@@ -35,8 +36,9 @@ header = (
 )
 
 
-def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, record=False, debug=True):
+def print_event(env, agent, episode, score, avg_score, timesteps, tot_timesteps, record=False, debug=True):
     """
+        env             : environment/problem to solve
         agent           : agent
         episode         : event's message
         score           : score of the episode
@@ -45,6 +47,7 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
         tot_timesteps   : total number of timesteps passed
     """
     msg_debug = (
+        "env: {:<15s}, ".format(env) +
         "sim_id: {:3.0f}, ".format(global_gym.sim_id) +
         "agent: {:3.0f}, ".format(agent.id) +
         "episode: {:5.0f}, ".format(episode) +
@@ -60,6 +63,7 @@ def print_event(agent, episode, score, avg_score, timesteps, tot_timesteps, reco
 
     sim_t = Global.get_sim_time_in_seconds()
     msg_csv = (
+        env,
         agent.id,
         episode,
         score,

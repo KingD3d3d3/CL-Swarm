@@ -5,17 +5,17 @@ from AI.DQN import DQN
 import gymplayground.debug_gym as debug_gym
 import gymplayground.global_gym as global_gym
 
-COLLABORATION = False
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentGym(object):
     def __init__(self, render=False, id=-1, num_agents=0, config=None, max_ep=2000, env_name='', solved_score=100000,
-                 seed=None):
+                 seed=None, collaboration=False):
 
         # Agent's ID
         self.id = id
 
         self.env = gym.make(env_name)  # create Gym environment
+        self.env_name = env_name
         if seed is not None:
             self.env.seed(seed)
         self.seed = seed
@@ -39,6 +39,7 @@ class AgentGym(object):
 
         self.best_agent = False # flag that indicates if it is the best agent according to average scores
 
+        self.collaboration = collaboration
         # ------------------ Variables to set at each simulation --------------------
 
         self.brain = None
@@ -98,7 +99,7 @@ class AgentGym(object):
                 if not self.synchronized_episodes():
                     return
 
-                if COLLABORATION:
+                if self.collaboration:
                     self.collaborative_learning()
 
                 self.state = self.brain.preprocess(self.env.reset())  # initial state
@@ -138,30 +139,32 @@ class AgentGym(object):
             self.tot_timesteps += self.timesteps # increment total number of timesteps of all episodes
 
             # Record event (every episode)
-            if global_gym.record: # and self.episodes % 10 == 0: # TODO every 10 episodes, to be changed to 1 episode
-                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=self.average_score,
-                                      timesteps=self.timesteps, tot_timesteps=self.tot_timesteps, record=True, debug=False)
+            if global_gym.record:
+                debug_gym.print_event(env=self.env_name, agent=self, episode=self.episodes, score=self.score,
+                                      avg_score=self.average_score, timesteps=self.timesteps,
+                                      tot_timesteps=self.tot_timesteps, record=True, debug=False)
 
             # Periodically print current average of reward
             if self.episodes % 10 == 0:
-                debug_gym.print_event(agent=self, episode=self.episodes, score=self.score, avg_score=self.average_score,
-                                      timesteps=self.timesteps, tot_timesteps=self.tot_timesteps, record=False, debug=True)
+                debug_gym.print_event(env=self.env_name, agent=self, episode=self.episodes, score=self.score,
+                                      avg_score=self.average_score, timesteps=self.timesteps,
+                                      tot_timesteps=self.tot_timesteps, record=False, debug=True)
 
             # Problem solved
             if self.average_score >= self.solved_score and len(self.scores) >= 100:  # need reach solved score and at least 100 episodes to terminate
-                print("agent: {:4.0f}, *** Solved after {} episodes *** reached solved score: {}".format(self.id, self.episodes, self.solved_score))
+                print("env: {:<15s}, agent: {:4.0f}, *** Solved after {} episodes *** reached solved score: {}"
+                      .format(self.env_name, self.id, self.episodes, self.solved_score))
                 self.problem_done = True
                 self.problem_solved = True
                 return
 
             # Reached maximum limit of episodes
             if self.episodes >= self.max_episodes:
-                print(
-                    "agent: {:4.0f}, *** Reached maximum number of episodes: {} ***".format(self.id, self.episodes))
+                print("env: {:<15s}, agent: {:4.0f}, *** Reached maximum number of episodes: {} ***"
+                      .format(self.env_name, self.id, self.episodes))
                 self.problem_done = True
                 return
             # --------------------------------------------------------------------------------------------------------------
-
 
 
     def synchronized_episodes(self):

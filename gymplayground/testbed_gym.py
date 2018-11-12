@@ -93,10 +93,18 @@ class TestbedGym(object):
         self.running = True
         self.sim_count = 0 # count number of simulation
 
+        collaboration = sim_param.collaboration
+
         # Create the agents
-        self.agents = [AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config, max_ep=self.max_ep,
-                                solved_score=self.solved_score, env_name=env, seed=sim_param.seed + i)
-            for i in range(self.num_agents)]
+        self.agents = []
+        for i in range(sim_param.num_agents):
+            if sim_param.seed:
+                seed = sim_param.seed + i
+            else:
+                seed = None
+            self.agents.append(AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config,
+                                        max_ep=self.max_ep, solved_score=self.solved_score, env_name=env,
+                                        seed=seed, collaboration=collaboration))
         for agent in self.agents:
             agent.agents = self.agents # list of agents
 
