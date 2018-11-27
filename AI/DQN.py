@@ -323,7 +323,9 @@ class DQN(object):
             Add 1 dimension for batching
         """
         # Input shape in Keras : (batch_size, input_dim)
-        return np.reshape(observation, [1, self.input_size])  # need to add 1 dimension when batching
+        a = np.reshape(observation, [1, self.input_size])  # need to add 1 dimension when batching
+        a32 = a.astype(np.float32)
+        return a32
 
     def select_action(self, state):
         """
