@@ -42,7 +42,7 @@ parser.add_argument('--cl_experience_exchange', help='CL experience exchange', d
 parser.add_argument('--exchange_knowledge_freq', help='frequencies of episodes for knowledge exchange between agents', default=0, type=int)
 parser.add_argument('--collaboration', help='Collaborative Learning or not', default=False, type=Util.str2bool)
 
-parser.add_argument('--seed', help='starting seed offset', default='None', type=Util.str_to_int)
+parser.add_argument('--seed', help='seed tuples', default='None', type=Util.str_to_intlist)
 
 # Saving
 parser.add_argument('--save_model_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)

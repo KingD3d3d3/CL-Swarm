@@ -11,7 +11,7 @@ import task_race.global_race as global_race
 
 class AgentRace(object):
     def __init__(self, display=False, id=-1, num_agents=0, config=None, max_ep=5000, env_name='', solved_timesteps=-1,
-                 seed=None, manual=False, give_exp=False):
+                 manual=False, give_exp=False):
 
         self.id = id # agent's ID
 
@@ -27,7 +27,6 @@ class AgentRace(object):
             sys.exit()
         self.env_name = env_name
 
-        self.seed = seed
         self.display = display
         # Call env.render() at the beginning before to predict or train neural network (dummy NN processing to avoid the freeze)
         if display:
@@ -51,6 +50,8 @@ class AgentRace(object):
 
         self.brain = None
 
+        self.seed = None
+
         self.episodes = 0 # number of episodes during current simulation
         # self.scores = deque(maxlen=100) # keep total scores of last 100
         self.tmstp_list_size = 100
@@ -66,7 +67,10 @@ class AgentRace(object):
         self.best_average = self.env.max_episode_steps
         self.experience = None
 
-    def setup(self, training=True, random_agent=False):
+    def setup(self, training=True, random_agent=False, seed=None):
+
+        # Seed for DQN algo
+        self.seed = seed
 
         if random_agent:
             training = False # no training for random agent
@@ -91,7 +95,6 @@ class AgentRace(object):
         self.experience = None
 
     def update(self):
-        # print('agent id: {}, i: {}, update: {}'.format(id(self), self.id, self.tot_timesteps))
         """
             Main function of the agent
         """

@@ -39,7 +39,7 @@ parser.add_argument('--load_h1out_weights', help='load h1 output weights of neur
 parser.add_argument('--load_mem', help='load defined number of experiences to agent', default=0, type=int)
 parser.add_argument('--load_mem2', help='load defined number of experiences to agent', default=0, type=int)
 
-parser.add_argument('--seed', help='starting seed offset', default='None', type=Util.str_to_int)
+parser.add_argument('--seed', help='seed tuples', default='None', type=Util.str_to_intlist)
 
 # Saving
 parser.add_argument('--save_model_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)

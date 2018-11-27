@@ -98,15 +98,15 @@ class TestbedGym(object):
         # Create the agents
         self.agents = []
         for i in range(sim_param.num_agents):
-            if sim_param.seed:
-                seed = sim_param.seed + i
-            else:
-                seed = None
             self.agents.append(AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config,
                                         max_ep=self.max_ep, solved_score=self.solved_score, env_name=env,
-                                        seed=seed, collaboration=collaboration))
+                                        collaboration=collaboration))
         for agent in self.agents:
             agent.agents = self.agents # list of agents
+
+        self.seeds = sim_param.seed
+        print('seeds', self.seeds)
+        self.max_sim = sim_param.multi_sim
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
@@ -121,6 +121,7 @@ class TestbedGym(object):
         if file_to_load:
             self.file_to_load = file_to_load
 
+        # Variables
         self.sim_count += 1
         self.running = True
 
@@ -154,8 +155,14 @@ class TestbedGym(object):
 
         for agent in self.agents:
 
+            # Seed
+            if self.seeds and len(self.seeds) >= self.max_sim:
+                seed = self.seeds[global_gym.sim_id] + agent.id
+            else:
+                seed = None
+
             # Setup agent's and brain
-            agent.setup(training=self.training, random_agent=self.random_agent)
+            agent.setup(training=self.training, random_agent=self.random_agent, seed=seed)
 
             if not self.exploration:
                 agent.brain.stop_exploring()
@@ -335,7 +342,8 @@ if __name__ == '__main__':
     # -------------------------------------------------------
 
     print("\n_______________________")
-    print("All simulation finished\n"
+    print("All simulation finished\n" +
+          "Record directory: {}\n".format(testbed.sim_dir) +
           "Number of simulations: {}\n".format(testbed.sim_count) +
           "Total simulations time: {}\n".format(Global.get_time()) +
           "Total simulations timesteps: {}".format(Global.timesteps))

@@ -42,9 +42,9 @@ class TestbedRace(object):
             env3 = config3.environment['env_name']
             self.config3 = config3
 
-        print("########################")
-        print("#### Testbed Race ######")
-        print("########################")
+        print("###########################")
+        print("#### CL Testbed Race ######")
+        print("###########################")
         # -------------------- Simulation Parameters ----------------------
 
         self.display = sim_param.display
@@ -121,27 +121,27 @@ class TestbedRace(object):
         # Create the agents
         self.agents = []
         for i in range(sim_param.num_agents):
-            if sim_param.seed:
-                seed = sim_param.seed + i
-            else:
-                seed = None
             self.agents.append(AgentRace(display=sim_param.display, id=i, num_agents=self.num_agents, config=config,
                                          max_ep=self.max_ep, solved_timesteps=self.solved_timesteps, env_name=env,
-                                         seed=seed, manual=sim_param.manual))
+                                        manual=sim_param.manual))
         if sim_param.cfg2:
             agent2 = AgentRace(display=sim_param.display, id=1, num_agents=self.num_agents, config=self.config2,
                                max_ep=self.max_ep, env_name=env2, solved_timesteps=self.solved_timesteps,
-                               seed=sim_param.seed, manual=sim_param.manual, give_exp=self.give_exp)
+                               manual=sim_param.manual, give_exp=self.give_exp)
             self.agents.append(agent2)
         if sim_param.cfg3:
             agent3 = AgentRace(display=sim_param.display, id=2, num_agents=self.num_agents, config=self.config3,
                                max_ep=self.max_ep, env_name=env3, solved_timesteps=self.solved_timesteps,
-                               seed=sim_param.seed, manual=sim_param.manual, give_exp=self.give_exp)
+                               manual=sim_param.manual, give_exp=self.give_exp)
             self.agents.append(agent3)
 
         # Add reference to others agents to each agent
         for agent in self.agents:
             agent.agents = self.agents
+
+        self.seeds = sim_param.seed
+        print('seeds', self.seeds)
+        self.max_sim = sim_param.multi_sim
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
@@ -197,8 +197,14 @@ class TestbedRace(object):
 
         for agent in self.agents:
 
+            # Seed
+            if self.seeds and len(self.seeds) >= self.max_sim:
+                seed = self.seeds[global_race.sim_id] + agent.id
+            else:
+                seed = None
+
             # Setup agent's location and brain
-            agent.setup(training=self.training, random_agent=self.random_agent)
+            agent.setup(training=self.training, random_agent=self.random_agent, seed=seed)
 
             if not self.exploration:
                 agent.brain.stop_exploring()
@@ -409,6 +415,7 @@ if __name__ == '__main__':
 
     print("\n_______________________")
     print("All simulation finished\n"
+          "Record directory: {}\n".format(testbed.sim_dir) +
           "Number of simulations: {}\n".format(testbed.sim_count) +
           "Total simulations time: {}\n".format(Global.get_time()) +
           "Total simulations timesteps: {}".format(Global.timesteps))

@@ -6,6 +6,7 @@ import argparse
 import os
 import errno
 from datetime import datetime
+import scipy.stats
 
 def world_to_pixels(vector, screen_height, ppm):
     return vector.x * ppm, screen_height - vector.y * ppm
@@ -174,3 +175,28 @@ def str_to_int(x):
         return None
     else:
         return int(x)
+
+def str_to_intlist(l):
+    if l == 'None':
+        return None
+    else:
+        return [int(e) for e in l.split(',')]
+
+# def confidence_interval_95_10trials(data):
+#     x = 1.0 * np.array(data)
+#     n = len(x)
+#     mean = np.mean(x)
+#     std = np.std(x, ddof=1) # sample standard deviation
+#     t = 2.262 # inf -> 1.96
+#
+#     low = mean - t * (std / np.sqrt(n))
+#     high = mean + t * (std / np.sqrt(n))
+#
+#     return low, high
+
+def mean_confidence_interval(data, confidence=0.95):
+    a = 1.0 * np.array(data)
+    n = len(a)
+    m, se = np.mean(a), scipy.stats.sem(a)
+    h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
+    return m, m-h, m+h

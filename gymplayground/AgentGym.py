@@ -9,25 +9,20 @@ import gymplayground.global_gym as global_gym
 
 class AgentGym(object):
     def __init__(self, render=False, id=-1, num_agents=0, config=None, max_ep=2000, env_name='', solved_score=100000,
-                 seed=None, collaboration=False):
+                 collaboration=False):
 
         # Agent's ID
         self.id = id
 
-        self.env = gym.make(env_name)  # create Gym environment
+        # Gym environment and seed
+        self.env = None
         self.env_name = env_name
-        if seed is not None:
-            self.env.seed(seed)
-        self.seed = seed
+        self.seed = None
 
         self.render = render
 
-        # Call env.render() at the beginning before to predict or train neural network (dummy NN processing to avoid the freeze)
-        if render:
-            self.env.render()
-
-        self.input_size = self.env.observation_space.shape[0]
-        self.action_size = self.env.action_space.n
+        self.input_size = None
+        self.action_size = None
 
         # List of agents
         self.num_agents = num_agents
@@ -63,7 +58,21 @@ class AgentGym(object):
         self.cl_experience_exchange = 0
         self.exchange_knowledge_freq = 0
 
-    def setup(self, training=True, random_agent=False):
+    def setup(self, training=True, random_agent=False, seed=None):
+
+        # Gym environment and seed
+        self.env = gym.make(self.env_name)
+        self.env_name = self.env_name
+        if seed is not None:
+            self.env.seed(seed)
+        self.seed = seed
+
+        self.input_size = self.env.observation_space.shape[0]
+        self.action_size = self.env.action_space.n
+
+        # Call env.render() at the beginning before to predict or train neural network (dummy NN processing to avoid the freeze)
+        if self.render:
+            self.env.render()
 
         if random_agent:
             training = False # no training for random agent
