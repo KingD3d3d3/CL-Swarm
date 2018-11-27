@@ -9,6 +9,7 @@ import gymplayground.debug_gym as debug_gym
 import gymplayground.global_gym as global_gym
 import res.Util as Util
 from res.print_colors import *
+import numpy as np
 
 class TestbedGym(object):
     def __init__(self, sim_param=None):
@@ -75,6 +76,7 @@ class TestbedGym(object):
         self.sim_dir = ''
         self.simlogs_dir = ''
         self.brain_dir = ''
+        self.seed_dir = ''
         self.env_name = env  # e.g. "CartPole_v0"
 
         # Directory for saving events, model files or memory files
@@ -104,8 +106,8 @@ class TestbedGym(object):
         for agent in self.agents:
             agent.agents = self.agents # list of agents
 
-        self.seeds = sim_param.seed
-        print('seeds', self.seeds)
+        self.seed_list = sim_param.seed
+        print('seeds list', self.seed_list)
         self.max_sim = sim_param.multi_sim
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
@@ -142,6 +144,11 @@ class TestbedGym(object):
             self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
             Util.create_dir(self.brain_dir)
 
+        # Seed directory
+        if global_gym.record:
+            self.seed_dir = self.sim_dir + "seeds/" + str(global_gym.sim_id) + "/"
+            Util.create_dir(self.seed_dir)  # create the directory
+
         # Setup agents
         self.setup_agents()
 
@@ -156,10 +163,27 @@ class TestbedGym(object):
         for agent in self.agents:
 
             # Seed
-            if self.seeds and len(self.seeds) >= self.max_sim:
-                seed = self.seeds[global_gym.sim_id] + agent.id
+            if self.seed_list and len(self.seed_list) >= self.max_sim:
+                seed = self.seed_list[global_gym.sim_id] + agent.id
+
+                # Seed file
+                if global_gym.record:
+                    timestr = time.strftime('%Y%m%d_%H%M%S')
+                    file = open(self.seed_dir + timestr + '_sim' + str(global_gym.sim_id) + '_agent' + str(agent.id) +
+                                '_seed.txt', 'w')
+                    file.write("{}\n".format(seed))
+                    file.close()
             else:
-                seed = None
+                np.random.seed(None)
+                seed = np.random.randint(0, 2 ** 32 - 1)
+
+                # Seed file
+                if global_gym.record:
+                    timestr = time.strftime('%Y%m%d_%H%M%S')
+                    file = open(self.seed_dir + timestr + '_sim' + str(global_gym.sim_id) + '_agent' + str(agent.id) +
+                                '_seed.txt', 'w')
+                    file.write("{}\n".format(seed))
+                    file.close()
 
             # Setup agent's and brain
             agent.setup(training=self.training, random_agent=self.random_agent, seed=seed)

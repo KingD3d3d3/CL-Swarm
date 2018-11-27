@@ -1,0 +1,20 @@
+--------------------------
+*** Summary of testbed ***
+--------------------------
+
+Number of simulations: 1
+Total simulations time: 0h 18m 19s
+Total simulations timesteps: 344797
+
+---------------------
+Testbed configuration
+---------------------
+
+Simulation parameters: Namespace(cfg='lunarlander_dqn', collect_experiences=True, debug=True, dir_name='', exploration=True, file_to_load='', load_all_weights=False, load_h1_weights=False, load_h1h2_weights=False, load_h1out_weights=False, load_h2_weights=False, load_h2out_weights=False, load_mem=0, load_model=False, load_out_weights=False, max_ep=0, multi_sim=1, num_agents=1, random_agent=False, record=True, render=False, save_mem=True, save_memory_freq_ep=0, save_model=True, save_network_freq_ep=0, solved_score=0, suffix='', training=True)
+
+--------------------------
+Problem configuration file
+--------------------------
+
+Environment: {'env_name': 'LunarLander-v2', 'max_ep': 2000, 'solved_score': 200.0}
+Hyperparameters: {'mem_capacity': 100000, 'eps_start': 1.0, 'use_double_dqn': True, 'exploration_steps': 10000, 'update_target_steps': 1000, 'use_prioritized_experience_replay': False, 'layers': (32, 32), 'lr': 0.001, 'eps_end': 0.01, 'batch_size': 32, 'gamma': 0.99}
