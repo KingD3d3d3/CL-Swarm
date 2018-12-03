@@ -97,7 +97,10 @@ def create_record_file(dir, suffix=""):
         Also create the directory if it doesn't exist
     """
     time_str = Util.get_time_string()
-    filename = dir + time_str + '_' + suffix + "_rec.csv"
+    if suffix:
+        filename = dir + time_str + '_' + suffix + "_rec.csv"
+    else:
+        filename = dir + time_str + "_rec.csv"
 
     if not os.path.exists(os.path.dirname(filename)):
         try:

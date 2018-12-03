@@ -42,8 +42,8 @@ if __name__ == '__main__':
     param.max_ep = 100
     param.load_all_weights = True
     param.collect_experiences = False
-    param.record = True
     param.suffix = 'confirm_master'
+    param.record = True
     param.solved_score = 100000 # just a high unreachable number so that the agent will play specified nums of episodes
 
     nn_file = param.file_to_load # Input nn file

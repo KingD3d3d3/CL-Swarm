@@ -17,22 +17,43 @@ def evaluate(t_bed):
     """
     print('evaluate environment {}'.format(t_bed.env_name))
     if t_bed.env_name == 'LunarLander-v2':
+        # Average score over the last 100 episodes
+        score = t_bed.agents[0].scores
+        avg_score = sum(score) / len(score)
+        print('average score {}'.format(avg_score))
+
+        # Success count
         success = t_bed.agents[0].env.env.sucessful_landing_count # number of successful landing (between the 2 flags)
         t_bed.agents[0].env.env.sucessful_landing_count = 0 # reset successful landing counter
-        print('successful landing  {}'.format(success))
-        return success
+        print('{}, success: {}'.format(t_bed.env_name, success))
 
-    elif t_bed.env_name == 'MountainCar-v0': # average timesteps over the last 100 episodes
-        score = t_bed.agents[0].scores
-        avg_tmstp = sum(score) / len(score)
-        print('average minus timestep {}'.format(avg_tmstp))
-        return avg_tmstp
+        return avg_score, success
 
-    elif t_bed.env_name == 'CartPole-v0': # average timesteps over the last 100 episodes
+    elif t_bed.env_name == 'MountainCar-v0':
+        # Average score over the last 100 episodes
         score = t_bed.agents[0].scores
-        avg_tmstp = sum(score) / len(score)
-        print('average timestep {}'.format(avg_tmstp))
-        return avg_tmstp
+        avg_score = sum(score) / len(score)
+        print('average score {}'.format(avg_score))
+
+        # Success count
+        threshold = -110
+        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        print('{}, success: {}'.format(t_bed.env_name, success))
+
+        return avg_score, success
+
+    elif t_bed.env_name == 'CartPole-v0':
+        # Average score over the last 100 episodes
+        score = t_bed.agents[0].scores
+        avg_score = sum(score) / len(score)
+        print('average score {}'.format(avg_score))
+
+        # Success count
+        threshold = 195
+        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        print('{}, success: {}'.format(t_bed.env_name, success))
+
+        return avg_score, success
 
     else:
         return None
@@ -42,13 +63,14 @@ if __name__ == '__main__':
     # Import simulation parameters
     param = sim_param_gym.args
 
-    param.debug = True
+    param.debug = False
     param.render = False
     param.training = False
     param.max_ep = 100
     param.load_all_weights = True
     param.collect_experiences = False
     param.solved_score = 100000 # just a high unreachable number so that the agent will play specified nums of episodes
+    param.save_record_rpu = True
 
     dir_name = param.dir_name # Input directory
     dir_name = os.path.abspath(dir_name) + '/'
@@ -81,6 +103,7 @@ if __name__ == '__main__':
         # For each saved Neural Networks model
         for f in sorted(glob.glob(curr_dir + "*.h5")):
 
+            print('') # newline print
             debug_gym.xprint(color=PRINT_GREEN, msg="Run NN file: {}".format(f))
 
             # Simulation lifecycle
@@ -90,11 +113,11 @@ if __name__ == '__main__':
 
             nn_file = os.path.basename(f) # f gives the whole path, let's save only the filename
             nn_file = re.sub(r'.*_(?P<episode>\d+)ep_.*', r'\g<episode>', nn_file) # extract the episode number
-            evalu = evaluate(testbed)
-            msg_csv = (nn_file, str(evalu))
+            eval_avg_score, eval_success = evaluate(testbed)
+            seed = testbed.seed_list[0] # only 1 agent in run parallel univ
 
-            # Append score to csv file
-            writer.writerow(msg_csv)
+            msg_csv = (nn_file, str(eval_avg_score), str(eval_success), seed)
+            writer.writerow(msg_csv) # Append score to csv file
 
         # Close file properly
         if fo:
@@ -104,7 +127,8 @@ if __name__ == '__main__':
         if filename:
             data = pd.read_csv(filename, header=None)
             data_sorted = data.sort_values(by=0, axis=0) # sort by first column of the Dataframe
-            data_sorted.to_csv(filename, index=False, header=False) # write sorted data to the same result csv file
+            header = ('nn_episode', 'avg_score', 'success', 'seed')
+            data_sorted.to_csv(filename, index=False, header=header) # write sorted data to the same result csv file
 
     # -------------------------------------------------------
 

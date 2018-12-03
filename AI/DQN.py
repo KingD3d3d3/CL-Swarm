@@ -44,6 +44,8 @@ class Model(object):
 
         self.dummy_processing(input_size, output_size)  # prevent training freeze
 
+        self.num_layers = len(layers)
+
     @staticmethod
     def build_model(input_size, output_size, layers, lr):
         model = Sequential()  # Sequential() creates the foundation of the layers.
@@ -121,7 +123,12 @@ class Model(object):
         """
             Set output weights of Q-Network and Target-Network
         """
-        self.set_weights_by_layer(weights, 2)
+        if self.num_layers == 2:
+            self.set_weights_by_layer(weights, 2)
+        elif self.num_layers == 1:
+            self.set_weights_by_layer(weights, 1)
+        else:
+            raise NotImplementedError()
 
     def set_h1h2_weights(self, weights_h1, weights_h2):
         """
@@ -230,6 +237,7 @@ class DQN(object):
 
         # Hyperparameters
         self.layers = layers
+        self.num_layers = len(layers)
         self.batch_size = batch_size
         self.mem_capacity = mem_capacity
         self.gamma = gamma
@@ -600,26 +608,36 @@ class DQN(object):
 
     def load_out_weights(self, model_file):
         """
-            Load second hidden layer weights from given file and set Q-Network, Target-Network
+            Load output layer weights from given file and set Q-Network, Target-Network
         """
-        # print('before', self.model.q_network.get_weights().layers[0])
+        # print('before', self.model.q_network.get_weights())
 
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
 
-        # print('master', model_copy.layers[0].get_weights())
+        # print('master', model_copy.get_weights())
 
         # Output layer weights
-        weights_output = model_copy.layers[2].get_weights()
+        if self.num_layers == 2:
+            weights_output = model_copy.layers[2].get_weights()
+        elif self.num_layers == 1:
+            weights_output = model_copy.layers[1].get_weights()
+        else:
+            weights_output = None
+            raise NotImplementedError()
 
         # Set weights
         self.model.set_out_weights(weights_output)
 
         # print('after', self.model.q_network.get_weights())
 
-        if np.array_equal(self.model.q_network.layers[2].get_weights(), weights_output):
-            sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
+        if self.num_layers == 2:
+            if np.array_equal(self.model.q_network.layers[2].get_weights(), weights_output):
+                sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
+        elif self.num_layers == 1:
+            if np.array_equal(self.model.q_network.layers[1].get_weights(), weights_output):
+                sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
 
         self.dqn_print(msg="Load output layer weights" + " <- file: {}".format(model_file))
 

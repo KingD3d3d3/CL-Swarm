@@ -10,6 +10,8 @@ import gymplayground.global_gym as global_gym
 import res.Util as Util
 from res.print_colors import *
 import numpy as np
+import os
+import re
 
 class TestbedGym(object):
     def __init__(self, sim_param=None):
@@ -106,14 +108,20 @@ class TestbedGym(object):
         for agent in self.agents:
             agent.agents = self.agents # list of agents
 
-        self.seed_list = sim_param.seed
-        print('seeds list', self.seed_list)
+        self.given_seeds = sim_param.seed
+        print('seeds list', self.given_seeds)
+        self.save_seed = sim_param.save_seed
         self.max_sim = sim_param.multi_sim
+        self.seed_list = None
+
+        self.save_record_rpu = sim_param.save_record_rpu
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
             Setup simulation
         """
+        global_gym.record = self.sim_param.record
+
         # Set ID of simulation
         global_gym.sim_id = sim_id
 
@@ -139,14 +147,30 @@ class TestbedGym(object):
             global_gym.simlogs_writer = csv.writer(global_gym.simlogs_fo)
             global_gym.simlogs_writer.writerow(debug_gym.header) # write header of the record file
 
+        # RPU save record data
+        if self.save_record_rpu:
+            global_gym.record = True
+
+            # CSV event file
+            direc = os.path.dirname(file_to_load) + '/rpu_sim_logs/'
+
+            nn_file = os.path.basename(file_to_load) # filename
+            episode = re.sub(r'.*_(?P<episode>\d+)ep_.*', r'\g<episode>', nn_file) # extract the episode number
+            suffix = self.env_name + '_' + episode + 'ep' + '_rpu'
+
+            filename = debug_gym.create_record_file(dir=direc, suffix=suffix)
+            global_gym.simlogs_fo = open(filename, 'a')
+            global_gym.simlogs_writer = csv.writer(global_gym.simlogs_fo)
+            global_gym.simlogs_writer.writerow(debug_gym.header)  # write header of the record file
+
         # Brain directory
         if self.save_model or self.save_mem or self.save_model_freq_ep or self.save_mem_freq_ep:
             self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
             Util.create_dir(self.brain_dir)
 
         # Seed directory
-        if global_gym.record:
-            self.seed_dir = self.sim_dir + "seeds/" + str(global_gym.sim_id) + "/"
+        if self.save_seed and global_gym.record:
+            self.seed_dir = self.sim_dir + "seeds/"
             Util.create_dir(self.seed_dir)  # create the directory
 
         # Setup agents
@@ -160,14 +184,17 @@ class TestbedGym(object):
         """
         debug_gym.xprint(msg="Setup agents")
 
+        self.seed_list = []
+
         for agent in self.agents:
 
             # Seed
-            if self.seed_list and len(self.seed_list) >= self.max_sim:
-                seed = self.seed_list[global_gym.sim_id] + agent.id
+            if self.given_seeds and len(self.given_seeds) >= self.max_sim:
+                seed = self.given_seeds[global_gym.sim_id] + agent.id
+                self.seed_list.append(seed)
 
                 # Seed file
-                if global_gym.record:
+                if self.save_seed and global_gym.record:
                     timestr = time.strftime('%Y%m%d_%H%M%S')
                     file = open(self.seed_dir + timestr + '_sim' + str(global_gym.sim_id) + '_agent' + str(agent.id) +
                                 '_seed.txt', 'w')
@@ -176,9 +203,10 @@ class TestbedGym(object):
             else:
                 np.random.seed(None)
                 seed = np.random.randint(0, 2 ** 32 - 1)
+                self.seed_list.append(seed)
 
                 # Seed file
-                if global_gym.record:
+                if self.save_seed and global_gym.record:
                     timestr = time.strftime('%Y%m%d_%H%M%S')
                     file = open(self.seed_dir + timestr + '_sim' + str(global_gym.sim_id) + '_agent' + str(agent.id) +
                                 '_seed.txt', 'w')
