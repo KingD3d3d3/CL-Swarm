@@ -26,6 +26,10 @@ M1 = vec2(-np.cos(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.x, CENTER_POIN
 M2 = vec2(0, CENTER_POINT.x)
 M3 = vec2(0, np.sin(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.y)
 M4 = vec2(-np.cos(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.x, np.sin(3 * (np.pi / 12)) * RADIUS_INNER + CENTER_POINT.y)
+m1 = world_to_pixels(M1, SCREEN_HEIGHT, PPM)
+m2 = world_to_pixels(M2, SCREEN_HEIGHT, PPM)
+m3 = world_to_pixels(M3, SCREEN_HEIGHT, PPM)
+m4 = world_to_pixels(M4, SCREEN_HEIGHT, PPM)
 
 class RaceMap(object):
     def __init__(self, screen=None, world=None):
@@ -91,15 +95,19 @@ class RaceMap(object):
                                   ], )
 
     def render(self):
+        # Goal square
+        pygame.draw.rect(self.screen, Color.Orange, (m1[0], m1[1], m2[0] - m1[0], m3[1] - m1[1]), 0)
+        pygame.draw.rect(self.screen, Color.Orange, (m3[0], m3[1], 100, -50), 0) # leftover
+
         for triangle in self.triangle_list:
             triangle.render()
         self.wall.render()
         self.inner_circle.render()
 
-        pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M1, SCREEN_HEIGHT, PPM), world_to_pixels(M2, SCREEN_HEIGHT, PPM))
-        pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M2, SCREEN_HEIGHT, PPM), world_to_pixels(M3, SCREEN_HEIGHT, PPM))
-        pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M3, SCREEN_HEIGHT, PPM), world_to_pixels(M4, SCREEN_HEIGHT, PPM))
-        pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M4, SCREEN_HEIGHT, PPM), world_to_pixels(M1, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M1, SCREEN_HEIGHT, PPM), world_to_pixels(M2, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M2, SCREEN_HEIGHT, PPM), world_to_pixels(M3, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M3, SCREEN_HEIGHT, PPM), world_to_pixels(M4, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Orange, world_to_pixels(M4, SCREEN_HEIGHT, PPM), world_to_pixels(M1, SCREEN_HEIGHT, PPM))
 
 class RaceContactListener(contactListener):
 

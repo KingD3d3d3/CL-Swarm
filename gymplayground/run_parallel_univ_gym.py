@@ -25,7 +25,7 @@ def evaluate(t_bed):
         # Success count
         success = t_bed.agents[0].env.env.sucessful_landing_count # number of successful landing (between the 2 flags)
         t_bed.agents[0].env.env.sucessful_landing_count = 0 # reset successful landing counter
-        print('{}, success: {}'.format(t_bed.env_name, success))
+        print('success: {}'.format(success))
 
         return avg_score, success
 
@@ -38,7 +38,7 @@ def evaluate(t_bed):
         # Success count
         threshold = -110
         success = sum(i > threshold for i in t_bed.agents[0].scores)
-        print('{}, success: {}'.format(t_bed.env_name, success))
+        print('success: {}'.format(success))
 
         return avg_score, success
 
@@ -51,7 +51,7 @@ def evaluate(t_bed):
         # Success count
         threshold = 195
         success = sum(i > threshold for i in t_bed.agents[0].scores)
-        print('{}, success: {}'.format(t_bed.env_name, success))
+        print('success: {}'.format(success))
 
         return avg_score, success
 

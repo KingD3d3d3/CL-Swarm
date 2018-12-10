@@ -14,6 +14,7 @@ import errno
 import Global
 import res.Util as Util
 from res.print_colors import *
+import keras.callbacks
 
 # DEFAULT HYPERPARAMETERS
 H1 = 64  # number of neurons in the 1st hidden layer
@@ -28,6 +29,12 @@ EPSILON_END = 0.01  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000  # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
 EPSILON_TEST = 0  # epsilon value during testing after training is done
 
+class LossHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs=None):
+        self.losses = []
+
+    def on_batch_end(self, batch, logs=None):
+        self.losses.append(logs.get('loss'))
 
 # -------------------- MODEL -------------------------
 
@@ -39,6 +46,8 @@ class Model(object):
             :param layers: list of ints defining the size of each layer used in the model
             :param lr: learning rate
         """
+        self.history = LossHistory()
+
         self.q_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
         self.target_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
 
@@ -65,7 +74,10 @@ class Model(object):
             Fit the model
         """
         # self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
-        self.q_network.fit(x, y, batch_size=batch_len, epochs=nb_epochs, verbose=verbose)  # keras 2
+        self.q_network.fit(x, y, batch_size=batch_len, epochs=nb_epochs, verbose=verbose,
+                           callbacks=[self.history])  # keras 2
+        # TODO : print loss
+        # print('loss', self.history.losses)
 
     def predict(self, state, batch_len=1, target=False):
         """
@@ -175,7 +187,6 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
         self.capacity = capacity  # max capacity of container
         self.samples = deque(maxlen=capacity)  # container of experiences (queue)
 
-        # TODO : verify it is a random seed for each instance
         if seed is not None:
             random.seed(seed)
         else:
@@ -225,7 +236,6 @@ class DQN(object):
                  exploration_steps=EXPLORATION_STEPS, use_double_dqn=True, use_prioritized_experience_replay=False,
                  seed=None):
 
-        # TODO : verify it is a random seed for each instance
         if seed is not None:
             np.random.seed(seed)
         else:
@@ -359,6 +369,8 @@ class DQN(object):
             Add sample to memory
         """
         if self.collect_experiences:  # self.training
+            # self.memory.push(sample)
+            sample = sample + (None, None) # added None for Q-values
             self.memory.push(sample)
 
     def train(self):
@@ -394,7 +406,7 @@ class DQN(object):
 
         batch = self.memory.get(self.batch_size)
         batch = zip(*batch)
-        batch_state, batch_action, batch_reward, batch_next_state, batch_done = batch
+        batch_state, batch_action, batch_reward, batch_next_state, batch_done, batch_q, batch_q_next = batch
 
         batch_state = np.array(batch_state).squeeze(axis=1)
         q = self.model.predict(batch_state, batch_len=self.batch_size)
@@ -405,9 +417,22 @@ class DQN(object):
         batch_reward = np.array(batch_reward)
         X = batch_state
 
+        # Q-values from Master
+        index_Q = [i for i, j in enumerate(batch_q_next) if j is not None] # index of q qnd q_next if not None
+        if index_Q and len(index_Q) == self.batch_size:
+            for i in range(len(index_Q)): # replace q-values estimate
+                q_next_target[i] = batch_q_next[index_Q[i]]
+                # q[i] = batch_q[index_Q[i]]
+
         if self.use_double_dqn:
             # Double DQN
-            q_next = self.model.predict(batch_next_state, batch_len=self.batch_size, target=False)
+            q_next = self.model.predict(batch_next_state, batch_len=self.batch_size)
+
+            # Q-values from Master
+            if index_Q and len(index_Q) == self.batch_size:
+                for i in range(len(index_Q)):  # replace q-values estimate
+                    q_next[i] = batch_q_next[index_Q[i]]
+
             indices = np.argmax(q_next, axis=1)
             indices = np.expand_dims(indices, axis=0)  # need to add 1 dimension to be 2D array
             taken = np.take_along_axis(q_next_target, indices.T, axis=1).squeeze(axis=1)
@@ -475,9 +500,9 @@ class DQN(object):
         """
             Stop appending new experience to memory
         """
-        self.collect_experiences = False
-
         self.dqn_print(msg="Stop collecting experiences")
+
+        self.collect_experiences = False
 
     def save_model(self, dir, suffix=''):
         """
@@ -500,9 +525,9 @@ class DQN(object):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        self.model.q_network.save(model_file)
-
         self.dqn_print(msg="Save agent's model" + " -> file: {}".format(model_file))
+
+        self.model.q_network.save(model_file)
 
     def save_mem(self, dir, suffix=''):
         """
@@ -524,7 +549,9 @@ class DQN(object):
                 if exc.errno != errno.EEXIST:
                     raise
 
-        header = ("state", "action", "reward", "next_state", "done")
+        self.dqn_print(msg="Save agent's memory" + " -> file: {}".format(memory_file))
+
+        header = ("state", "action", "reward", "next_state", "done", "q", "q_next")
 
         fo = open(memory_file, 'a')
         writer = csv.writer(fo)
@@ -536,21 +563,27 @@ class DQN(object):
             next_state = Util.remove_blank(np.array2string(self.memory.samples[i][3])).replace(' ]', ']').replace('[ ',
                                                                                                                   '[')
             done = str(self.memory.samples[i][4])
-            experience = (state, action, reward, next_state, done)
+
+            # Record the Q-values
+            s = self.memory.samples[i][0]
+            _s = self.memory.samples[i][3]
+            q = self.model.predict(s, batch_len=1)
+            q_next = self.model.predict(_s, batch_len=1)
+
+            experience = (state, action, reward, next_state, done, q, q_next)
             writer.writerow(experience)  # write experience
 
         fo.close()  # close file properly
-
-        self.dqn_print(msg="Save agent's memory" + " -> file: {}".format(memory_file))
+        pass
 
     def load_model(self, model_file):
         """
             Load model from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load full model (nn and optimizer)" + " <- file: {}".format(model_file))
+
         self.model.q_network = load_model(model_file)
         self.model.target_network_network = load_model(model_file)
-
-        self.dqn_print(msg="Load full model (nn and optimizer)" + " <- file: {}".format(model_file))
 
         # print_color(color=PRINT_RED, msg="Load model not working anymore !!??")
 
@@ -558,6 +591,8 @@ class DQN(object):
         """
             Load weights from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load all weights" + " <- file: {}".format(model_file))
+
         # directory = "./simulation_data/FINAL/Normal/normal_30000it_100sim_20180824/brain_files/1/"
         # model_file = directory + "20180824_102251_784404_28599tmstp_28500it_normal_model.h5"  # neural network model file
 
@@ -566,12 +601,12 @@ class DQN(object):
 
         # print('master', self.model.q_network.get_weights())
 
-        self.dqn_print(msg="Load all weights" + " <- file: {}".format(model_file))
-
     def load_h1_weights(self, model_file):
         """
             Load first hidden layer weights from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load 1st hidden layer weights" + " <- file: {}".format(model_file))
+
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -585,12 +620,12 @@ class DQN(object):
         if np.array_equal(self.model.q_network.layers[0].get_weights(), weights_h1):
             sys.exit('Error! Q-Network h1 weights is not equal to the h1 weights from file')
 
-        self.dqn_print(msg="Load 1st hidden layer weights" + " <- file: {}".format(model_file))
-
     def load_h2_weights(self, model_file):
         """
             Load second hidden layer weights from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load 2nd hidden layer weights" + " <- file: {}".format(model_file))
+
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -604,12 +639,12 @@ class DQN(object):
         if np.array_equal(self.model.q_network.layers[1].get_weights(), weights_h2):
             sys.exit('Error! Q-Network h2 weights is not equal to the h2 weights from file')
 
-        self.dqn_print(msg="Load 2nd hidden layer weights" + " <- file: {}".format(model_file))
-
     def load_out_weights(self, model_file):
         """
             Load output layer weights from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load output layer weights" + " <- file: {}".format(model_file))
+
         # print('before', self.model.q_network.get_weights())
 
         # Load master
@@ -639,12 +674,12 @@ class DQN(object):
             if np.array_equal(self.model.q_network.layers[1].get_weights(), weights_output):
                 sys.exit('Error! Q-Network output weights is not equal to the output weights from file')
 
-        self.dqn_print(msg="Load output layer weights" + " <- file: {}".format(model_file))
-
     def load_h1h2_weights(self, model_file):
         """
             Load first and second hidden layers weights from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load 1st and 2nd hidden layer weights" + " <- file: {}".format(model_file))
+
         # print('before', self.model.q_network.get_weights())
 
         # Load master
@@ -666,12 +701,12 @@ class DQN(object):
 
         # print('after', self.model.q_network.get_weights())
 
-        self.dqn_print(msg="Load 1st and 2nd hidden layer weights" + " <- file: {}".format(model_file))
-
     def load_h2out_weights(self, model_file):
         """
             Load first and second hidden layers weights from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load h2 and output weights" + " <- file: {}".format(model_file))
+
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -685,12 +720,12 @@ class DQN(object):
         # Set weights
         self.model.set_h2out_weights(weights_h2, weights_output)
 
-        self.dqn_print(msg="Load h2 and output weights" + " <- file: {}".format(model_file))
-
     def load_h1out_weights(self, model_file):
         """
             Load first hidden layers and output layers weights from given file and set Q-Network, Target-Network
         """
+        self.dqn_print(msg="Load h1 and output weights" + " <- file: {}".format(model_file))
+
         # Load master
         model_copy = clone_model(self.model.q_network)
         model_copy.load_weights(model_file)
@@ -704,12 +739,13 @@ class DQN(object):
         # Set weights
         self.model.set_h1out_weights(weights_h1, weights_output)
 
-        self.dqn_print(msg="Load h1 and output weights" + " <- file: {}".format(model_file))
 
     def load_mem(self, memory_file, size=-1):
         """
             Load memory from given file
         """
+        self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
+
         experiences = []
         data = pd.read_csv(memory_file)
 
@@ -725,27 +761,68 @@ class DQN(object):
             """
             size = self.mem_capacity
             for i, row in data.iterrows():
-                exp = (row['state'], row['action'], row['reward'], row['next_state'], row['done'])
+                exp = (row['state'].astype(np.float32), row['action'], row['reward'],
+                       row['next_state'].astype(np.float32), row['done'],
+                       None, None)
                 experiences.append(exp)
         else:
             """
                 Load specified number of experiences
             """
-            # Random number on list
-            # shuffled_data = sklearn.utils.shuffle(data)
-            # for i, row in shuffled_data[0:size].iterrows():
-            #     exp = (row['state'], row['action'], row['reward'], row['next_state'])
-            #     experiences.append(exp)
-
             shuffled_data = sklearn.utils.shuffle(data)
             for i, row in shuffled_data[0:size].iterrows():
-                exp = (row['state'], row['action'], row['reward'], row['next_state'], row['done'])
+                exp = (row['state'].astype(np.float32), row['action'], row['reward'],
+                       row['next_state'].astype(np.float32), row['done'],
+                       None, None)
                 experiences.append(exp)
 
         # Add experiences to memory
         self.memory.push_multi(experiences)
 
-        self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
+
+    def load_mem_q_values(self, memory_file, size=-1):
+        """
+            Load memory from given file
+        """
+        self.dqn_print(msg="Load memory and Q-values: {} exp".format(size) + " <- file: {}".format(memory_file))
+
+        experiences = []
+        data = pd.read_csv(memory_file)
+
+        remove_bracket = lambda x: x.replace('[', '').replace(']', '')
+        string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
+
+        data['state'] = data['state'].map(remove_bracket).map(string_to_array)
+        data['next_state'] = data['next_state'].map(remove_bracket).map(string_to_array)
+
+        # Q-values estimate
+        data['q'] = data['q'].map(remove_bracket).map(string_to_array)
+        data['q_next'] = data['q_next'].map(remove_bracket).map(string_to_array)
+
+        if size == -1:
+            """
+                Default: Load full memory
+            """
+            size = self.mem_capacity
+            for i, row in data.iterrows():
+                exp = (row['state'].astype(np.float32), row['action'], row['reward'],
+                       row['next_state'].astype(np.float32), row['done'],
+                       row['q'].astype(np.float32), row['q_next'].astype(np.float32))
+                experiences.append(exp)
+        else:
+            """
+                Load specified number of experiences
+            """
+            shuffled_data = sklearn.utils.shuffle(data)
+            for i, row in shuffled_data[0:size].iterrows():
+                exp = (row['state'].astype(np.float32), row['action'], row['reward'],
+                       row['next_state'].astype(np.float32), row['done'],
+                       row['q'].astype(np.float32), row['q_next'].astype(np.float32))
+                experiences.append(exp)
+
+        # Add experiences to memory
+        self.memory.push_multi(experiences)
+
 
     def dqn_print(self, msg=""):
         print_color(color=PRINT_CYAN,

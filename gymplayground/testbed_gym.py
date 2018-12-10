@@ -60,6 +60,7 @@ class TestbedGym(object):
         self.load_h2out_weights = sim_param.load_h2out_weights
         self.load_h1out_weights = sim_param.load_h1out_weights
         self.load_mem = sim_param.load_mem
+        self.load_mem_q_values = sim_param.load_mem_q_values
 
         self.file_to_load = sim_param.file_to_load
 
@@ -256,6 +257,10 @@ class TestbedGym(object):
             # Load memory to agent
             if self.load_mem:
                 agent.brain.load_mem(self.file_to_load, self.load_mem)
+
+            # Load memory and Q-values to agent
+            if self.load_mem_q_values:
+                agent.brain.load_mem_q_values(self.file_to_load, self.load_mem_q_values)
 
             # Collect experiences
             if not self.collect_experiences:

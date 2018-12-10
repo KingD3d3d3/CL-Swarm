@@ -9,24 +9,47 @@ def evaluate(t_bed):
     """
     print('evaluate environment {}'.format(t_bed.env_name))
     if t_bed.env_name == 'LunarLander-v2':
-        success = t_bed.agents[0].env.env.sucessful_landing_count # number of successful landing (between the 2 flags)
-        t_bed.agents[0].env.env.sucessful_landing_count = 0 # reset successful landing counter
-        print('successful landing: {}'.format(success))
-        msg = 'successful landing: {}'.format(success)
+        # Average score over the last 100 episodes
+        score = t_bed.agents[0].scores
+        avg_score = sum(score) / len(score)
+        print('average score {}'.format(avg_score))
+        msg = 'average score: {}'.format(avg_score)
+
+        # Success count
+        success = t_bed.agents[0].env.env.sucessful_landing_count  # number of successful landing (between the 2 flags)
+        t_bed.agents[0].env.env.sucessful_landing_count = 0  # reset successful landing counter
+        print('success: {}'.format(success))
+        msg += ', success: {}'.format(success)
+
         return msg, success
 
     elif t_bed.env_name == 'MountainCar-v0': # average timesteps over the last 100 episodes
+        # Average score over the last 100 episodes
         score = t_bed.agents[0].scores
-        avg_tmstp = sum(score) / len(score)
-        print('average minus timestep: {}'.format(avg_tmstp))
-        msg = 'average minus timestep: {}'.format(avg_tmstp)
-        return msg, score
+        avg_score = sum(score) / len(score)
+        print('average score {}'.format(avg_score))
+        msg = 'average score: {}'.format(avg_score)
 
-    elif t_bed.env_name == 'CartPole-v0': # average timesteps over the last 100 episodes
+        # Success count
+        threshold = -110
+        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        print('success: {}'.format(success))
+        msg += ', success: {}'.format(success)
+
+        return msg, score
+    elif t_bed.env_name == 'CartPole-v0':
+        # Average score over the last 100 episodes
         score = t_bed.agents[0].scores
-        avg_tmstp = sum(score) / len(score)
-        print('average timestep: {}'.format(avg_tmstp))
-        msg = 'average timestep: {}'.format(avg_tmstp)
+        avg_score = sum(score) / len(score)
+        print('average score {}'.format(avg_score))
+        msg = 'average score: {}'.format(avg_score)
+
+        # Success count
+        threshold = 195
+        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        print('success: {}'.format(success))
+        msg += ', success: {}'.format(success)
+
         return msg, score
     else:
         return None

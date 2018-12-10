@@ -25,6 +25,10 @@ M1 = vec2(0, Y_MID)                                     # vec2(0, 18)
 M2 = vec2(ROAD_WIDTH, Y_MID)                            # vec2(7, 18)
 M3 = vec2(0, Y_MID + 7)                                 # vec2(0, 25)
 M4 = vec2(ROAD_WIDTH, Y_MID + 7)                        # vec2(7, 25)
+m1 = world_to_pixels(M1, SCREEN_HEIGHT, PPM)
+m2 = world_to_pixels(M2, SCREEN_HEIGHT, PPM)
+m3 = world_to_pixels(M3, SCREEN_HEIGHT, PPM)
+m4 = world_to_pixels(M4, SCREEN_HEIGHT, PPM)
 
 C2 = vec2(RADIUS_OUTTER, Y_MID)                         # vec2(18, 18)
 S2_POINT = vec2(C2.x - RADIUS_INNER, C2.y)              # vec2(7, 18) # equal M2
@@ -140,6 +144,10 @@ class RaceMap(object):
         self.boundary.append(boundary4)
 
     def render(self):
+        # Goal square
+        pygame.draw.rect(self.screen, Color.Orange, (m1[0], m1[1], m2[0] - m1[0], m3[1] - m1[1]), 0)
+        # pygame.draw.rect(self.screen, Color.Orange, (m3[0], m3[1], 100, -50), 0) # leftover
+
         for triangle in self.triangle_list:
             triangle.render()
         self.circle_c2.render()
@@ -149,10 +157,10 @@ class RaceMap(object):
         for boundary in self.boundary:
             boundary.render()
 
-        pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M1, SCREEN_HEIGHT, PPM), world_to_pixels(M2, SCREEN_HEIGHT, PPM))
-        pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M2, SCREEN_HEIGHT, PPM), world_to_pixels(M4, SCREEN_HEIGHT, PPM))
-        pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M4, SCREEN_HEIGHT, PPM), world_to_pixels(M3, SCREEN_HEIGHT, PPM))
-        pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M3, SCREEN_HEIGHT, PPM), world_to_pixels(M1, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M1, SCREEN_HEIGHT, PPM), world_to_pixels(M2, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M2, SCREEN_HEIGHT, PPM), world_to_pixels(M4, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M4, SCREEN_HEIGHT, PPM), world_to_pixels(M3, SCREEN_HEIGHT, PPM))
+        # pygame.draw.line(self.screen, Color.Yellow, world_to_pixels(M3, SCREEN_HEIGHT, PPM), world_to_pixels(M1, SCREEN_HEIGHT, PPM))
 
 class RaceContactListener(contactListener):
 

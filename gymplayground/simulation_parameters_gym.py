@@ -27,14 +27,15 @@ parser.add_argument('--file_to_load', help='name of the file to load NN weights 
 # Load weights from file
 parser.add_argument('--load_model',  help='load model to agent', default=False, type=Util.str2bool)
 parser.add_argument('--load_all_weights', help='load full weights of neural networks', default=False, type=Util.str2bool)
-parser.add_argument('--load_h1h2_weights', help='load hidden layer 1 and 2 weights of neural networks', default=False, type=Util.str2bool)
 parser.add_argument('--load_h1_weights', help='load hidden layer 1 weights of neural networks', default=False, type=Util.str2bool)
-parser.add_argument('--load_h2_weights', help='load h2 weights of neural networks', default=False, type=Util.str2bool)
-parser.add_argument('--load_out_weights', help='load output weights of neural networks', default=False, type=Util.str2bool)
-parser.add_argument('--load_h2out_weights', help='load h2 output weights of neural networks', default=False, type=Util.str2bool)
+parser.add_argument('--load_h1h2_weights', help='load hidden layer 1 and 2 weights of neural networks', default=False, type=Util.str2bool)
 parser.add_argument('--load_h1out_weights', help='load h1 output weights of neural networks', default=False, type=Util.str2bool)
+parser.add_argument('--load_h2_weights', help='load h2 weights of neural networks', default=False, type=Util.str2bool)
+parser.add_argument('--load_h2out_weights', help='load h2 output weights of neural networks', default=False, type=Util.str2bool)
+parser.add_argument('--load_out_weights', help='load output weights of neural networks', default=False, type=Util.str2bool)
 # Load experiences from file
 parser.add_argument('--load_mem', help='load defined number of experiences to agent', default=0, type=int)
+parser.add_argument('--load_mem_q_values', help='load defined number of experiences and q-values to agent', default=0, type=int)
 
 # Collaborative Learning
 parser.add_argument('--cl_param_exchange_all_weights', help='CL param exchange with all weights', default=False, type=Util.str2bool)
@@ -44,7 +45,7 @@ parser.add_argument('--collaboration', help='Collaborative Learning or not', def
 
 # Seed
 parser.add_argument('--seed', help='seed tuples', default='None', type=Util.str_to_intlist)
-parser.add_argument('--save_seed', help='save simulation seed', default=False, type=Util.str2bool)
+parser.add_argument('--save_seed', help='save simulation seed', default=True, type=Util.str2bool)
 parser.add_argument('--save_record_rpu', help='save record simulation in run parallel universe case', default=False, type=Util.str2bool)
 
 # Saving
