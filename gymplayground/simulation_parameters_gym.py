@@ -38,10 +38,12 @@ parser.add_argument('--load_mem', help='load defined number of experiences to ag
 parser.add_argument('--load_mem_q_values', help='load defined number of experiences and q-values to agent', default=0, type=int)
 
 # Collaborative Learning
-parser.add_argument('--cl_param_exchange_all_weights', help='CL param exchange with all weights', default=False, type=Util.str2bool)
-parser.add_argument('--cl_experience_exchange', help='CL experience exchange', default=0, type=int)
-parser.add_argument('--exchange_knowledge_freq', help='frequencies of episodes for knowledge exchange between agents', default=0, type=int)
-parser.add_argument('--collaboration', help='Collaborative Learning or not', default=False, type=Util.str2bool)
+parser.add_argument('--collab', help='Collaborative Learning or not', default=False, type=Util.str2bool)
+parser.add_argument('--cl_allweights', help='CL param exchange with all weights', default=False, type=Util.str2bool)
+parser.add_argument('--cl_exp', help='CL experience exchange', default=0, type=int)
+parser.add_argument('--exchange_freq', help='frequencies of episodes for knowledge exchange between agents', default=0, type=int)
+# parser.add_argument('--sync_env_seed', help='Synchronize environment seed at each episode', default=False, type=Util.str2bool)
+
 
 # Seed
 parser.add_argument('--seed', help='seed tuples', default='None', type=Util.str_to_intlist)

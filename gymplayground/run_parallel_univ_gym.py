@@ -71,6 +71,7 @@ if __name__ == '__main__':
     param.collect_experiences = False
     param.solved_score = 100000 # just a high unreachable number so that the agent will play specified nums of episodes
     param.save_record_rpu = True
+    param.save_seed = False
 
     dir_name = param.dir_name # Input directory
     dir_name = os.path.abspath(dir_name) + '/'

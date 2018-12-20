@@ -298,8 +298,8 @@ class RaceCircleRight(object):
 
         self.race.render()
         self.car.render()
-        self.gizmo()
-        Util.print_fps(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+        # self.gizmo()
+        # Util.print_fps(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
 
         pygame.display.flip()
 

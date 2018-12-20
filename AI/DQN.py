@@ -74,8 +74,8 @@ class Model(object):
             Fit the model
         """
         # self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
-        self.q_network.fit(x, y, batch_size=batch_len, epochs=nb_epochs, verbose=verbose,
-                           callbacks=[self.history])  # keras 2
+        self.q_network.fit(x, y, batch_size=batch_len, epochs=nb_epochs, verbose=verbose) # keras 2
+                           # callbacks=[self.history])  # keras 2
         # TODO : print loss
         # print('loss', self.history.losses)
 
@@ -423,6 +423,7 @@ class DQN(object):
             for i in range(len(index_Q)): # replace q-values estimate
                 q_next_target[i] = batch_q_next[index_Q[i]]
                 # q[i] = batch_q[index_Q[i]]
+            self.dqn_print(msg="loaded q values")
 
         if self.use_double_dqn:
             # Double DQN
@@ -744,7 +745,11 @@ class DQN(object):
         """
             Load memory from given file
         """
-        self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
+        if size == -1:
+            n_exp = self.mem_capacity
+            self.dqn_print(msg="Load memory: {} exp".format(n_exp) + " <- file: {}".format(memory_file))
+        else:
+            self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
 
         experiences = []
         data = pd.read_csv(memory_file)
@@ -759,7 +764,6 @@ class DQN(object):
             """
                 Default: Load full memory
             """
-            size = self.mem_capacity
             for i, row in data.iterrows():
                 exp = (row['state'].astype(np.float32), row['action'], row['reward'],
                        row['next_state'].astype(np.float32), row['done'],

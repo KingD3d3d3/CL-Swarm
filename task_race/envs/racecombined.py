@@ -190,7 +190,7 @@ class RaceCombined(object):
         if self.display:
             pygame.init()
             self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
-            pygame.display.set_caption('Environment Race Combined Right')
+            pygame.display.set_caption('Environment Race Combined')
             self.clock = pygame.time.Clock()
             self.myfont = pygame.font.SysFont("monospace", 15)
             self.delta_time = 1.0 / TARGET_FPS
@@ -353,8 +353,8 @@ class RaceCombined(object):
 
         self.race.render()
         self.car.render()
-        self.gizmo()
-        Util.print_fps(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
+        # self.gizmo()
+        # Util.print_fps(self.screen, self.myfont, 'FPS : ' + str('{:3.2f}').format(self.fps))
 
         pygame.display.flip()
 

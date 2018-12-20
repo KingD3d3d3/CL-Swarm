@@ -203,7 +203,7 @@ class Car(object):
 
         current_forward_normal = self.body.GetWorldVector((0, 1))
         pygame.draw.line(self.screen, Color.White, world_to_pixels(self.body.worldCenter, self.screen_height, self.ppm),
-                         world_to_pixels(self.body.worldCenter + current_forward_normal * self.radius, self.screen_height, self.ppm))
+                         world_to_pixels(self.body.worldCenter + current_forward_normal * self.radius, self.screen_height, self.ppm), 3)
 
         # Draw raycasts
         for i in range(self.num_sensors):
@@ -214,4 +214,4 @@ class Car(object):
                 ray_color = self.raycastDangerColor
             else:
                 ray_color = self.raycastSafeColor
-            pygame.draw.line(self.screen, ray_color, world_to_pixels(p1, self.screen_height, self.ppm), world_to_pixels(p2, self.screen_height, self.ppm))
+            pygame.draw.line(self.screen, ray_color, world_to_pixels(p1, self.screen_height, self.ppm), world_to_pixels(p2, self.screen_height, self.ppm), 3)

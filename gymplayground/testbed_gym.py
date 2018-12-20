@@ -70,9 +70,10 @@ class TestbedGym(object):
         self.save_mem_freq_ep = sim_param.save_mem_freq_ep
 
         # Collaborative Learning
-        self.cl_param_exchange_all_weights = sim_param.cl_param_exchange_all_weights
-        self.cl_experience_exchange = sim_param.cl_experience_exchange
-        self.exchange_knowledge_freq = sim_param.exchange_knowledge_freq
+        collaboration = sim_param.collab
+        self.cl_allweights = sim_param.cl_allweights
+        self.cl_exp = sim_param.cl_exp
+        self.exchange_freq = sim_param.exchange_freq
 
         # Directory for saving files
         self.suffix = ''
@@ -98,8 +99,6 @@ class TestbedGym(object):
         self.running = True
         self.sim_count = 0 # count number of simulation
 
-        collaboration = sim_param.collaboration
-
         # Create the agents
         self.agents = []
         for i in range(sim_param.num_agents):
@@ -116,6 +115,9 @@ class TestbedGym(object):
         self.seed_list = None
 
         self.save_record_rpu = sim_param.save_record_rpu
+
+        self.check_agents_nn_saved = [False] * sim_param.num_agents
+        # self.sync_env_seed = sim_param.sync_env_seed
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
@@ -135,9 +137,10 @@ class TestbedGym(object):
         # Variables
         self.sim_count += 1
         self.running = True
+        self.check_agents_nn_saved = [False] * self.num_agents
 
         # Record simulation
-        self.simlogs_dir = self.sim_dir + "sim_logs/"
+        self.simlogs_dir = self.sim_dir + 'sim_logs/'
         if global_gym.record:
             debug_gym.xprint(msg="Start recording".format(sim_id))
 
@@ -166,12 +169,12 @@ class TestbedGym(object):
 
         # Brain directory
         if self.save_model or self.save_mem or self.save_model_freq_ep or self.save_mem_freq_ep:
-            self.brain_dir = self.sim_dir + "brain_files/" + str(global_gym.sim_id) + "/"
+            self.brain_dir = self.sim_dir + 'brain_files/' + 'sim' + str(global_gym.sim_id) + '/'
             Util.create_dir(self.brain_dir)
 
         # Seed directory
         if self.save_seed and global_gym.record:
-            self.seed_dir = self.sim_dir + "seeds/"
+            self.seed_dir = self.sim_dir + 'seeds/'
             Util.create_dir(self.seed_dir)  # create the directory
 
         # Setup agents
@@ -267,12 +270,12 @@ class TestbedGym(object):
                 agent.brain.stop_collect_experiences()
 
             # Collaborative Learning
-            if self.cl_param_exchange_all_weights:
-                agent.cl_param_exchange_all_weights = self.cl_param_exchange_all_weights
-            if self.cl_experience_exchange:
-                agent.cl_experience_exchange = self.cl_experience_exchange
-            if self.exchange_knowledge_freq:
-                agent.exchange_knowledge_freq = self.exchange_knowledge_freq
+            if self.cl_allweights:
+                agent.cl_allweights = self.cl_allweights
+            if self.cl_exp:
+                agent.cl_exp = self.cl_exp
+            if self.exchange_freq:
+                agent.exchange_freq = self.exchange_freq
 
     def run_simulation(self):
         """"
@@ -300,17 +303,32 @@ class TestbedGym(object):
         """
             Simulation logic
         """
-        # Save neural networks model frequently based on episode count
+        # Save neural networks model frequently based on episode count (and for each agents)
         if self.save_model_freq_ep:
-            if self.agents[0].episode_done and \
-                    self.agents[0].episodes and self.agents[0].episodes % self.save_model_freq_ep == 0:
-                suffix = self.env_name + '_' + str(self.agents[0].episodes) + 'ep'
-                self.agents[0].brain.save_model(dir=self.brain_dir, suffix=suffix)
+            for agent in self.agents:
+                if self.check_agents_nn_saved[agent.id]: # agent already saved at this episode
+                    pass
+                elif agent.episode_done and \
+                        agent.episodes and agent.episodes % self.save_model_freq_ep == 0:
+                    suffix = self.env_name + '_agent' + str(agent.id) + '_' + str(agent.episodes) + 'ep'
+                    directory = self.brain_dir + 'agent' + str(agent.id) + '/'
+                    agent.brain.save_model(dir=directory, suffix=suffix)
+                    self.check_agents_nn_saved[agent.id] = True
+
+            # All agents saved NN at this episode -> reset check saved list
+            if self.check_agents_nn_saved and all(self.check_agents_nn_saved):
+                self.check_agents_nn_saved = [False] * self.num_agents
 
         # # Save memory frequently
         # if global_gym.record and self.save_memory_freq:
         #     if Global.timestep != 0 and Global.timestep % self.save_memory_freq == 0:
         #         self.agents[0].save_mem(dir=self.brain_dir, suffix=self.suffix)
+
+        # # Synchronize environment seed between agents
+        # if self.sync_env_seed:
+        #     env_seed = 42 + self.agents[0].episodes # # np.random.randint(0, 2 ** 32 - 1)
+        #     for agent in self.agents:
+        #         agent.env_seed = env_seed
 
         # End simulation when all agents had done the problem
         for agent in self.agents:
@@ -368,6 +386,7 @@ class TestbedGym(object):
         file.write("---------------------\n")
         file.write("Testbed configuration\n")
         file.write("---------------------\n\n")
+        file.write("Number of agents: {}\n".format(self.num_agents))
         file.write("Simulation parameters: {}\n\n".format(self.sim_param))
 
         file.write("--------------------------\n")

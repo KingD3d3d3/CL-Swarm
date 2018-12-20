@@ -4,6 +4,7 @@ from collections import deque
 from AI.DQN import DQN
 import gymplayground.debug_gym as debug_gym
 import gymplayground.global_gym as global_gym
+from res.print_colors import *
 
 # ---------------------------------- Agent -----------------------------------------
 
@@ -34,7 +35,7 @@ class AgentGym(object):
 
         self.best_agent = False # flag that indicates if it is the best agent according to average scores
 
-        self.collaboration = collaboration
+        self.collab = collaboration
         # ------------------ Variables to set at each simulation --------------------
 
         self.brain = None
@@ -54,9 +55,11 @@ class AgentGym(object):
         self.timesteps = 0 # count number of timesteps during 1 episode
 
         # Collaborative Learning
-        self.cl_param_exchange_all_weights = False
-        self.cl_experience_exchange = 0
-        self.exchange_knowledge_freq = 0
+        self.cl_allweights = False
+        self.cl_exp = 0
+        self.exchange_freq = 0
+
+        # self.env_seed = None
 
     def setup(self, training=True, random_agent=False, seed=None):
 
@@ -108,8 +111,12 @@ class AgentGym(object):
                 if not self.synchronized_episodes():
                     return
 
-                if self.collaboration:
+                if self.collab:
                     self.collaborative_learning()
+
+                # # Reset environment based on seed (each episode)
+                # if self.env_seed is not None:
+                #     self.env.seed(self.env_seed)
 
                 self.state = self.brain.preprocess(self.env.reset())  # initial state
                 self.score = 0
@@ -191,7 +198,7 @@ class AgentGym(object):
             Decentralized Collaborative Learning
         """
         # Frequency of communication between both agents
-        if not (self.episodes and self.episodes % self.exchange_knowledge_freq == 0):
+        if not (self.episodes and self.episodes % self.exchange_freq == 0):
             return
 
         # Part I - Find the best agent
@@ -208,9 +215,9 @@ class AgentGym(object):
         if self.best_agent:
             for agent in self.agents:
                 if self != agent: # skip myself
-                    print("agent: {} gives knowledge to agent: {}".format(self.id, agent.id))
-                    # if self.cl_param_exchange_all_weights:
-                    agent.brain.model.set_weights(self.brain.model.q_network.get_weights())
+                    if self.cl_allweights:
+                        print_color(color=PRINT_RED, msg="agent: {} gives all weights to agent: {}".format(self.id, agent.id))
+                        agent.brain.model.set_weights(self.brain.model.q_network.get_weights())
 
             self.best_agent = False # reset
 
