@@ -479,9 +479,10 @@ class RaceCombined(object):
         """
             Core function of the agent for training
         """
-        flag_col = False
+        # flag_col = False
         if self.car.collision:
-            flag_col = True
+            # flag_col = True
+            return Reward.COLLISION
 
         # Process sensor's value
         r = np.fromiter((Reward.reward_sensor(s, max_length=self.car.raycast_length) for s in self.car.sensors),
@@ -508,7 +509,8 @@ class RaceCombined(object):
         self.prev_shaping = shaping
 
         # Overall reward equation
-        reward = flag_col * Reward.COLLISION + reward_sensors + potential_shaping
+        # reward = flag_col * Reward.COLLISION + reward_sensors + potential_shaping
+        reward = reward_sensors + potential_shaping
 
         return reward
 

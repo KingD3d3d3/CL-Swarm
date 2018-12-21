@@ -386,7 +386,6 @@ class TestbedGym(object):
         file.write("---------------------\n")
         file.write("Testbed configuration\n")
         file.write("---------------------\n\n")
-        file.write("Number of agents: {}\n".format(self.num_agents))
         file.write("Simulation parameters: {}\n\n".format(self.sim_param))
 
         file.write("--------------------------\n")
