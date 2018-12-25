@@ -70,7 +70,7 @@ class TestbedGym(object):
         self.save_mem_freq_ep = sim_param.save_mem_freq_ep
 
         # Collaborative Learning
-        collaboration = sim_param.collab
+        self.collaboration = sim_param.collaboration
         self.cl_allweights = sim_param.cl_allweights
         self.cl_exp = sim_param.cl_exp
         self.exchange_freq = sim_param.exchange_freq
@@ -104,7 +104,7 @@ class TestbedGym(object):
         for i in range(sim_param.num_agents):
             self.agents.append(AgentGym(render=sim_param.render, id=i, num_agents=self.num_agents, config=config,
                                         max_ep=self.max_ep, solved_score=self.solved_score, env_name=env,
-                                        collaboration=collaboration))
+                                        collaboration=self.collaboration))
         for agent in self.agents:
             agent.agents = self.agents # list of agents
 
@@ -115,9 +115,6 @@ class TestbedGym(object):
         self.seed_list = None
 
         self.save_record_rpu = sim_param.save_record_rpu
-
-        self.check_agents_nn_saved = [False] * sim_param.num_agents
-        # self.sync_env_seed = sim_param.sync_env_seed
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """

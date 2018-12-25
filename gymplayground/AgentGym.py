@@ -35,7 +35,7 @@ class AgentGym(object):
 
         self.best_agent = False # flag that indicates if it is the best agent according to average scores
 
-        self.collab = collaboration
+        self.collaboration = collaboration
         # ------------------ Variables to set at each simulation --------------------
 
         self.brain = None
@@ -58,8 +58,6 @@ class AgentGym(object):
         self.cl_allweights = False
         self.cl_exp = 0
         self.exchange_freq = 0
-
-        # self.env_seed = None
 
     def setup(self, training=True, random_agent=False, seed=None):
 
@@ -111,12 +109,8 @@ class AgentGym(object):
                 if not self.synchronized_episodes():
                     return
 
-                if self.collab:
+                if self.collaboration:
                     self.collaborative_learning()
-
-                # # Reset environment based on seed (each episode)
-                # if self.env_seed is not None:
-                #     self.env.seed(self.env_seed)
 
                 self.state = self.brain.preprocess(self.env.reset())  # initial state
                 self.score = 0
@@ -182,7 +176,6 @@ class AgentGym(object):
                 return
             # --------------------------------------------------------------------------------------------------------------
 
-
     def synchronized_episodes(self):
         """
             True if episodes are synchronized between agents, else False
@@ -216,7 +209,8 @@ class AgentGym(object):
             for agent in self.agents:
                 if self != agent: # skip myself
                     if self.cl_allweights:
-                        print_color(color=PRINT_RED, msg="agent: {} gives all weights to agent: {}".format(self.id, agent.id))
+                        print_color(color=PRINT_RED, msg="episode: {}, agent: {} gives all weights to agent: {}"
+                                    .format(self.episodes, self.id, agent.id))
                         agent.brain.model.set_weights(self.brain.model.q_network.get_weights())
 
             self.best_agent = False # reset
