@@ -44,7 +44,6 @@ parser.add_argument('--cl_exp', help='CL experience exchange', default=0, type=i
 parser.add_argument('--exchange_freq', help='frequencies of episodes for knowledge exchange between agents', default=0, type=int)
 # parser.add_argument('--sync_env_seed', help='Synchronize environment seed at each episode', default=False, type=Util.str2bool)
 
-
 # Seed
 parser.add_argument('--seed', help='seed tuples', default='None', type=Util.str_to_intlist)
 parser.add_argument('--save_seed', help='save simulation seed', default=True, type=Util.str2bool)

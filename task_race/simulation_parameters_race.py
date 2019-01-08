@@ -40,6 +40,8 @@ parser.add_argument('--load_mem', help='load defined number of experiences to ag
 parser.add_argument('--load_mem2', help='load defined number of experiences to agent', default=0, type=int)
 
 parser.add_argument('--seed', help='seed tuples', default='None', type=Util.str_to_intlist)
+parser.add_argument('--save_seed', help='save simulation seed', default=True, type=Util.str2bool)
+parser.add_argument('--save_record_rpu', help='save record simulation in run parallel universe case', default=False, type=Util.str2bool)
 
 # Saving
 parser.add_argument('--save_model_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)

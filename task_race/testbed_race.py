@@ -11,6 +11,9 @@ import csv
 from task_race.AgentRace import AgentRace
 import task_race.debug_race as debug_race
 import task_race.global_race as global_race
+import numpy as np
+import os
+import re
 
 class TestbedRace(object):
 
@@ -22,25 +25,25 @@ class TestbedRace(object):
         sys.path.append('config/' + sim_param.cfg.split('_')[0])
         config = importlib.import_module(sim_param.cfg)
         env = config.environment['env_name']
-        self.config = config
+        self.problem_config = config
 
         # 2nd agent
         env2 = None
-        self.config2 = None
+        self.problem_config2 = None
         if sim_param.cfg2:
             sys.path.append('config/' + sim_param.cfg2.split('_')[0])
             config2 = importlib.import_module(sim_param.cfg2)
             env2 = config2.environment['env_name']
-            self.config2 = config2
+            self.problem_config2 = config2
 
         # 3rd agent
         env3 = None
-        self.config3 = None
+        self.problem_config3 = None
         if sim_param.cfg3:
             sys.path.append('config/' + sim_param.cfg3.split('_')[0])
             config3 = importlib.import_module(sim_param.cfg3)
             env3 = config3.environment['env_name']
-            self.config3 = config3
+            self.problem_config3 = config3
 
         print("###########################")
         print("#### CL Testbed Race ######")
@@ -87,12 +90,16 @@ class TestbedRace(object):
         self.save_model_freq_ep = sim_param.save_model_freq_ep
         self.save_mem_freq_ep = sim_param.save_mem_freq_ep
 
+        # Collaborative Learning
+        self.give_exp = sim_param.give_exp
+
         # Directory for saving files
         self.suffix = ''
         self.sim_dir = ''
         self.simlogs_dir = ''
         self.brain_dir = ''
-        self.env_name = env  # e.g. "CartPole_v0"
+        self.seed_dir = ''
+        self.env_name = env  # e.g. "RaceCircleLeft"
         self.env_name2 = None
         self.env_name3 = None
         if sim_param.cfg2:
@@ -117,7 +124,6 @@ class TestbedRace(object):
         self.sim_count = 0 # count number of simulation
         self.pause = False
 
-        self.give_exp = sim_param.give_exp
         # Create the agents
         self.agents = []
         for i in range(sim_param.num_agents):
@@ -125,12 +131,12 @@ class TestbedRace(object):
                                          max_ep=self.max_ep, solved_timesteps=self.solved_timesteps, env_name=env,
                                         manual=sim_param.manual))
         if sim_param.cfg2:
-            agent2 = AgentRace(display=sim_param.display, id=1, num_agents=self.num_agents, config=self.config2,
+            agent2 = AgentRace(display=sim_param.display, id=1, num_agents=self.num_agents, config=self.problem_config2,
                                max_ep=self.max_ep, env_name=env2, solved_timesteps=self.solved_timesteps,
                                manual=sim_param.manual, give_exp=self.give_exp)
             self.agents.append(agent2)
         if sim_param.cfg3:
-            agent3 = AgentRace(display=sim_param.display, id=2, num_agents=self.num_agents, config=self.config3,
+            agent3 = AgentRace(display=sim_param.display, id=2, num_agents=self.num_agents, config=self.problem_config3,
                                max_ep=self.max_ep, env_name=env3, solved_timesteps=self.solved_timesteps,
                                manual=sim_param.manual, give_exp=self.give_exp)
             self.agents.append(agent3)
@@ -139,14 +145,21 @@ class TestbedRace(object):
         for agent in self.agents:
             agent.agents = self.agents
 
-        self.seeds = sim_param.seed
-        print('seeds', self.seeds)
+        self.given_seeds = sim_param.seed
+        print('seeds', self.given_seeds)
         self.max_sim = sim_param.multi_sim
+        self.save_seed = sim_param.save_seed
+
+        self.save_record_rpu = sim_param.save_record_rpu
+        self.seed_list = None # used in RPU
+        self.check_agents_nn_saved = None
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
             Setup simulation
         """
+        global_race.record = self.sim_param.record
+
         # Set ID of simulation
         global_race.sim_id = sim_id
 
@@ -166,6 +179,7 @@ class TestbedRace(object):
         self.pause = False
         self.sim_count += 1
         self.running = True
+        self.check_agents_nn_saved = [False] * self.num_agents
 
         # Record simulation
         self.simlogs_dir = self.sim_dir + "sim_logs/"
@@ -179,10 +193,31 @@ class TestbedRace(object):
             global_race.simlogs_writer = csv.writer(global_race.simlogs_fo)
             global_race.simlogs_writer.writerow(debug_race.header)  # write header of the record file
 
+        # RPU save record data
+        if self.save_record_rpu:
+            global_race.record = True
+
+            # CSV event file
+            direc = os.path.dirname(file_to_load) + '/rpu_sim_logs/'
+
+            nn_file = os.path.basename(file_to_load)  # filename
+            episode = re.sub(r'.*_(?P<episode>\d+)ep_.*', r'\g<episode>', nn_file)  # extract the episode number
+            suffix = self.env_name + '_' + episode + 'ep' + '_rpu'
+
+            filename = debug_race.create_record_file(dir=direc, suffix=suffix)
+            global_race.simlogs_fo = open(filename, 'a')
+            global_race.simlogs_writer = csv.writer(global_race.simlogs_fo)
+            global_race.simlogs_writer.writerow(debug_race.header)  # write header of the record file
+
         # Brain directory
         if self.save_model or self.save_mem or self.save_model_freq_ep or self.save_mem_freq_ep:
             self.brain_dir = self.sim_dir + "brain_files/" + str(global_race.sim_id) + "/"
             Util.create_dir(self.brain_dir)
+
+        # Seed directory
+        if self.save_seed and global_race.record:
+            self.seed_dir = self.sim_dir + 'seeds/'
+            Util.create_dir(self.seed_dir)  # create the directory
 
         # Setup agents
         self.setup_agents()
@@ -195,13 +230,34 @@ class TestbedRace(object):
         """
         debug_race.xprint(msg="Setup agents")
 
+        self.seed_list = [] # used in RPU
+
         for agent in self.agents:
 
             # Seed
-            if self.seeds and len(self.seeds) >= self.max_sim:
-                seed = self.seeds[global_race.sim_id] + agent.id
+            if self.given_seeds and len(self.given_seeds) >= self.max_sim:
+                seed = self.given_seeds[global_race.sim_id] + agent.id
+                self.seed_list.append(seed)
+
+                # Seed file
+                if self.save_seed and global_race.record:
+                    timestr = time.strftime('%Y%m%d_%H%M%S')
+                    file = open(self.seed_dir + timestr + '_sim' + str(global_race.sim_id) + '_agent' + str(agent.id) +
+                                '_seed.txt', 'w')
+                    file.write("{}\n".format(seed))
+                    file.close()
             else:
-                seed = None
+                np.random.seed(None)
+                seed = np.random.randint(0, 2 ** 32 - 1)
+                self.seed_list.append(seed)
+
+                # Seed file
+                if self.save_seed and global_race.record:
+                    timestr = time.strftime('%Y%m%d_%H%M%S')
+                    file = open(self.seed_dir + timestr + '_sim' + str(global_race.sim_id) + '_agent' + str(agent.id) +
+                                '_seed.txt', 'w')
+                    file.write("{}\n".format(seed))
+                    file.close()
 
             # Setup agent's location and brain
             agent.setup(training=self.training, random_agent=self.random_agent, seed=seed)
@@ -317,10 +373,19 @@ class TestbedRace(object):
         """
         # Save neural networks model frequently based on episode count
         if self.save_model_freq_ep:
-            if self.agents[0].episode_done and \
-                    self.agents[0].episodes and self.agents[0].episodes % self.save_model_freq_ep == 0:
-                suffix = self.env_name + '_' + str(self.agents[0].episodes) + 'ep'
-                self.agents[0].brain.save_model(dir=self.brain_dir, suffix=suffix)
+            for agent in self.agents:
+                if self.check_agents_nn_saved[agent.id]: # agent already saved at this episode
+                    pass
+                elif agent.episode_done and \
+                        agent.episodes and agent.episodes % self.save_model_freq_ep == 0:
+                    suffix = agent.env_name + '_agent' + str(agent.id) + '_' + str(agent.episodes) + 'ep'
+                    directory = self.brain_dir + 'agent' + str(agent.id) + '/'
+                    agent.brain.save_model(dir=directory, suffix=suffix)
+                    self.check_agents_nn_saved[agent.id] = True
+
+            # All agents saved NN at this episode -> reset check saved list
+            if self.check_agents_nn_saved and all(self.check_agents_nn_saved):
+                self.check_agents_nn_saved = [False] * self.num_agents
 
         # End simulation when all agents had done the problem
         for agent in self.agents:
@@ -343,7 +408,7 @@ class TestbedRace(object):
         if self.save_model or self.save_mem:
 
             for agent in self.agents:
-                suffix = self.env_name + '_end'
+                suffix = agent.env_name + '_end'
 
                 # Solved problem suffix
                 if agent.problem_solved:
@@ -383,14 +448,14 @@ class TestbedRace(object):
         file.write("--------------------------\n")
         file.write("Problem configuration file\n")
         file.write("--------------------------\n\n")
-        file.write("Environment: {}\n".format(self.config.environment))
-        file.write("Hyperparameters: {}\n".format(self.config.hyperparams))
+        file.write("Environment: {}\n".format(self.problem_config.environment))
+        file.write("Hyperparameters: {}\n".format(self.problem_config.hyperparams))
         if self.env_name2:
-            file.write("Environment 2: {}\n".format(self.config2.environment))
-            file.write("Hyperparameters 2: {}\n".format(self.config2.hyperparams))
+            file.write("Environment 2: {}\n".format(self.problem_config2.environment))
+            file.write("Hyperparameters 2: {}\n".format(self.problem_config2.hyperparams))
         if self.env_name3:
-            file.write("Environment 3: {}\n".format(self.config3.environment))
-            file.write("Hyperparameters 3: {}\n".format(self.config3.hyperparams))
+            file.write("Environment 3: {}\n".format(self.problem_config3.environment))
+            file.write("Hyperparameters 3: {}\n".format(self.problem_config3.hyperparams))
 
         file.close()
 

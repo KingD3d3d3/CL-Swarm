@@ -3,7 +3,7 @@
 
 environment = {
     'env_name': 'RaceCircleLeft',
-    'solved_timesteps': 140,
+    'solved_timesteps': 150, #140,
     'max_ep': 1000
 }
 

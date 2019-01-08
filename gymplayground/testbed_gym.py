@@ -112,9 +112,10 @@ class TestbedGym(object):
         print('seeds list', self.given_seeds)
         self.save_seed = sim_param.save_seed
         self.max_sim = sim_param.multi_sim
-        self.seed_list = None
 
         self.save_record_rpu = sim_param.save_record_rpu
+        self.seed_list = None # used in RPU
+        self.check_agents_nn_saved = None
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
@@ -185,7 +186,7 @@ class TestbedGym(object):
         """
         debug_gym.xprint(msg="Setup agents")
 
-        self.seed_list = []
+        self.seed_list = [] # used in RPU
 
         for agent in self.agents:
 
@@ -315,17 +316,6 @@ class TestbedGym(object):
             # All agents saved NN at this episode -> reset check saved list
             if self.check_agents_nn_saved and all(self.check_agents_nn_saved):
                 self.check_agents_nn_saved = [False] * self.num_agents
-
-        # # Save memory frequently
-        # if global_gym.record and self.save_memory_freq:
-        #     if Global.timestep != 0 and Global.timestep % self.save_memory_freq == 0:
-        #         self.agents[0].save_mem(dir=self.brain_dir, suffix=self.suffix)
-
-        # # Synchronize environment seed between agents
-        # if self.sync_env_seed:
-        #     env_seed = 42 + self.agents[0].episodes # # np.random.randint(0, 2 ** 32 - 1)
-        #     for agent in self.agents:
-        #         agent.env_seed = env_seed
 
         # End simulation when all agents had done the problem
         for agent in self.agents:
