@@ -10,7 +10,7 @@ import task_race.global_race as global_race
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentRace(object):
-    def __init__(self, display=False, id=-1, num_agents=0, config=None, max_ep=5000, env_name='', solved_timesteps=-1,
+    def __init__(self, display=False, id=-1, num_agents=0, config=None, max_ep=1000, env_name='', solved_timesteps=-1,
                  manual=False, give_exp=False):
 
         self.id = id # agent's ID

@@ -19,7 +19,7 @@ parser.add_argument('--exploration', help='agent takes random action at the begi
 parser.add_argument('--collect_experiences', help='append a new experience to memory', default=True, type=Util.str2bool)
 parser.add_argument('--max_ep', help='maximum number of episodes for 1 simulation', default=0, type=int)
 
-parser.add_argument('--solved_timesteps', help='average score agent needs to reach to consider the problem solved', default=-1, type=int)
+parser.add_argument('--solved_timesteps', help='average score agent needs to reach to consider the problem solved', default=0, type=int)
 parser.add_argument('--multi_sim', help='multiple successive simulations', default=1, type=int)
 parser.add_argument('--random_agent', help='agent is taking random action', default=False, type=Util.str2bool)
 

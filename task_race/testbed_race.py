@@ -211,7 +211,7 @@ class TestbedRace(object):
 
         # Brain directory
         if self.save_model or self.save_mem or self.save_model_freq_ep or self.save_mem_freq_ep:
-            self.brain_dir = self.sim_dir + "brain_files/" + str(global_race.sim_id) + "/"
+            self.brain_dir = self.sim_dir + "brain_files/" + 'sim' + str(global_race.sim_id) + "/"
             Util.create_dir(self.brain_dir)
 
         # Seed directory

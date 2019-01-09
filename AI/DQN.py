@@ -745,14 +745,16 @@ class DQN(object):
         """
             Load memory from given file
         """
-        if size == -1:
-            n_exp = self.mem_capacity
-            self.dqn_print(msg="Load memory: {} exp".format(n_exp) + " <- file: {}".format(memory_file))
-        else:
-            self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
 
         experiences = []
         data = pd.read_csv(memory_file)
+
+        if size == -1:
+            # n_exp = self.mem_capacity
+            n_exp = data.shape[0]
+            self.dqn_print(msg="Load memory: {} exp".format(n_exp) + " <- file: {}".format(memory_file))
+        else:
+            self.dqn_print(msg="Load memory: {} exp".format(size) + " <- file: {}".format(memory_file))
 
         remove_bracket = lambda x: x.replace('[', '').replace(']', '')
         string_to_array = lambda x: np.expand_dims(np.fromstring(x, sep=' '), axis=0)
