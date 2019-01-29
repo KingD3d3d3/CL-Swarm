@@ -92,6 +92,7 @@ class TestbedRace(object):
 
         # Collaborative Learning
         self.give_exp = sim_param.give_exp
+        self.ttr = sim_param.ttr
 
         # Directory for saving files
         self.suffix = ''
@@ -126,19 +127,25 @@ class TestbedRace(object):
 
         # Create the agents
         self.agents = []
-        for i in range(sim_param.num_agents):
-            self.agents.append(AgentRace(display=sim_param.display, id=i, num_agents=self.num_agents, config=config,
-                                         max_ep=self.max_ep, solved_timesteps=self.solved_timesteps, env_name=env,
-                                        manual=sim_param.manual))
+
+        if sim_param.cfg2:
+            self.num_agents += 1
+        if sim_param.cfg3:
+            self.num_agents += 1
+
+        # for i in range(sim_param.num_agents):
+        self.agents.append(AgentRace(display=sim_param.display, id=0, num_agents=self.num_agents, config=config,
+                                     max_ep=self.max_ep, solved_timesteps=self.solved_timesteps, env_name=env,
+                                    manual=sim_param.manual))
         if sim_param.cfg2:
             agent2 = AgentRace(display=sim_param.display, id=1, num_agents=self.num_agents, config=self.problem_config2,
                                max_ep=self.max_ep, env_name=env2, solved_timesteps=self.solved_timesteps,
-                               manual=sim_param.manual, give_exp=self.give_exp)
+                               manual=sim_param.manual, give_exp=self.give_exp, ttr=self.ttr)
             self.agents.append(agent2)
         if sim_param.cfg3:
             agent3 = AgentRace(display=sim_param.display, id=2, num_agents=self.num_agents, config=self.problem_config3,
                                max_ep=self.max_ep, env_name=env3, solved_timesteps=self.solved_timesteps,
-                               manual=sim_param.manual, give_exp=self.give_exp)
+                               manual=sim_param.manual, give_exp=self.give_exp, ttr=self.ttr)
             self.agents.append(agent3)
 
         # Add reference to others agents to each agent

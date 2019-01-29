@@ -785,6 +785,7 @@ class DQN(object):
         # Add experiences to memory
         self.memory.push_multi(experiences)
 
+        print('memory size: {}'.format(self.memory.size()))
 
     def load_mem_q_values(self, memory_file, size=-1):
         """

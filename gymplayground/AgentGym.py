@@ -5,7 +5,7 @@ from AI.DQN import DQN
 import gymplayground.debug_gym as debug_gym
 import gymplayground.global_gym as global_gym
 from res.print_colors import *
-
+import res.Util as Util
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentGym(object):
@@ -42,7 +42,11 @@ class AgentGym(object):
 
         self.episodes = 0 # number of episodes during current simulation
         self.scores = deque(maxlen=100) # keep total scores of last 100 episodes
+        self.scores_10ep = deque(maxlen=10) # keep total scores of last 10 episodes
+
         self.average_score = 0
+        self.score_10ep = 0 # weighted moving average # average_score_10ep
+
         self.problem_done = False # when problem is done, the simulation end
         self.problem_solved = False # problem is solved Flag
         self.episode_inited = False # at the beginning of an episode we need to rest environment
@@ -85,7 +89,11 @@ class AgentGym(object):
 
         self.episodes = 0
         self.scores = deque(maxlen=100)
+        self.scores_10ep = deque(maxlen=10)
+
         self.average_score = 0
+        self.score_10ep = 0
+
         self.problem_done = False
         self.problem_solved = False
         self.episode_inited = False
@@ -137,6 +145,7 @@ class AgentGym(object):
             if done:  # either game over or reached maximum timesteps of episode
                 self.episodes += 1
                 self.scores.append(self.score)
+                self.scores_10ep.append(self.score)
                 self.episode_done = True
             else:
                 return
@@ -144,6 +153,7 @@ class AgentGym(object):
 
             # Calculate average over the last episodes
             self.average_score = sum(self.scores) / len(self.scores)
+            self.score_10ep = sum(self.scores_10ep) / len(self.scores_10ep) # Util.weighted_average_10(self.scores_10ep) # SMA -> sum(self.scores_10ep) / len(self.scores_10ep)
 
             self.episode_inited = False # re-initiate the environment for the next episode
             self.tot_timesteps += self.timesteps # increment total number of timesteps of all episodes
@@ -151,14 +161,16 @@ class AgentGym(object):
             # Record event (every episode)
             if global_gym.record:
                 debug_gym.print_event(env=self.env_name, agent=self, episode=self.episodes, score=self.score,
-                                      avg_score=self.average_score, timesteps=self.timesteps,
-                                      tot_timesteps=self.tot_timesteps, record=True, debug=False)
+                                      avg_score=self.average_score, score_10ep=self.score_10ep,
+                                      timesteps=self.timesteps, tot_timesteps=self.tot_timesteps,
+                                      record=True, debug=False)
 
             # Periodically print current average of reward
             if self.episodes % 10 == 0:
                 debug_gym.print_event(env=self.env_name, agent=self, episode=self.episodes, score=self.score,
-                                      avg_score=self.average_score, timesteps=self.timesteps,
-                                      tot_timesteps=self.tot_timesteps, record=False, debug=True)
+                                      avg_score=self.average_score, score_10ep=self.score_10ep,
+                                      timesteps=self.timesteps, tot_timesteps=self.tot_timesteps,
+                                      record=False, debug=True)
 
             # Problem solved
             if self.average_score >= self.solved_score and len(self.scores) >= 100:  # need reach solved score and at least 100 episodes to terminate
@@ -190,6 +202,8 @@ class AgentGym(object):
         """
             Decentralized Collaborative Learning
         """
+        self.best_agent = False  # reset
+
         # Frequency of communication between both agents
         if not (self.episodes and self.episodes % self.exchange_freq == 0):
             return
@@ -197,8 +211,9 @@ class AgentGym(object):
         # Part I - Find the best agent
         for agent in self.agents:
             if self != agent: # skip myself
-                if self.average_score < agent.average_score or agent.best_agent: # best agent
-                # if self.average_score > agent.average_score or agent.best_agent: # worst agent
+                if self.score_10ep < agent.score_10ep or agent.best_agent: # 10ep WMA metric best agent
+                # if self.average_score < agent.average_score or agent.best_agent: # 100ep metric best agent
+                # if self.average_score > agent.average_score or agent.best_agent: # 100ep metric worst agent
                     self.best_agent = False
                     break
                 else:
@@ -212,6 +227,4 @@ class AgentGym(object):
                         print_color(color=PRINT_RED, msg="episode: {}, agent: {} gives all weights to agent: {}"
                                     .format(self.episodes, self.id, agent.id))
                         agent.brain.model.set_weights(self.brain.model.q_network.get_weights())
-
-            self.best_agent = False # reset
 

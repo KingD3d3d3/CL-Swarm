@@ -36,7 +36,7 @@ header = (
 )
 
 
-def print_event(env, agent, episode, score, avg_score, timesteps, tot_timesteps, record=False, debug=True):
+def print_event(env, agent, episode, score, avg_score, score_10ep, timesteps, tot_timesteps, record=False, debug=True):
     """
         env             : environment/problem to solve
         agent           : agent
@@ -53,6 +53,7 @@ def print_event(env, agent, episode, score, avg_score, timesteps, tot_timesteps,
         "episode: {:5.0f}, ".format(episode) +
         "score: {:4.0f}, ".format(score) +
         "avg_score: {:8.2f}, ".format(avg_score) +
+        "score_10ep: {:8.2f}, ".format(score_10ep) +
         "timesteps: {:4.0f}, ".format(timesteps) +
         "tot_timesteps: {:8.0f}, ".format(tot_timesteps) +
         "training_it: {:8.0f}, ".format(agent.brain.training_it) +

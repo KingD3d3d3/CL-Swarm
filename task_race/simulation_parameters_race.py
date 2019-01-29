@@ -52,6 +52,7 @@ parser.add_argument('--dir_name', help='directory name to load NN files (to run 
 
 # Collaborative Learning
 parser.add_argument('--give_exp', help='CL agent 1 and agent 2 gives experiences to agent 0', default=False, type=Util.str2bool)
+parser.add_argument('--ttr', help='Time-to-reach before agent 1 and agent 2 (RaceCircle Left/Right) stop giving experiences to agent 0 (RaceCombined)', default=2000, type=int)
 
 # Race problem to solve
 parser.add_argument('--cfg', help='game environment and agent\'s hyperparameters config file', required=True)

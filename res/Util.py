@@ -200,3 +200,10 @@ def mean_confidence_interval(data, confidence=0.95):
     m, se = np.mean(a), scipy.stats.sem(a)
     h = se * scipy.stats.t.ppf((1 + confidence) / 2., n-1)
     return m, m-h, m+h
+
+def weighted_average_10(data):
+    w = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.]
+    if len(data) < len(w):
+        return np.average(data, weights=w[:len(data)])
+    else:
+        return np.average(data, weights=w)

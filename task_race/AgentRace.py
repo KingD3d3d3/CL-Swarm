@@ -7,11 +7,13 @@ from task_race.envs.racecombined import RaceCombined
 import sys
 import task_race.debug_race as debug_race
 import task_race.global_race as global_race
+from res.print_colors import *
+
 # ---------------------------------- Agent -----------------------------------------
 
 class AgentRace(object):
     def __init__(self, display=False, id=-1, num_agents=0, config=None, max_ep=1000, env_name='', solved_timesteps=-1,
-                 manual=False, give_exp=False):
+                 manual=False, give_exp=False, ttr=2000):
 
         self.id = id # agent's ID
 
@@ -67,6 +69,9 @@ class AgentRace(object):
         self.best_average = self.env.max_episode_steps
         self.experience = None
 
+        self.ttr = ttr # time to reach to stop sending experiences
+        self.printStopSendingExperiences = False # Flag to be used for printing learning event
+
     def setup(self, training=True, random_agent=False, seed=None):
 
         # Seed for DQN algo
@@ -94,6 +99,8 @@ class AgentRace(object):
         self.best_average = self.env.max_episode_steps
         self.experience = None
 
+        self.printStopSendingExperiences = False # Flag to be used for printing learning event
+
     def update(self):
         """
             Main function of the agent
@@ -119,6 +126,7 @@ class AgentRace(object):
 
             action = self.brain.select_action(self.state)
             observation, reward, done, info = self.env.step(action)
+            # print(" t: {}, reward: {}".format(self.timesteps, reward))
             next_state = self.brain.preprocess(observation)
             self.experience = (self.state, action, reward, next_state, done)
 
@@ -126,8 +134,8 @@ class AgentRace(object):
             self.state = next_state
 
             if self.give_exp:
-                agent0_id = 0
-                self.give_experience(agent0_id)
+                receiver = self.agents[0]
+                self.give_experience(receiver)
 
             self.brain.train()
 
@@ -204,10 +212,15 @@ class AgentRace(object):
             return
 
         # Frequency of communication between agents
-        if self.episodes > 250: # exceed max limit of time to give experiences # TODO make it parameter
+        if self.episodes > self.ttr: # exceed max limit of time to give experiences
+
+            if not self.printStopSendingExperiences: # print "stop sending experiences"
+                print_color(color=PRINT_RED, msg="episode: {}, agent: {} stop sending experiences to agent: {}"
+                            .format(self.episodes, self.id, receiver.id))
+                self.printStopSendingExperiences = True
             return
 
         # Part II - Exchange knowledge
         if self.episode_inited: # currently running
             # print("agent: {} gives experience to agent: {}".format(self.id, self.agents[receiver].id))
-            self.agents[receiver].brain.record(self.experience)  # push experience
+            receiver.brain.record(self.experience)  # push experience
