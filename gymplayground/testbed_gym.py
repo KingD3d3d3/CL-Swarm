@@ -15,10 +15,12 @@ import re
 
 class TestbedGym(object):
     def __init__(self, sim_param=None):
-
+        """
+            :param sim_param: simulation parameters from command-line arguments
+        """
         self.sim_param = sim_param
 
-        # Load config from file # assume path is cfg/<env>/<env>_<agent type>.  e.g. 'config/cartpole/cartpole_dqn'
+        # Load environment and agent config from file # assume path is cfg/<env>/<env>_<agent type>.  e.g. 'config/cartpole/cartpole_dqn'
         sys.path.append('config/' + sim_param.cfg.split('_')[0])
         config = importlib.import_module(sim_param.cfg)
         env = config.environment['env_name']
@@ -28,16 +30,14 @@ class TestbedGym(object):
         print("#### CL Testbed Gym ####")
         print("########################")
         print("Environment: {}\n".format(env))
+
         # -------------------- Simulation Parameters ----------------------
-
-        self.render = sim_param.render
-
-        self.num_agents = sim_param.num_agents
-
-        self.training = sim_param.training
-        self.random_agent = sim_param.random_agent
-        self.exploration = sim_param.exploration
-        self.collect_experiences = sim_param.collect_experiences
+        self.render = sim_param.render # render or not the visualization
+        self.num_agents = sim_param.num_agents # number of agents in the simulation
+        self.training = sim_param.training # decide whether to train agent or not
+        self.random_agent = sim_param.random_agent # random_agent: yes -> agent performs random action, else choose action
+        self.exploration = sim_param.exploration # agent has exploration phase
+        self.collect_experiences = sim_param.collect_experiences # agent collect experiences each timestep
 
         # Max number of episodes
         if sim_param.max_ep:
@@ -95,8 +95,7 @@ class TestbedGym(object):
         # Print event only in debug mode
         global_gym.debug = sim_param.debug
 
-        # Simulation running flag
-        self.running = True
+        self.running = True # simulation running flag
         self.sim_count = 0 # count number of simulation
 
         # Create the agents
@@ -108,20 +107,23 @@ class TestbedGym(object):
         for agent in self.agents:
             agent.agents = self.agents # list of agents
 
-        self.given_seeds = sim_param.seed
+        self.given_seeds = sim_param.seed # give a seed directly
         print('seeds list', self.given_seeds)
-        self.save_seed = sim_param.save_seed
-        self.max_sim = sim_param.multi_sim
+        self.save_seed = sim_param.save_seed # save the used seeds in a txt file
 
-        self.save_record_rpu = sim_param.save_record_rpu
+        self.max_sim = sim_param.multi_sim # max number of simulations
+
+        self.save_record_rpu = sim_param.save_record_rpu # record simulation logs when using Run in Parallel Universe (RPU) script
         self.seed_list = None # used in RPU
-        self.check_agents_nn_saved = None
+        self.check_agents_nn_saved = None # check at an episode if the agents have save their neural network
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
-            Setup simulation
+            Setup current simulation
+            :param sim_id: id of the current simulation
+            :param file_to_load: NN file or experiences file to load directly
         """
-        global_gym.record = self.sim_param.record
+        global_gym.record = self.sim_param.record # record simulation log
 
         # Set ID of simulation
         global_gym.sim_id = sim_id
@@ -137,7 +139,7 @@ class TestbedGym(object):
         self.running = True
         self.check_agents_nn_saved = [False] * self.num_agents
 
-        # Record simulation
+        # Record simulation logs
         self.simlogs_dir = self.sim_dir + 'sim_logs/'
         if global_gym.record:
             debug_gym.xprint(msg="Start recording".format(sim_id))
@@ -149,7 +151,7 @@ class TestbedGym(object):
             global_gym.simlogs_writer = csv.writer(global_gym.simlogs_fo)
             global_gym.simlogs_writer.writerow(debug_gym.header) # write header of the record file
 
-        # RPU save record data
+        # RPU save simulation logs
         if self.save_record_rpu:
             global_gym.record = True
 
@@ -165,12 +167,12 @@ class TestbedGym(object):
             global_gym.simlogs_writer = csv.writer(global_gym.simlogs_fo)
             global_gym.simlogs_writer.writerow(debug_gym.header)  # write header of the record file
 
-        # Brain directory
+        # Create brain directory (NN files and experiences files)
         if self.save_model or self.save_mem or self.save_model_freq_ep or self.save_mem_freq_ep:
             self.brain_dir = self.sim_dir + 'brain_files/' + 'sim' + str(global_gym.sim_id) + '/'
             Util.create_dir(self.brain_dir)
 
-        # Seed directory
+        # Seed directory (seeds for randomstate)
         if self.save_seed and global_gym.record:
             self.seed_dir = self.sim_dir + 'seeds/'
             Util.create_dir(self.seed_dir)  # create the directory
@@ -182,7 +184,7 @@ class TestbedGym(object):
 
     def setup_agents(self):
         """
-            Setup agents
+            Setup agents of the simulation
         """
         debug_gym.xprint(msg="Setup agents")
 
@@ -192,6 +194,7 @@ class TestbedGym(object):
 
             # Seed
             if self.given_seeds and len(self.given_seeds) >= self.max_sim:
+                # Give seeds directly
                 seed = self.given_seeds[global_gym.sim_id] + agent.id
                 self.seed_list.append(seed)
 
@@ -203,6 +206,7 @@ class TestbedGym(object):
                     file.write("{}\n".format(seed))
                     file.close()
             else:
+                # Random seed
                 np.random.seed(None)
                 seed = np.random.randint(0, 2 ** 32 - 1)
                 self.seed_list.append(seed)
@@ -215,7 +219,7 @@ class TestbedGym(object):
                     file.write("{}\n".format(seed))
                     file.close()
 
-            # Setup agent's and brain
+            # Setup agent's
             agent.setup(training=self.training, random_agent=self.random_agent, seed=seed)
 
             if not self.exploration:
@@ -268,18 +272,16 @@ class TestbedGym(object):
                 agent.brain.stop_collect_experiences()
 
             # Collaborative Learning
-            if self.cl_allweights:
+            if self.cl_allweights: # send all weights
                 agent.cl_allweights = self.cl_allweights
-            if self.cl_exp:
+            if self.cl_exp: # send experience
                 agent.cl_exp = self.cl_exp
-            if self.exchange_freq:
+            if self.exchange_freq: # exchange frequency
                 agent.exchange_freq = self.exchange_freq
 
     def run_simulation(self):
         """"
-            Main
-            Game
-            Loop
+            Main game loop
         """
         while self.running:
 
@@ -293,8 +295,6 @@ class TestbedGym(object):
             for agent in self.agents:
                 agent.update()
 
-            # Step counter
-            # Global.sim_timesteps += 1
             Global.timesteps += 1
 
     def simulation_logic(self):
@@ -359,7 +359,8 @@ class TestbedGym(object):
 
     def save_summary(self, suffix=''):
         """
-            Simulation summary (completion time, number of simulations, etc)
+            Save simulation summary (completion time, number of simulations, etc) in text file
+            :param suffix: add suffix to the saved text file
         """
         timestr = time.strftime('%Y%m%d_%H%M%S')
         file = open(self.sim_dir + suffix + 'summary_' + timestr + '.txt', 'w')
@@ -382,7 +383,6 @@ class TestbedGym(object):
         file.write("Hyperparameters: {}\n".format(self.problem_config.hyperparams))
 
         file.close()
-
 
 if __name__ == '__main__':
 

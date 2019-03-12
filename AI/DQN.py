@@ -14,7 +14,6 @@ import errno
 import Global
 import res.Util as Util
 from res.print_colors import *
-import keras.callbacks
 
 # DEFAULT HYPERPARAMETERS
 H1 = 64  # number of neurons in the 1st hidden layer
@@ -29,12 +28,12 @@ EPSILON_END = 0.01  # Final value of epsilon in epsilon-greedy during training
 EXPLORATION_STEPS = 10000  # 10000  # 1000  # Number of steps over which initial value of epsilon is reduced to its final value for training
 EPSILON_TEST = 0  # epsilon value during testing after training is done
 
-class LossHistory(keras.callbacks.Callback):
-    def on_train_begin(self, logs=None):
-        self.losses = []
-
-    def on_batch_end(self, batch, logs=None):
-        self.losses.append(logs.get('loss'))
+# class LossHistory(keras.callbacks.Callback):
+#     def on_train_begin(self, logs=None):
+#         self.losses = []
+#
+#     def on_batch_end(self, batch, logs=None):
+#         self.losses.append(logs.get('loss'))
 
 # -------------------- MODEL -------------------------
 
@@ -46,17 +45,23 @@ class Model(object):
             :param layers: list of ints defining the size of each layer used in the model
             :param lr: learning rate
         """
-        self.history = LossHistory()
-
         self.q_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
         self.target_network = self.build_model(input_size=input_size, output_size=output_size, layers=layers, lr=lr)
 
-        self.dummy_processing(input_size, output_size)  # prevent training freeze
+        self.dummy_processing(input_size, output_size)  # dummy processing at init to prevent training freeze in runtime
 
         self.num_layers = len(layers)
 
     @staticmethod
     def build_model(input_size, output_size, layers, lr):
+        """
+            Build the neural network (NN) model
+            :param input_size: size of the input layer
+            :param output_size: size of the output layer
+            :param layers: list of ints defining the size of each layer used in the model
+            :param lr: learning rate
+            :return: the NN model
+        """
         model = Sequential()  # Sequential() creates the foundation of the layers.
 
         model.add(Dense(layers[0], activation='relu', input_dim=input_size))  # add input to 1st hidden layer
@@ -69,19 +74,25 @@ class Model(object):
 
         return model
 
-    def train(self, x, y, nb_epochs=1, verbose=0, batch_len=1):
+    def train(self, x, y, nb_epochs=1, verbose=0, batch_len=BATCH_SIZE):
         """
-            Fit the model
+            Fit the model using batch update
+            :param x: array of training data
+            :param y: array of target data
+            :param nb_epochs: number of epochs to train the model
+            :param verbose: verbosity mode. 0 = silent, 1 = progress bar, 2 = one line per epoch.
+            :param batch_len: number of samples per gradient update
         """
         # self.q_network.fit(x, y, batch_size=batch_len, nb_epoch=nb_epochs, verbose=verbose)  # keras 1.2.2
         self.q_network.fit(x, y, batch_size=batch_len, epochs=nb_epochs, verbose=verbose) # keras 2
-                           # callbacks=[self.history])  # keras 2
-        # TODO : print loss
-        # print('loss', self.history.losses)
 
     def predict(self, state, batch_len=1, target=False):
         """
-            Predict q-values given an input state
+            Predict q-values from NN given input state
+            :param state: array of input state
+            :param batch_len: number of samples to predict
+            :param target: if yes predict from target-network, otherwise Q-network
+            :return: Q-values
         """
         if target:
             # Predict from Target-network
@@ -92,7 +103,9 @@ class Model(object):
 
     def dummy_processing(self, input_size, output_size):
         """
-            Dummy Neural Network Processing to avoid the freeze when training starts
+            Dummy neural network processing to avoid the freeze when the training starts
+            :param input_size: size of the input layer
+            :param output_size: size of the output layer
         """
         zeros_state = np.zeros([1, input_size])
         zeros_x = np.zeros((1, input_size))
@@ -104,36 +117,45 @@ class Model(object):
 
     def update_target_network(self):
         """
-            Update Target-Network : copy Q-Network weights into Target-Network
+            Copy the Q-Network weights into the target-Network
         """
         self.target_network.set_weights(self.q_network.get_weights())
 
     def set_weights(self, weights):
+        """
+            Set given weights into the Q-network and target-network
+            :param weights: weights use for replace
+        """
         self.q_network.set_weights(weights)
         self.target_network.set_weights(weights)
 
     def set_weights_by_layer(self, weights, layer_num):
         """
-            Set 1 layer weights of Q-Network and Target-Network
+            Set given weights into the specified layer index of Q-network and target-network
+            :param weights: weights use for replace
+            :param layer_num: layer index
         """
         self.q_network.layers[layer_num].set_weights(weights)
         self.target_network.layers[layer_num].set_weights(weights)
 
     def set_h1_weights(self, weights):
         """
-            Set h1 weights of Q-Network and Target-Network
+            Set first hidden layer weights of Q-Network and target-Network
+            :param weights: weights use for replace
         """
         self.set_weights_by_layer(weights, 0)
 
     def set_h2_weights(self, weights):
         """
-            Set h2 weights of Q-Network and Target-Network
+            Set second hidden layer weights of Q-Network and target-Network
+            :param weights: weights use for replace
         """
         self.set_weights_by_layer(weights, 1)
 
     def set_out_weights(self, weights):
         """
-            Set output weights of Q-Network and Target-Network
+            Set output layer weights of Q-Network and target-Network
+            :param weights: weights use for replace
         """
         if self.num_layers == 2:
             self.set_weights_by_layer(weights, 2)
@@ -144,21 +166,27 @@ class Model(object):
 
     def set_h1h2_weights(self, weights_h1, weights_h2):
         """
-            Set h1 h2 weights of Q-Network and Target-Network
+            Set first and second hidden layer weights of Q-Network and target-Network
+            :param weights_h1: first hidden layer weights
+            :param weights_h2: second hidden layer weights
         """
         self.set_h1_weights(weights_h1)
         self.set_h2_weights(weights_h2)
 
     def set_h2out_weights(self, weights_h2, weights_output):
         """
-            Set h2 output weights of Q-Network and Target-Network
+            Set second hidden layer and output weights of Q-Network and target-Network
+            :param weights_h2: second hidden layer weights
+            :param weights_output: output layer weights
         """
         self.set_h2_weights(weights_h2)
         self.set_out_weights(weights_output)
 
     def set_h1out_weights(self, weights_h1, weights_output):
         """
-            Set h1 output weights of Q-Network and Target-Network
+            Set first hidden layer and output weights of Q-Network and target-Network
+            :param weights_h1: first hidden layer weights
+            :param weights_output: output layer weights
         """
         self.set_h1_weights(weights_h1)
         self.set_out_weights(weights_output)
@@ -184,7 +212,11 @@ class Model(object):
 class Memory(object):  # sample stored as (s, a, r, s_, done)
 
     def __init__(self, capacity, seed=None):
-        self.capacity = capacity  # max capacity of container
+        """
+            :param capacity: maximum capacity of the memory
+            :param seed: seed for random
+        """
+        self.capacity = capacity
         self.samples = deque(maxlen=capacity)  # container of experiences (queue)
 
         if seed is not None:
@@ -195,47 +227,67 @@ class Memory(object):  # sample stored as (s, a, r, s_, done)
     def push(self, sample):
         """
             Append a new sample to the memory, remove the oldest sample if memory was full
+            :param sample: sample to add
         """
         self.samples.append(sample)  # add only one event
 
     def push_multi(self, samples):
         """
-            Samples : a list of samples
-            Receive samples and append them to the memory
+            Append samples to the memory
+            :param samples: list of samples
         """
         for sp in samples:
             self.push(sp)
 
     def get(self, n):
         """
-            Get n samples randomly from the memory
+            Get n samples randomly (uniform) from the memory
+            :param n: number of samples to draw
+            :return: the samples
         """
-        # n = min(n, len(self.samples))
         return random.sample(self.samples, n)
 
     def is_full(self):
         """
-            True if the container is full else False
+            :return: true if the container is full, otherwise false
         """
         return len(self.samples) >= self.capacity
 
     def size(self):
         """
-            Return current size of the container
+            :return: current size of the container
         """
         return len(self.samples)
-
 
 # -------------------- DQN AGENT -----------------------
 
 class DQN(object):
-    def __init__(self, input_size, action_size, id=-1, training=True, random_agent=False, ratio_train=1, brain_file="",
+    def __init__(self, input_size, action_size, id=-1, training=True, random_agent=False,
                  layers=(H1, H2), mem_capacity=MEMORY_CAPACITY, batch_size=BATCH_SIZE, gamma=GAMMA, lr=LEARNING_RATE,
                  update_target_steps=UPDATE_TARGET_STEPS, eps_start=EPSILON_START, eps_end=EPSILON_END,
                  eps_test=EPSILON_TEST,
                  exploration_steps=EXPLORATION_STEPS, use_double_dqn=True, use_prioritized_experience_replay=False,
                  seed=None):
-
+        """
+            :param input_size: number of inputs
+            :param action_size: number of actions
+            :param id: id
+            :param training: decide whether agent trains or not
+            :param random_agent: yes -> agent performs random action, else choose action
+            :param layers: list of ints defining the size of each layer used in the model
+            :param mem_capacity: maximum memory capacity
+            :param batch_size: batch size for gradient update
+            :param gamma: discount factor
+            :param lr: learning rate
+            :param update_target_steps: number of timesteps before updating target-network
+            :param eps_start: initial value of epsilon
+            :param eps_end: final value of epsilon
+            :param eps_test: epsilon value during testing mode (training off)
+            :param exploration_steps: number of exploration steps
+            :param use_double_dqn: yes to use double-DQN, else standard DQN (with target-network)
+            :param use_prioritized_experience_replay: TODO implement Prioritized experience replay
+            :param seed: seed for random state
+        """
         if seed is not None:
             np.random.seed(seed)
         else:
@@ -274,14 +326,10 @@ class DQN(object):
         # Create the memory Experience Replay
         self.memory = Memory(capacity=mem_capacity, seed=seed)
 
-        # File to be used when saving the model
-        self.model_file = brain_file
-
         # Count the number of training iterations
         self.training_it = 0
 
         # Number of iterations for learning update
-        self.ratio_train = ratio_train  # Default 1 means the agent learns every timestep
         self.update_counter = 0
 
         # Flag to be used for printing learning event
@@ -303,7 +351,6 @@ class DQN(object):
         self.summary_config()
 
     def summary_config(self):
-
         print("_________________________________________________________________")
         print("*** Summary of DQN agent config ***\n")
 
@@ -311,7 +358,6 @@ class DQN(object):
         print("Action: {}".format(self.action_size))
         print("Training: {}".format(self.training))
         print("Random agent: {}".format(self.random_agent))
-        print("Ratio update: {}".format(self.ratio_train))
         print("Seed: {}".format(self.seed))
 
         print("\n----------------")
@@ -337,11 +383,12 @@ class DQN(object):
 
     def preprocess(self, observation):
         """
-            Preprocess an observation
-            Add 1 dimension for batching
+            Preprocess an observation: add 1 dimension for batch
+            :param observation: observation to preprocess
+            :return: processed observation
         """
-        # Input shape in Keras : (batch_size, input_dim)
-        a = np.reshape(observation, [1, self.input_size])  # need to add 1 dimension when batching
+        # Input shape in Keras : (batch dim, input_dim)
+        a = np.reshape(observation, [1, self.input_size])  # need to add 1 dimension for batch
         a32 = a.astype(np.float32)
         return a32
 
@@ -350,6 +397,8 @@ class DQN(object):
             * Epsilon greedy action-selection policy
             * Random action when random agent
             * Most of the time select best action when testing
+            :param state: input state
+            :return: returned action for action-selection policy
         """
         # Random agent
         if self.random_agent:
@@ -367,6 +416,7 @@ class DQN(object):
     def record(self, sample):
         """
             Add sample to memory
+            :param sample: sample to add
         """
         if self.collect_experiences:  # self.training
             # self.memory.push(sample)
@@ -375,7 +425,7 @@ class DQN(object):
 
     def train(self):
         """
-            Main training function of DQN agent
+            Overall training function of DQN agent
         """
         # Training
         if self.training and len(
@@ -392,7 +442,7 @@ class DQN(object):
 
     def replay(self):
         """
-            DQN algorithm
+            DQN algorithm (or Double-DQN)
             Sample minibatch from memory and perform gradient descent
         """
         # If not enough sample in memory
@@ -507,8 +557,10 @@ class DQN(object):
 
     def save_model(self, dir, suffix=''):
         """
-            Save model (neural network, optimizer, loss, etc ..) in file
+            Save model (neural network, optimizer, loss, etc ..) in a file
             Also create the /brain_files/{sim_id}/ directory if it doesn't exist
+            :param dir: directory to save the file
+            :param suffix: suffix to the filename
         """
         model_file = dir
         model_file += Util.get_time_string()  # timestring
@@ -534,6 +586,8 @@ class DQN(object):
         """
             Save agent's experiences in csv file
             Also create the /brain_files/{sim_id}/ directory if it doesn't exist
+            :param dir: directory to save the file
+            :param suffix: suffix to the filename
         """
         memory_file = dir
         memory_file += Util.get_time_string()  # timestring
@@ -575,36 +629,31 @@ class DQN(object):
             writer.writerow(experience)  # write experience
 
         fo.close()  # close file properly
-        pass
 
     def load_model(self, model_file):
         """
-            Load model from given file and set Q-Network, Target-Network
+            Load model from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load full model (nn and optimizer)" + " <- file: {}".format(model_file))
 
         self.model.q_network = load_model(model_file)
         self.model.target_network_network = load_model(model_file)
 
-        # print_color(color=PRINT_RED, msg="Load model not working anymore !!??")
-
     def load_full_weights(self, model_file):
         """
-            Load weights from given file and set Q-Network, Target-Network
+            Load weights from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load all weights" + " <- file: {}".format(model_file))
-
-        # directory = "./simulation_data/FINAL/Normal/normal_30000it_100sim_20180824/brain_files/1/"
-        # model_file = directory + "20180824_102251_784404_28599tmstp_28500it_normal_model.h5"  # neural network model file
 
         self.model.q_network.load_weights(model_file)
         self.model.target_network.load_weights(model_file)
 
-        # print('master', self.model.q_network.get_weights())
-
     def load_h1_weights(self, model_file):
         """
-            Load first hidden layer weights from given file and set Q-Network, Target-Network
+            Load first hidden layer weights from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load 1st hidden layer weights" + " <- file: {}".format(model_file))
 
@@ -623,7 +672,8 @@ class DQN(object):
 
     def load_h2_weights(self, model_file):
         """
-            Load second hidden layer weights from given file and set Q-Network, Target-Network
+            Load second hidden layer weights from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load 2nd hidden layer weights" + " <- file: {}".format(model_file))
 
@@ -642,7 +692,8 @@ class DQN(object):
 
     def load_out_weights(self, model_file):
         """
-            Load output layer weights from given file and set Q-Network, Target-Network
+            Load output layer weights from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load output layer weights" + " <- file: {}".format(model_file))
 
@@ -660,7 +711,6 @@ class DQN(object):
         elif self.num_layers == 1:
             weights_output = model_copy.layers[1].get_weights()
         else:
-            weights_output = None
             raise NotImplementedError()
 
         # Set weights
@@ -677,7 +727,8 @@ class DQN(object):
 
     def load_h1h2_weights(self, model_file):
         """
-            Load first and second hidden layers weights from given file and set Q-Network, Target-Network
+            Load first and second hidden layers weights from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load 1st and 2nd hidden layer weights" + " <- file: {}".format(model_file))
 
@@ -704,7 +755,8 @@ class DQN(object):
 
     def load_h2out_weights(self, model_file):
         """
-            Load first and second hidden layers weights from given file and set Q-Network, Target-Network
+            Load first and second hidden layers weights from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load h2 and output weights" + " <- file: {}".format(model_file))
 
@@ -723,7 +775,8 @@ class DQN(object):
 
     def load_h1out_weights(self, model_file):
         """
-            Load first hidden layers and output layers weights from given file and set Q-Network, Target-Network
+            Load first hidden layers and output layers weights from given file and set Q-Network and target-Network
+            :param model_file: model file to load
         """
         self.dqn_print(msg="Load h1 and output weights" + " <- file: {}".format(model_file))
 
@@ -740,17 +793,16 @@ class DQN(object):
         # Set weights
         self.model.set_h1out_weights(weights_h1, weights_output)
 
-
     def load_mem(self, memory_file, size=-1):
         """
-            Load memory from given file
+            Load experiences from given memory file
+            :param memory_file: memory file to load (CSV format)
+            :param size: number of experiences to load
         """
-
         experiences = []
         data = pd.read_csv(memory_file)
 
         if size == -1:
-            # n_exp = self.mem_capacity
             n_exp = data.shape[0]
             self.dqn_print(msg="Load memory: {} exp".format(n_exp) + " <- file: {}".format(memory_file))
         else:
@@ -789,7 +841,9 @@ class DQN(object):
 
     def load_mem_q_values(self, memory_file, size=-1):
         """
-            Load memory from given file
+            Load experiences with Q-values estimates from given memory file
+            :param memory_file: memory file to load (CSV format)
+            :param size: number of experiences to load
         """
         self.dqn_print(msg="Load memory and Q-values: {} exp".format(size) + " <- file: {}".format(memory_file))
 
@@ -810,7 +864,6 @@ class DQN(object):
             """
                 Default: Load full memory
             """
-            size = self.mem_capacity
             for i, row in data.iterrows():
                 exp = (row['state'].astype(np.float32), row['action'], row['reward'],
                        row['next_state'].astype(np.float32), row['done'],
@@ -830,8 +883,11 @@ class DQN(object):
         # Add experiences to memory
         self.memory.push_multi(experiences)
 
-
     def dqn_print(self, msg=""):
+        """
+            Custom logger in DQN class
+            :param msg: message to print
+        """
         print_color(color=PRINT_CYAN,
                     msg="agent: {:4.0f}, ".format(self.id) +
                         "{: <35s}, ".format(msg) +

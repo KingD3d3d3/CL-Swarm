@@ -18,8 +18,8 @@ def evaluate(t_bed):
     print('evaluate environment {}'.format(t_bed.env_name))
     if t_bed.env_name == 'LunarLander-v2':
         # Average score over the last 100 episodes
-        score = t_bed.agents[0].scores
-        avg_score = sum(score) / len(score)
+        scores = t_bed.agents[0].scores_100ep
+        avg_score = sum(scores) / len(scores)
         print('average score {}'.format(avg_score))
 
         # Success count
@@ -31,26 +31,26 @@ def evaluate(t_bed):
 
     elif t_bed.env_name == 'MountainCar-v0':
         # Average score over the last 100 episodes
-        score = t_bed.agents[0].scores
-        avg_score = sum(score) / len(score)
+        scores = t_bed.agents[0].scores_100ep
+        avg_score = sum(scores) / len(scores)
         print('average score {}'.format(avg_score))
 
         # Success count
         threshold = -110
-        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        success = sum(i > threshold for i in t_bed.agents[0].scores_100ep)
         print('success: {}'.format(success))
 
         return avg_score, success
 
     elif t_bed.env_name == 'CartPole-v0':
         # Average score over the last 100 episodes
-        score = t_bed.agents[0].scores
-        avg_score = sum(score) / len(score)
+        scores = t_bed.agents[0].scores_100ep
+        avg_score = sum(scores) / len(scores)
         print('average score {}'.format(avg_score))
 
         # Success count
         threshold = 195
-        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        success = sum(i > threshold for i in t_bed.agents[0].scores_100ep)
         print('success: {}'.format(success))
 
         return avg_score, success

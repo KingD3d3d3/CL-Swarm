@@ -10,6 +10,11 @@ PRINT_BOLD = "\033[;1m"
 PRINT_REVERSE = "\033[;7m"
 
 def print_color(color=PRINT_BLUE, msg=""):
+    """
+        Print a message in the console with the specified color
+        :param color: color to print
+        :param msg: text to print
+    """
     sys.stdout.write(color)
     print(msg)
     sys.stdout.write(PRINT_RESET)

@@ -6,12 +6,14 @@ import time
 def evaluate(t_bed):
     """
         Evaluation method based on the environment of the testbed
+        :param t_bed: testbed simulation object
+        :return:
     """
     print('evaluate environment {}'.format(t_bed.env_name))
     if t_bed.env_name == 'LunarLander-v2':
         # Average score over the last 100 episodes
-        score = t_bed.agents[0].scores
-        avg_score = sum(score) / len(score)
+        scores = t_bed.agents[0].scores_100ep
+        avg_score = sum(scores) / len(scores)
         print('average score {}'.format(avg_score))
         msg = 'average score: {}'.format(avg_score)
 
@@ -25,8 +27,8 @@ def evaluate(t_bed):
 
     elif t_bed.env_name == 'MountainCar-v0': # average timesteps over the last 100 episodes
         # Average score over the last 100 episodes
-        score = t_bed.agents[0].scores
-        avg_score = sum(score) / len(score)
+        scores = t_bed.agents[0].scores_100ep
+        avg_score = sum(scores) / len(scores)
         print('average score {}'.format(avg_score))
         msg = 'average score: {}'.format(avg_score)
 
@@ -36,11 +38,11 @@ def evaluate(t_bed):
         print('success: {}'.format(success))
         msg += ', success: {}'.format(success)
 
-        return msg, score
+        return msg, success
     elif t_bed.env_name == 'CartPole-v0':
         # Average score over the last 100 episodes
-        score = t_bed.agents[0].scores
-        avg_score = sum(score) / len(score)
+        scores = t_bed.agents[0].scores_100ep
+        avg_score = sum(scores) / len(scores)
         print('average score {}'.format(avg_score))
         msg = 'average score: {}'.format(avg_score)
 
@@ -50,7 +52,7 @@ def evaluate(t_bed):
         print('success: {}'.format(success))
         msg += ', success: {}'.format(success)
 
-        return msg, score
+        return msg, success
     else:
         return None
 

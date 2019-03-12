@@ -3,7 +3,7 @@ import argparse
 import time
 import res.Util as Util
 
-# -------------------- Simulation Parameters ----------------------
+# -------------------- Simulation Parameters (command line arguments) ----------------------
 
 parser = argparse.ArgumentParser(description='Testbed Gym Playground')
 parser.add_argument('--render', help='render the simulation', default=True, type=Util.str2bool)
@@ -42,7 +42,6 @@ parser.add_argument('--collaboration', help='Collaborative Learning or not', def
 parser.add_argument('--cl_allweights', help='CL param exchange with all weights', default=False, type=Util.str2bool)
 parser.add_argument('--cl_exp', help='CL experience exchange', default=0, type=int)
 parser.add_argument('--exchange_freq', help='frequencies of episodes for knowledge exchange between agents', default=0, type=int)
-# parser.add_argument('--sync_env_seed', help='Synchronize environment seed at each episode', default=False, type=Util.str2bool)
 
 # Seed
 parser.add_argument('--seed', help='seed tuples', default='None', type=Util.str_to_intlist)
@@ -64,7 +63,8 @@ args = parser.parse_args()
 
 def sim_suffix():
     """
-        Simulation suffix name given simulation parameters
+        Simulation suffix (for directory name, file name) given the simulation parameters
+        :return: suffix
     """
     # Suffix
     suffix = ''
@@ -114,6 +114,7 @@ def sim_suffix():
 def sim_dir():
     """
         Simulation directory name given simulation parameters
+        :return: directory name
     """
     multi_sim = args.multi_sim
 

@@ -1,3 +1,6 @@
+"""
+RGB values of different colors
+"""
 
 # Basic colors
 Black = (0, 0, 0)

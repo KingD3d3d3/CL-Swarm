@@ -19,6 +19,7 @@
           <option value="E301" />
           <option value="E701" />
           <option value="E127" />
+          <option value="E741" />
         </list>
       </option>
     </inspection_tool>
