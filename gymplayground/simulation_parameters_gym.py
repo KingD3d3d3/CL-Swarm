@@ -50,7 +50,7 @@ parser.add_argument('--save_record_rpu', help='save record simulation in run par
 
 # Saving
 parser.add_argument('--save_model_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)
-parser.add_argument('--save_mem_freq_ep', help='save memory every defined episodes', default=0, type=int)
+parser.add_argument('--save_mem_freq_ep', help='save memory every defined episodes', default=0, type=int) # TODO : not implemented, edit: not sure if really useful
 
 parser.add_argument('--suffix', help='custom suffix to add', default='')
 parser.add_argument('--dir_name', help='directory name to load NN files (to run in parallel universe)', default='')

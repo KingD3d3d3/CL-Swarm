@@ -67,7 +67,7 @@ class TestbedGym(object):
         self.save_model = sim_param.save_model
         self.save_mem = sim_param.save_mem
         self.save_model_freq_ep = sim_param.save_model_freq_ep
-        self.save_mem_freq_ep = sim_param.save_mem_freq_ep
+        self.save_mem_freq_ep = sim_param.save_mem_freq_ep # TODO : not implemented, edit: not sure if really useful
 
         # Collaborative Learning
         self.collaboration = sim_param.collaboration

@@ -291,13 +291,6 @@ class DQN(object):
         """
         if seed is not None:
             np.random.seed(seed)
-
-            # TODO : still get different result, for now abandon feature of seed to get reproducible results
-            # Seed Tensorflow's internal random generator
-            # if K.backend() == 'tensorflow':
-            #     from tensorflow import set_random_seed
-            #     set_random_seed(seed)
-
         else:
             np.random.seed()
         self.seed = seed
