@@ -2,6 +2,7 @@ import Global
 from gymplayground.testbed_gym import TestbedGym
 import gymplayground.simulation_parameters_gym as sim_param_gym
 import time
+import res.Util as Util
 
 def evaluate(t_bed):
     """
@@ -13,46 +14,45 @@ def evaluate(t_bed):
     if t_bed.env_name == 'LunarLander-v2':
         # Average score over the last 100 episodes
         scores = t_bed.agents[0].scores_100ep
-        avg_score = sum(scores) / len(scores)
-        print('average score {}'.format(avg_score))
-        msg = 'average score: {}'.format(avg_score)
+        mean, low95, high95 = Util.mean_confidence_interval(scores)
+        print('average score {} ({}, {})'.format(mean, low95, high95))
+        msg = 'average score: {} ({}, {})'.format(mean, low95, high95)
 
         # Success count
         success = t_bed.agents[0].env.env.sucessful_landing_count  # number of successful landing (between the 2 flags)
         t_bed.agents[0].env.env.sucessful_landing_count = 0  # reset successful landing counter
         print('success: {}'.format(success))
         msg += ', success: {}'.format(success)
-
-        return msg, success
+        return msg
 
     elif t_bed.env_name == 'MountainCar-v0': # average timesteps over the last 100 episodes
         # Average score over the last 100 episodes
         scores = t_bed.agents[0].scores_100ep
-        avg_score = sum(scores) / len(scores)
-        print('average score {}'.format(avg_score))
-        msg = 'average score: {}'.format(avg_score)
+        mean, low95, high95 = Util.mean_confidence_interval(scores)
+        print('average score {} ({}, {})'.format(mean, low95, high95))
+        msg = 'average score: {} ({}, {})'.format(mean, low95, high95)
 
         # Success count
         threshold = -110
-        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        success = sum(i > threshold for i in scores)
         print('success: {}'.format(success))
         msg += ', success: {}'.format(success)
+        return msg
 
-        return msg, success
     elif t_bed.env_name == 'CartPole-v0':
         # Average score over the last 100 episodes
         scores = t_bed.agents[0].scores_100ep
-        avg_score = sum(scores) / len(scores)
-        print('average score {}'.format(avg_score))
-        msg = 'average score: {}'.format(avg_score)
+        mean, low95, high95 = Util.mean_confidence_interval(scores)
+        print('average score {} ({}, {})'.format(mean, low95, high95))
+        msg = 'average score: {} ({}, {})'.format(mean, low95, high95)
 
         # Success count
         threshold = 195
-        success = sum(i > threshold for i in t_bed.agents[0].scores)
+        success = sum(i > threshold for i in scores)
         print('success: {}'.format(success))
         msg += ', success: {}'.format(success)
+        return msg
 
-        return msg, success
     else:
         return None
 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     testbed.end_simulation()
 
     # Evaluation
-    message, evalu = evaluate(testbed)
+    message = evaluate(testbed)
 
     # Eval file
     timestr = time.strftime('%Y%m%d_%H%M%S')

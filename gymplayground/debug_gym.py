@@ -40,7 +40,7 @@ def print_event(env, agent, episode, score, avg_score_100ep, avg_score_10ep, tim
         "episode: {:5.0f}, ".format(episode) +
         "score: {:4.0f}, ".format(score) +
         "avg_score: {:8.2f}, ".format(avg_score_100ep) +
-        "score_10ep: {:8.2f}, ".format(avg_score_10ep) +
+        "avg_score_10ep: {:8.2f}, ".format(avg_score_10ep) +
         "timesteps: {:4.0f}, ".format(timesteps) +
         "tot_timesteps: {:8.0f}, ".format(tot_timesteps) +
         "training_it: {:8.0f}, ".format(agent.brain.training_it) +
