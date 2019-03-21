@@ -21,8 +21,7 @@ header = (
 
 def print_event(env, agent, episode, score, avg_score_100ep, avg_score_10ep, timesteps, tot_timesteps, record=False, debug=True):
     """
-
-        :param env: environment (also called problem)
+        :param env: environment
         :param agent: agent calling the function
         :param episode: current episode
         :param score: score of the episode
@@ -43,10 +42,10 @@ def print_event(env, agent, episode, score, avg_score_100ep, avg_score_10ep, tim
         "avg_score_10ep: {:8.2f}, ".format(avg_score_10ep) +
         "timesteps: {:4.0f}, ".format(timesteps) +
         "tot_timesteps: {:8.0f}, ".format(tot_timesteps) +
-        "training_it: {:8.0f}, ".format(agent.brain.training_it) +
-        "sim_t: {}, ".format(Global.get_sim_time()) +
-        "global_t: {}, ".format(Global.get_time()) +
-        "world_t: {}".format(Util.get_time_string2())
+        "training_it: {:8.0f}, ".format(agent.brain.training_it) + # number of training iterations passed since beginning of simulation
+        "sim_t: {}, ".format(Global.get_sim_time()) + # time passed since beginning of simulation
+        "global_t: {}, ".format(Global.get_time()) + # time passed since beginning of program
+        "world_t: {}".format(Util.get_time_string2()) # current time in real life
     )
 
     sim_t = Global.get_sim_time_in_seconds()

@@ -18,16 +18,18 @@ import re
 class TestbedRace(object):
 
     def __init__(self, sim_param=None):
-
+        """
+            :param sim_param: simulation parameters from command-line arguments
+        """
         self.sim_param = sim_param
 
-        # Load config from file # assume path is cfg/<env>/<env>_<agent type>.  e.g. 'config/cartpole/cartpole_dqn'
+        # Load config from file # assume path is cfg/<env>/<env>_<agent type>.  e.g. 'config/racecircleleft/racecircleleft_dqn'
         sys.path.append('config/' + sim_param.cfg.split('_')[0])
         config = importlib.import_module(sim_param.cfg)
         env = config.environment['env_name']
         self.problem_config = config
 
-        # 2nd agent
+        # 2nd agent (optional, depends on the experiment)
         env2 = None
         self.problem_config2 = None
         if sim_param.cfg2:
@@ -36,7 +38,7 @@ class TestbedRace(object):
             env2 = config2.environment['env_name']
             self.problem_config2 = config2
 
-        # 3rd agent
+        # 3rd agent (optional, depends on the experiment)
         env3 = None
         self.problem_config3 = None
         if sim_param.cfg3:
@@ -50,14 +52,14 @@ class TestbedRace(object):
         print("###########################")
         # -------------------- Simulation Parameters ----------------------
 
-        self.display = sim_param.display
-        self.can_handle_events = sim_param.display
-        self.num_agents = sim_param.num_agents
+        self.display = sim_param.display # render or not the visualization
+        self.can_handle_events = sim_param.display # user can control the simulation (pause, stop) using  keyboard
+        self.num_agents = sim_param.num_agents # number of agents in the simulation
 
-        self.training = sim_param.training
-        self.random_agent = sim_param.random_agent
-        self.exploration = sim_param.exploration
-        self.collect_experiences = sim_param.collect_experiences
+        self.training = sim_param.training # decide whether to train agent or not
+        self.random_agent = sim_param.random_agent # random_agent: yes -> agent performs random action, else choose action
+        self.exploration = sim_param.exploration # agent has exploration phase
+        self.collect_experiences = sim_param.collect_experiences # agent collect experiences each timestep
 
         # Max number of episodes
         if sim_param.max_ep:
@@ -88,11 +90,11 @@ class TestbedRace(object):
         self.save_model = sim_param.save_model
         self.save_mem = sim_param.save_mem
         self.save_model_freq_ep = sim_param.save_model_freq_ep
-        self.save_mem_freq_ep = sim_param.save_mem_freq_ep
+        self.save_mem_freq_ep = sim_param.save_mem_freq_ep # TODO : not implemented, edit: not sure if really useful
 
-        # Collaborative Learning
+        # Combining experiences
         self.give_exp = sim_param.give_exp
-        self.ttr = sim_param.ttr
+        self.tts = sim_param.tts
 
         # Directory for saving files
         self.suffix = ''
@@ -140,12 +142,12 @@ class TestbedRace(object):
         if sim_param.cfg2:
             agent2 = AgentRace(display=sim_param.display, id=1, num_agents=self.num_agents, config=self.problem_config2,
                                max_ep=self.max_ep, env_name=env2, solved_timesteps=self.solved_timesteps,
-                               manual=sim_param.manual, give_exp=self.give_exp, ttr=self.ttr)
+                               manual=sim_param.manual, give_exp=self.give_exp, tts=self.tts)
             self.agents.append(agent2)
         if sim_param.cfg3:
             agent3 = AgentRace(display=sim_param.display, id=2, num_agents=self.num_agents, config=self.problem_config3,
                                max_ep=self.max_ep, env_name=env3, solved_timesteps=self.solved_timesteps,
-                               manual=sim_param.manual, give_exp=self.give_exp, ttr=self.ttr)
+                               manual=sim_param.manual, give_exp=self.give_exp, tts=self.tts)
             self.agents.append(agent3)
 
         # Add reference to others agents to each agent
@@ -154,16 +156,18 @@ class TestbedRace(object):
 
         self.given_seeds = sim_param.seed
         print('seeds', self.given_seeds)
-        self.max_sim = sim_param.multi_sim
-        self.save_seed = sim_param.save_seed
+        self.max_sim = sim_param.multi_sim # max number of simulations
+        self.save_seed = sim_param.save_seed # save the seeds in a txt file
 
-        self.save_record_rpu = sim_param.save_record_rpu
+        self.save_record_rpu = sim_param.save_record_rpu # record simulation logs when using Run in Parallel Universe (RPU) script
         self.seed_list = None # used in RPU
-        self.check_agents_nn_saved = None
+        self.check_agents_nn_saved = None # check at an episode if the agents have save their neural network
 
     def setup_simulations(self, sim_id=0, file_to_load=''):
         """
-            Setup simulation
+            Setup current simulation
+            :param sim_id: id of the current simulation
+            :param file_to_load: NN file or experiences file to load directly
         """
         global_race.record = self.sim_param.record
 
@@ -233,7 +237,7 @@ class TestbedRace(object):
 
     def setup_agents(self):
         """
-            Setup agent
+            Setup agent of the simulation
         """
         debug_race.xprint(msg="Setup agents")
 
@@ -343,9 +347,7 @@ class TestbedRace(object):
 
     def run_simulation(self):
         """"
-            Main
-            Game
-            Loop
+            Main game loop
         """
         while self.running:
 
@@ -436,7 +438,8 @@ class TestbedRace(object):
 
     def save_summary(self, suffix=''):
         """
-            Simulation summary (completion time, number of simulations, etc)
+            Save simulation summary (completion time, number of simulations, etc) in text file
+            :param suffix: add suffix to the saved text file
         """
         timestr = time.strftime('%Y%m%d_%H%M%S')
         file = open(self.sim_dir + suffix + 'summary_' + timestr + '.txt', 'w')

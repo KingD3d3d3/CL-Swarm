@@ -45,14 +45,15 @@ parser.add_argument('--save_record_rpu', help='save record simulation in run par
 
 # Saving
 parser.add_argument('--save_model_freq_ep', help='save neural networks model every defined episodes', default=0, type=int)
-parser.add_argument('--save_mem_freq_ep', help='save memory every defined episodes', default=0, type=int)
+parser.add_argument('--save_mem_freq_ep', help='save memory every defined episodes', default=0, type=int) # TODO : not implemented, edit: not sure if really useful
+
 
 parser.add_argument('--suffix', help='custom suffix to add', default='')
 parser.add_argument('--dir_name', help='directory name to load NN files (to run in parallel universe)', default='')
 
 # Collaborative Learning
 parser.add_argument('--give_exp', help='CL agent 1 and agent 2 gives experiences to agent 0', default=False, type=Util.str2bool)
-parser.add_argument('--ttr', help='Time-to-reach before agent 1 and agent 2 (RaceCircle Left/Right) stop giving experiences to agent 0 (RaceCombined)', default=2000, type=int)
+parser.add_argument('--tts', help='Time before agent 1 and agent 2 (RaceCircle Left/Right) stop giving experiences to agent 0 (RaceCombined)', default=2000, type=int)
 
 # Race problem to solve
 parser.add_argument('--cfg', help='game environment and agent\'s hyperparameters config file', required=True)
@@ -64,7 +65,8 @@ args = parser.parse_args()
 
 def sim_suffix():
     """
-        Simulation suffix name given simulation parameters
+        Simulation suffix (for directory name, file name) given the simulation parameters
+        :return: suffix
     """
     # Suffix
     suffix = ''
@@ -118,6 +120,7 @@ def sim_suffix():
 def sim_dir():
     """
         Simulation directory name given simulation parameters
+        :return: directory name
     """
     multi_sim = args.multi_sim
 

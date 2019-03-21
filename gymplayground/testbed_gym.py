@@ -109,7 +109,7 @@ class TestbedGym(object):
 
         self.given_seeds = sim_param.seed # give a seed directly
         print('seeds list', self.given_seeds)
-        self.save_seed = sim_param.save_seed # save the used seeds in a txt file
+        self.save_seed = sim_param.save_seed # save the seeds in a txt file
 
         self.max_sim = sim_param.multi_sim # max number of simulations
 
